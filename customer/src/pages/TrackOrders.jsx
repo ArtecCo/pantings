@@ -43,7 +43,7 @@ export default function TrackOrders() {
 
   if (!authenticated && !error) {
     return (
-      <div className="ara-collection-state">
+      <div className="ara-collection-state" style={{ textAlign: 'center' }}>
         <strong>Sign in to track your orders</strong>
         <p>Your orders are securely linked to your account. Sign in to view order status, delivery details and tracking information.</p>
         <Link to="/login" className="ara-btn ara-btn-primary">Sign In</Link>
