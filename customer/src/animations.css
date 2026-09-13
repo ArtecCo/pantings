@@ -4,6 +4,11 @@
   transform-origin: 50% 0;
 }
 
+/* Keep the footer from appearing as a dark flash while the page content enters. */
+.ara-footer {
+  animation: araFooterReveal 0.35s ease 0.55s both;
+}
+
 /* Collection cards: gentle entrance with a small stagger. */
 .ara-painting-card {
   animation: araCardEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -14,10 +19,6 @@
 .ara-painting-card:nth-child(4) { animation-delay: 210ms; }
 .ara-painting-card:nth-child(5) { animation-delay: 280ms; }
 .ara-painting-card:nth-child(6) { animation-delay: 350ms; }
-
-.ara-painting-card:hover {
-  box-shadow: 0 22px 40px rgba(44, 24, 16, .13);
-}
 
 @keyframes araPageEnter {
   from {
@@ -41,6 +42,11 @@
   }
 }
 
+@keyframes araFooterReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 600px) {
   .ara-page-stage {
     min-height: calc(100vh - 70px);
@@ -56,7 +62,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ara-page-stage,
-  .ara-painting-card {
+  .ara-painting-card,
+  .ara-footer {
     animation: none;
   }
 }
