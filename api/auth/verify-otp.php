@@ -34,17 +34,21 @@ try {
     $pdo->prepare('UPDATE admin_otp_codes SET used_at=NOW() WHERE id=?')
         ->execute([(int)$record['id']]);
 
-    $adminStmt=$pdo->prepare('SELECT id,email FROM admin_users WHERE id=? LIMIT 1');
+    $adminStmt=$pdo->prepare('SELECT id,email,is_active FROM admin_users WHERE id=? LIMIT 1');
     $adminStmt->execute([$adminId]);
     $admin=$adminStmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$admin) {
-        jsonResponse(['success'=>false,'message'=>'Administrator account no longer exists.'],401);
+    if (!$admin || !$admin['is_active']) {
+        $_SESSION=[];
+        session_destroy();
+        jsonResponse(['success'=>false,'message'=>'Administrator account is unavailable.'],401);
     }
 
     session_regenerate_id(true);
     $_SESSION['admin_user_id']=(int)$admin['id'];
+    $_SESSION['admin_user_type']='admin';
     $_SESSION['admin_email']=$admin['email'];
+    $_SESSION['admin_2fa_verified']=true;
     $_SESSION['admin_authenticated_at']=time();
     unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required']);
 
