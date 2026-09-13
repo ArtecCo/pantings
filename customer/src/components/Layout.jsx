@@ -34,7 +34,7 @@ export default function Layout({ children }) {
             </header>
 
             <main>
-                {children}
+                <div className="ara-page-stage">{children}</div>
             </main>
 
             <footer className="ara-footer">
