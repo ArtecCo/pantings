@@ -45,6 +45,7 @@ try {
     }
 
     session_regenerate_id(true);
+    unset($_SESSION['user_id'],$_SESSION['user_type'],$_SESSION['user_email'],$_SESSION['user_authenticated_at']);
     $_SESSION['admin_user_id']=(int)$admin['id'];
     $_SESSION['admin_user_type']='admin';
     $_SESSION['admin_email']=$admin['email'];
