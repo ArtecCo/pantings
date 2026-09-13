@@ -56,12 +56,22 @@ try {
         exit;
     }
 
-    if (!in_array($action, ['ACCEPT', 'REJECT'], true)) {
+    $validStatuses = [
+        'Order created',
+        'Artist to get in touch',
+        'Accepted',
+        'Processing',
+        'Dispatched',
+        'Delivered',
+        'REJECTED' // keeping for backward compatibility if needed, or maybe just stick to requested ones
+    ];
+
+    if (!in_array($action, $validStatuses, true)) {
         http_response_code(400);
 
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid order action'
+            'message' => 'Invalid order action/status'
         ]);
 
         exit;
@@ -87,88 +97,41 @@ try {
     $order = $orderStmt->fetch();
 
     if (!$order) {
-
         $pdo->rollBack();
-
         http_response_code(404);
-
-        echo json_encode([
-            'success' => false,
-            'message' => 'Order not found'
-        ]);
-
-        exit;
-    }
-
-    /*
-     * Acceptance/rejection is only allowed while
-     * the order is awaiting artist acceptance.
-     */
-    if ($order['status'] !== 'PENDING_ACCEPTANCE') {
-
-        $pdo->rollBack();
-
-        http_response_code(409);
-
-        echo json_encode([
-            'success' => false,
-            'message' => 'This order is no longer awaiting acceptance'
-        ]);
-
+        echo json_encode(['success' => false, 'message' => 'Order not found']);
         exit;
     }
 
     $oldStatus = $order['status'];
-
-    $newStatus = $action === 'ACCEPT'
-        ? 'ACCEPTED'
-        : 'REJECTED';
+    $newStatus = $action;
 
     /*
      * Update order status and artist notes.
      */
+    $updateQuery = "UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP";
+    $params = [$newStatus];
+
     if ($notes !== '') {
-
-        $updateStmt = $pdo->prepare("
-            UPDATE orders
-            SET
-                status = ?,
-                artist_notes = ?,
-                accepted_at = CASE
-                    WHEN ? = 'ACCEPTED'
-                    THEN CURRENT_TIMESTAMP
-                    ELSE accepted_at
-                END
-            WHERE id = ?
-        ");
-
-        $updateStmt->execute([
-            $newStatus,
-            $notes,
-            $newStatus,
-            $orderId
-        ]);
-
-    } else {
-
-        $updateStmt = $pdo->prepare("
-            UPDATE orders
-            SET
-                status = ?,
-                accepted_at = CASE
-                    WHEN ? = 'ACCEPTED'
-                    THEN CURRENT_TIMESTAMP
-                    ELSE accepted_at
-                END
-            WHERE id = ?
-        ");
-
-        $updateStmt->execute([
-            $newStatus,
-            $newStatus,
-            $orderId
-        ]);
+        $updateQuery .= ", artist_notes = ?";
+        $params[] = $notes;
     }
+
+    if ($newStatus === 'Accepted' && $oldStatus !== 'Accepted') {
+        $updateQuery .= ", accepted_at = CURRENT_TIMESTAMP";
+    }
+    if ($newStatus === 'Dispatched' && $oldStatus !== 'Dispatched') {
+        $updateQuery .= ", dispatched_at = CURRENT_TIMESTAMP";
+    }
+    if ($newStatus === 'Delivered' && $oldStatus !== 'Delivered') {
+        $updateQuery .= ", delivered_at = CURRENT_TIMESTAMP";
+    }
+
+    $updateQuery .= " WHERE id = ?";
+    $params[] = $orderId;
+
+    $updateStmt = $pdo->prepare($updateQuery);
+    $updateStmt->execute($params);
 
     /*
      * Record the status change.
@@ -197,9 +160,7 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => $newStatus === 'ACCEPTED'
-            ? 'Order accepted successfully'
-            : 'Order rejected successfully',
+        'message' => 'Order status updated successfully',
         'order_id' => $orderId,
         'order_number' => $order['order_number'],
         'old_status' => $oldStatus,
