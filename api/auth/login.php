@@ -30,7 +30,8 @@ try {
 
     if (!$twoFa) {
         session_regenerate_id(true);
-        $_SESSION['admin_2fa_verified'] = true;
+        unset($_SESSION['user_id'],$_SESSION['user_type'],$_SESSION['user_email'],$_SESSION['user_authenticated_at']);
+        $_SESSION['admin_2fa_verified']=true;
         $_SESSION['admin_user_id']=(int)$admin['id'];
         $_SESSION['admin_user_type']='admin';
         $_SESSION['admin_email']=$admin['email'];
@@ -53,7 +54,11 @@ try {
     );
     $insert->execute([(int)$admin['id'],$hash]);
 
-    unset($_SESSION['admin_user_id'],$_SESSION['admin_user_type'],$_SESSION['admin_email'],$_SESSION['admin_authenticated_at'],$_SESSION['admin_2fa_verified']);
+    unset(
+        $_SESSION['user_id'],$_SESSION['user_type'],$_SESSION['user_email'],$_SESSION['user_authenticated_at'],
+        $_SESSION['admin_user_id'],$_SESSION['admin_user_type'],$_SESSION['admin_email'],
+        $_SESSION['admin_authenticated_at'],$_SESSION['admin_2fa_verified']
+    );
     $_SESSION['admin_pending_user_id']=(int)$admin['id'];
     $_SESSION['admin_pending_email']=$admin['email'];
     $_SESSION['admin_otp_required']=true;
