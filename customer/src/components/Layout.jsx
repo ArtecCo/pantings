@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Layout({ children }) {
+    const location = useLocation();
+
     return (
         <div className="ara-client">
             <header className="ara-header">
@@ -34,7 +36,7 @@ export default function Layout({ children }) {
             </header>
 
             <main>
-                <div className="ara-page-stage">{children}</div>
+                <div className="ara-page-stage" key={location.pathname}>{children}</div>
             </main>
 
             <footer className="ara-footer">
