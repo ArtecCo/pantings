@@ -15,11 +15,11 @@ if (!filter_var($email,FILTER_VALIDATE_EMAIL) || $password==='') {
 }
 
 try {
-    $stmt=$pdo->prepare('SELECT id,email,password_hash FROM admin_users WHERE LOWER(email)=? LIMIT 1');
+    $stmt=$pdo->prepare('SELECT id,email,password_hash,is_active FROM admin_users WHERE LOWER(email)=? LIMIT 1');
     $stmt->execute([$email]);
     $admin=$stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$admin || empty($admin['password_hash']) || !password_verify($password,$admin['password_hash'])) {
+    if (!$admin || !$admin['is_active'] || empty($admin['password_hash']) || !password_verify($password,$admin['password_hash'])) {
         usleep(250000);
         jsonResponse(['success'=>false,'message'=>'Invalid email or password.'],401);
     }
@@ -32,8 +32,10 @@ try {
         session_regenerate_id(true);
         $_SESSION['admin_2fa_verified'] = true;
         $_SESSION['admin_user_id']=(int)$admin['id'];
+        $_SESSION['admin_user_type']='admin';
         $_SESSION['admin_email']=$admin['email'];
         $_SESSION['admin_authenticated_at']=time();
+        unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required']);
 
         jsonResponse(['success'=>true,'authenticated'=>true,'requires_otp'=>false,
             'admin'=>['id'=>(int)$admin['id'],'email'=>$admin['email']]]);
@@ -51,10 +53,10 @@ try {
     );
     $insert->execute([(int)$admin['id'],$hash]);
 
+    unset($_SESSION['admin_user_id'],$_SESSION['admin_user_type'],$_SESSION['admin_email'],$_SESSION['admin_authenticated_at'],$_SESSION['admin_2fa_verified']);
     $_SESSION['admin_pending_user_id']=(int)$admin['id'];
     $_SESSION['admin_pending_email']=$admin['email'];
     $_SESSION['admin_otp_required']=true;
-    unset($_SESSION['admin_user_id'],$_SESSION['admin_email'],$_SESSION['admin_authenticated_at']);
 
     require_once __DIR__ . '/../emails/send-admin-otp.php';
     if (!sendAdminOtp($admin['email'],$otp)) {
