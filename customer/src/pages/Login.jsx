@@ -1,78 +1,147 @@
 import { useState } from 'react';
 
+const API = 'http://localhost/paintings/api';
+
 export default function Login() {
+    const [mode, setMode] = useState('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
-    const handleEmailLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    const clearMessages = () => {
         setError('');
+        setMessage('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        clearMessages();
+        setLoading(true);
 
         try {
-            const res = await fetch('http://localhost/paintings/api/auth/user-login.php', {
+            const endpoint = mode === 'login' ? 'auth/user-login.php' : 'auth/user-register.php';
+            const body = mode === 'login'
+                ? { type: 'email', email: email.trim().toLowerCase(), password }
+                : {
+                    email: email.trim().toLowerCase(),
+                    password,
+                    first_name: firstName.trim(),
+                    last_name: lastName.trim(),
+                };
+
+            const res = await fetch(`${API}/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'email', email, password }),
+                credentials: 'include',
+                body: JSON.stringify(body),
             });
-            const data = await res.json();
-            if (data.success) {
-                window.location.href = '/account';
-            } else {
-                setError(data.message || 'Login failed.');
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || (mode === 'login' ? 'Unable to sign in.' : 'Unable to create your account.'));
             }
+
+            window.location.replace('/account');
         } catch (err) {
-            setError('Unable to login at this time.');
+            setError(err.message || 'Unable to continue.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleGoogleLoginMock = () => {
-        alert("Google Sign-in popup would open here. Remember to install @react-oauth/google!");
+    const handleGoogleLogin = () => {
+        clearMessages();
+        setMessage('Google Sign-In setup is ready on the backend. Add your Google OAuth client ID to the customer environment configuration, then this button can be enabled.');
+    };
+
+    const switchMode = (nextMode) => {
+        clearMessages();
+        setMode(nextMode);
+        setPassword('');
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '4rem auto', padding: '2rem', background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '4px' }}>
-            <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: 'var(--maroon)', textAlign: 'center', marginBottom: '1rem' }}>Welcome Back</h1>
-            <p style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: '2rem' }}>Sign in to track your orders and manage your account.</p>
+        <main className="ara-login-page">
+            <section className="ara-login-shell">
+                <div className="ara-login-brand">
+                    <div className="ara-login-mark">A</div>
+                    <div>
+                        <div className="ara-login-brand-name">ARAmane Arts</div>
+                        <div className="ara-login-brand-subtitle">Heritage Paintings</div>
+                    </div>
+                </div>
 
-            {error && <div style={{ color: 'var(--maroon)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+                <div className="ara-login-divider">
+                    <span /><b>✦</b><span />
+                </div>
 
-            <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={{ padding: '0.75rem', border: '1px solid var(--border)', background: 'transparent', outline: 'none' }}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={{ padding: '0.75rem', border: '1px solid var(--border)', background: 'transparent', outline: 'none' }}
-                />
-                <button type="submit" className="ara-btn ara-btn-primary" disabled={loading} style={{ width: '100%', padding: '1rem', cursor: 'pointer' }}>
-                    {loading ? 'Signing in...' : 'Sign In'}
+                <div className="ara-login-heading">
+                    <p className="ara-login-eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'JOIN ARAMANE ARTS'}</p>
+                    <h1>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
+                    <p>
+                        {mode === 'login'
+                            ? 'Sign in to track your orders and manage your account.'
+                            : 'Create an account to save your details and track your orders.'}
+                    </p>
+                </div>
+
+                <form className="ara-login-form" onSubmit={handleSubmit}>
+                    {mode === 'register' && (
+                        <div className="ara-login-name-grid">
+                            <label>
+                                <span>First name</span>
+                                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" autoComplete="given-name" required />
+                            </label>
+                            <label>
+                                <span>Last name</span>
+                                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" autoComplete="family-name" />
+                            </label>
+                        </div>
+                    )}
+
+                    <label>
+                        <span>Email address</span>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required />
+                    </label>
+
+                    <label>
+                        <span>Password</span>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required />
+                    </label>
+
+                    <button className="ara-login-submit" type="submit" disabled={loading}>
+                        {loading ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : (mode === 'login' ? 'Sign in' : 'Create account')}
+                        {!loading && <span>→</span>}
+                    </button>
+                </form>
+
+                <div className="ara-login-divider ara-login-or">
+                    <span /><b>OR</b><span />
+                </div>
+
+                <button type="button" className="ara-google-button" onClick={handleGoogleLogin}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12s3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.33 10 10.19 10 5.52 0 9.28-3.67 9.28-9.09 0-1.15-.15-1.81-.15-1.81Z" /></svg>
+                    Continue with Google
                 </button>
-            </form>
 
-            <div style={{ margin: '2rem 0', textAlign: 'center', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}>
-                <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
-                <span style={{ padding: '0 1rem' }}>OR</span>
-                <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
-            </div>
+                {message && <div className="ara-login-message">{message}</div>}
+                {error && <div className="ara-login-error">{error}</div>}
 
-            <button onClick={handleGoogleLoginMock} className="ara-btn ara-btn-secondary" style={{ width: '100%', padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.36,22 12.22,22C17.74,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z" /></svg>
-                Sign in with Google
-            </button>
-        </div>
+                <div className="ara-login-switch">
+                    {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
+                    <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
+                        {mode === 'login' ? 'Create one' : 'Sign in'}
+                    </button>
+                </div>
+
+                <div className="ara-login-footer">
+                    <span>ARAmane Arts</span><i>•</i><span>Heritage paintings</span>
+                </div>
+            </section>
+        </main>
     );
 }
