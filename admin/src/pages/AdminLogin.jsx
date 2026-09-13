@@ -1,154 +1,196 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-const API = 'http://localhost/paintings/api';
+const API = 'http://localhost/paintings/api'
 
 export default function AdminLogin() {
-  const [step, setStep] = useState(1);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate()
 
-  const requestOtp = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    setLoading(true);
+  const [step, setStep] = useState('credentials')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-    try {
-      const response = await axios.post(
-        `${API}/admin/request-otp.php`,
-        { email, password },
-        { withCredentials: true }
-      );
+  const clearMessages = () => {
+    setMessage('')
+    setError('')
+  }
 
-      if (response.data.success) {
-        setStep(2);
-
-        // Temporary local-development OTP
-        if (response.data.development_otp) {
-          setMessage(`Development OTP: ${response.data.development_otp}`);
-        }
-      } else {
-        setMessage(response.data.message || 'Unable to send OTP.');
-      }
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message ||
-        'Unable to connect to the server.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyOtp = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    setLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    clearMessages()
+    setLoading(true)
 
     try {
-      const response = await axios.post(
-        `${API}/admin/verify-otp.php`,
-        { otp },
-        { withCredentials: true }
-      );
+      const response = await fetch(`${API}/auth/login.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password
+        })
+      })
 
-      if (response.data.success) {
-        window.location.href = '/';
-      } else {
-        setMessage(response.data.message || 'Invalid OTP.');
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to sign in.')
       }
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message ||
-        'Unable to verify OTP.'
-      );
+
+      if (data.requires_otp) {
+        setStep('otp')
+        setMessage('A verification code has been sent to your registered email.')
+      } else {
+        navigate('/', { replace: true })
+      }
+    } catch (err) {
+      setError(err.message || 'Unable to sign in.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    clearMessages()
+
+    if (otp.length !== 6) {
+      setError('Enter the 6-digit verification code.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${API}/auth/verify-otp.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ otp })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Invalid verification code.')
+      }
+
+      navigate('/', { replace: true })
+    } catch (err) {
+      setError(err.message || 'Unable to verify the code.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="admin-login-page">
-      <div className="admin-login-card">
-      <div className="admin-login-mark">A</div>
-        <div className="admin-login-header">
-          <h1>Admin Portal</h1>
+    <main className="ara-login-page">
+      <section className="ara-login-shell">
+        <div className="ara-login-brand">
+          <div className="ara-login-mark">A</div>
+          <div>
+            <div className="ara-login-brand-name">ARAmane Arts</div>
+            <div className="ara-login-brand-subtitle">Heritage Paintings</div>
+          </div>
+        </div>
+
+        <div className="ara-login-divider">
+          <span />
+          <b>✦</b>
+          <span />
+        </div>
+
+        <div className="ara-login-heading">
+          <p className="ara-login-eyebrow">ADMINISTRATION</p>
+          <h1>{step === 'credentials' ? 'Welcome back' : 'Verify your identity'}</h1>
           <p>
-            {step === 1
-              ? 'Sign in to continue'
-              : 'Enter the verification code'}
+            {step === 'credentials'
+              ? 'Sign in to manage the ARAmane Arts collection.'
+              : 'Enter the verification code sent to your registered email address.'}
           </p>
         </div>
 
-        {step === 1 ? (
-          <form onSubmit={requestOtp}>
+        {step === 'credentials' ? (
+          <form className="ara-login-form" onSubmit={handleLogin}>
+            <label>
+              <span>Email address</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                autoComplete="username"
+                required
+              />
+            </label>
 
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
 
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading ? 'Sending OTP...' : 'Continue'}
+            <button className="ara-login-submit" type="submit" disabled={loading}>
+              {loading ? 'Signing in…' : 'Sign in'}
+              {!loading && <span>→</span>}
             </button>
-
           </form>
         ) : (
-          <form onSubmit={verifyOtp}>
+          <form className="ara-login-form" onSubmit={handleVerifyOtp}>
+            <label>
+              <span>Verification code</span>
+              <input
+                className="ara-otp-input"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                autoComplete="one-time-code"
+                autoFocus
+                required
+              />
+            </label>
 
-            <label>OTP</label>
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="6-digit OTP"
-              maxLength="6"
-              inputMode="numeric"
-              required
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading ? 'Verifying...' : 'Verify & Sign In'}
+            <button className="ara-login-submit" type="submit" disabled={loading}>
+              {loading ? 'Verifying…' : 'Verify & continue'}
+              {!loading && <span>→</span>}
             </button>
 
             <button
+              className="ara-login-back"
               type="button"
-              className="back-button"
               onClick={() => {
-                setStep(1);
-                setOtp('');
-                setMessage('');
+                clearMessages()
+                setOtp('')
+                setStep('credentials')
               }}
             >
-              Back
+              ← Back to sign in
             </button>
-
           </form>
         )}
 
-        {message && (
-          <div className="login-message">
-            {message}
-          </div>
-        )}
+        {message && <div className="ara-login-message">{message}</div>}
+        {error && <div className="ara-login-error">{error}</div>}
 
-      </div>
-    </div>
-  );
+        <div className="ara-login-footer">
+          <span>ARAmane Arts</span>
+          <i>•</i>
+          <span>Private administration</span>
+        </div>
+      </section>
+    </main>
+  )
 }

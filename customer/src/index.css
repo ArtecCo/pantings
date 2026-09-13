@@ -1,111 +1,1868 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --ivory: #faf6ee;
+  --paper: #fdfbf7;
+  --cream: #f4ebe1;
+  --gold: #d4af37;
+  --gold-light: #f3e5ab;
+  --maroon: #5b1217;
+  --maroon-light: #800f17;
+  --brown: #2c1810;
+  --muted: #6e5b53;
+  --border: rgba(91, 18, 23, 0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+* {
+  box-sizing: border-box;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
+  background: var(--ivory);
+  color: var(--brown);
+  font-family: 'DM Sans', sans-serif;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* Announcement */
+
+.ara-announcement {
+  min-height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding: 7px 20px;
+  background: linear-gradient(
+    90deg,
+    #b98b22,
+    var(--gold),
+    #b98b22
+  );
+  color: #fff9e8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Header */
+
+.ara-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(253, 251, 247, 0.94);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+
+.ara-header-inner {
+  width: min(1380px, calc(100% - 48px));
+  min-height: 82px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 35px;
+}
+
+.ara-brand {
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  line-height: 1;
+  min-width: 190px;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+.ara-brand-small {
+  color: var(--gold);
+  font-size: 9px;
+  letter-spacing: 0.27em;
+  margin-bottom: 6px;
+}
+
+.ara-brand-name {
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.ara-nav {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.ara-nav a {
+  position: relative;
+  padding: 8px 0;
+}
+
+.ara-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 1px;
+  background: var(--gold);
+  transition: width 0.25s ease;
+}
+
+.ara-nav a:hover::after {
+  width: 100%;
+}
+
+.ara-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 190px;
+  justify-content: flex-end;
+}
+
+.ara-track,
+.ara-account {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.ara-cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  color: var(--maroon);
+  font-size: 12px;
+}
+
+.ara-cart-count {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--maroon);
+  color: white;
+  font-size: 10px;
+}
+
+/* Hero */
+
+.ara-hero {
+  min-height: 620px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 55px 0;
+  background:
+    radial-gradient(circle at 75% 30%, rgba(212,175,55,.11), transparent 28%),
+    var(--ivory);
+}
+
+.ara-hero-inner {
+  width: min(1180px, calc(100% - 70px));
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1.15fr 0.75fr;
+  align-items: center;
+  gap: 70px;
+}
+
+.ara-hero-art {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: araReveal 1s 0.15s ease both;
+}
+
+.ara-art-frame {
+  position: relative;
+  width: min(100%, 390px);
+  aspect-ratio: 0.78;
+  padding: 14px;
+  background: var(--brown);
+  border: 2px solid var(--gold);
+  box-shadow:
+    0 25px 50px rgba(44,24,16,.15),
+    inset 0 0 0 5px rgba(212,175,55,.18);
+}
+
+.ara-hero-copy {
+  animation: araReveal 0.9s ease both;
+}
+
+.ara-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+}
+
+.ara-eyebrow span {
+  width: 28px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.ara-hero h1 {
+  margin: 22px 0 20px;
+  max-width: 650px;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(60px, 7vw, 96px);
+  line-height: 0.88;
   font-weight: 500;
-  color: var(--text-h);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+.ara-hero h1 em {
+  display: block;
+  color: var(--brown);
+  font-weight: 400;
+}
+
+.ara-hero-copy > p {
+  max-width: 510px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.ara-hero-actions {
+  display: flex;
+  gap: 13px;
+  margin-top: 34px;
+}
+
+.ara-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  min-height: 50px;
+  padding: 0 25px;
+  border-radius: 30px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+.ara-btn-primary {
+  background: var(--maroon);
+  color: var(--ivory);
+}
+
+.ara-btn-primary:hover {
+  background: var(--maroon-light);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(91,18,23,.18);
+}
+
+.ara-btn-secondary {
+  border: 1px solid rgba(91,18,23,.3);
+  color: var(--maroon);
+}
+
+.ara-btn-secondary:hover {
+  border-color: var(--gold);
+  background: rgba(212,175,55,.08);
+}
+
+/* Hero frame */
+
+.ara-hero-art {
+  display: flex;
+  justify-content: center;
+  animation: araReveal 1s 0.15s ease both;
+}
+
+.ara-art-frame {
+  position: relative;
+  width: min(100%, 500px);
+  aspect-ratio: 0.78;
+  padding: 17px;
+  background: var(--brown);
+  border: 2px solid var(--gold);
+  box-shadow:
+    0 30px 60px rgba(44,24,16,.16),
+    inset 0 0 0 5px rgba(212,175,55,.18);
+}
+
+.ara-art-inner {
+  height: 100%;
+  border: 1px solid var(--gold);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(212,175,55,.3), transparent 30%),
+    linear-gradient(145deg, #e9d2a3, #9b6936 50%, #4d2819);
+  display: grid;
+  place-items: center;
+}
+
+.ara-art-placeholder {
+  width: 72%;
+  aspect-ratio: 0.7;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(255,235,170,.7);
+  outline: 8px solid rgba(91,18,23,.35);
+  color: #fff4d0;
+  text-align: center;
+  box-shadow: inset 0 0 35px rgba(44,24,16,.35);
+}
+
+.ara-art-placeholder span {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+.ara-art-placeholder strong {
+  margin: 15px 0 5px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 500;
+}
+
+.ara-art-placeholder small {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+}
+
+.ara-corner {
+  position: absolute;
+  width: 35px;
+  height: 35px;
+}
+
+.ara-corner::before,
+.ara-corner::after {
+  content: '';
+  position: absolute;
+  background: var(--gold);
+}
+
+.ara-corner::before {
+  width: 100%;
+  height: 1px;
+}
+
+.ara-corner::after {
+  width: 1px;
+  height: 100%;
+}
+
+.ara-corner-tl {
+  top: 28px;
+  left: 28px;
+}
+
+.ara-corner-tr {
+  top: 28px;
+  right: 28px;
+  transform: rotate(90deg);
+}
+
+.ara-corner-bl {
+  bottom: 28px;
+  left: 28px;
+  transform: rotate(-90deg);
+}
+
+.ara-corner-br {
+  bottom: 28px;
+  right: 28px;
+  transform: rotate(180deg);
+}
+
+.ara-stamp {
+  position: absolute;
+  right: -23px;
+  bottom: 38px;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: var(--maroon);
+  color: var(--gold-light);
+  box-shadow: 0 8px 20px rgba(44,24,16,.2);
+}
+
+.ara-stamp span {
+  font-size: 10px;
+}
+
+.ara-stamp strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+}
+
+.ara-stamp small {
+  font-size: 7px;
+  letter-spacing: .18em;
+}
+
+/* Craft strip */
+
+.ara-craft-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--cream);
+}
+
+.ara-craft-item {
+  min-height: 125px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 25px 30px;
+  border-right: 1px solid var(--border);
+}
+
+.ara-craft-item:last-child {
+  border-right: 0;
+}
+
+.ara-craft-item > span {
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+}
+
+.ara-craft-item strong {
+  display: block;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.ara-craft-item p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Introduction */
+
+.ara-introduction {
+  width: min(1050px, calc(100% - 48px));
+  margin: auto;
+  padding: 110px 0 120px;
+  text-align: center;
+}
+
+.ara-section-heading > span {
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: .22em;
+  font-weight: 600;
+}
+
+.ara-section-heading h2 {
+  margin: 16px 0;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 58px;
+  font-weight: 500;
+}
+
+.ara-section-heading p {
+  max-width: 650px;
+  margin: auto;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.ara-text-link {
+  display: inline-flex;
+  gap: 12px;
+  margin-top: 28px;
+  color: var(--maroon);
+  border-bottom: 1px solid var(--gold);
+  padding-bottom: 6px;
+  font-size: 12px;
+}
+
+/* Footer */
+
+.ara-footer {
+  background: var(--brown);
+  color: var(--ivory);
+  padding: 70px 0 25px;
+}
+
+.ara-footer-inner {
+  width: min(1200px, calc(100% - 48px));
+  margin: auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 70px;
+  padding-bottom: 60px;
+}
+
+.ara-footer-brand span {
+  color: var(--gold);
+  font-size: 9px;
+  letter-spacing: .25em;
+}
+
+.ara-footer-brand strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--gold-light);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 500;
+}
+
+.ara-footer-brand p {
+  max-width: 360px;
+  color: rgba(250,246,238,.65);
+  line-height: 1.7;
+  font-size: 12px;
+}
+
+.ara-footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ara-footer-column h3 {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.ara-footer-column a {
+  color: rgba(250,246,238,.7);
+  font-size: 12px;
+}
+
+.ara-footer-column a:hover {
+  color: var(--gold-light);
+}
+
+.ara-footer-bottom {
+  width: min(1200px, calc(100% - 48px));
+  margin: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(250,246,238,.14);
+  display: flex;
+  justify-content: space-between;
+  color: rgba(250,246,238,.45);
+  font-size: 10px;
+}
+
+/* Animation */
+
+@keyframes araReveal {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-h2 {
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .ara-nav {
+    display: none;
+  }
+
+  .ara-header-actions {
+    min-width: auto;
+  }
+
+  .ara-account,
+  .ara-track {
+    display: none;
+  }
+
+  .ara-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 55px;
+  }
+
+  .ara-hero-copy {
+    text-align: center;
+  }
+
+  .ara-eyebrow,
+  .ara-hero-actions {
+    justify-content: center;
+  }
+
+  .ara-hero-copy > p {
+    margin: auto;
+  }
+
+  .ara-craft-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ara-craft-item:nth-child(2) {
+    border-right: 0;
+  }
+
+  .ara-craft-item:nth-child(-n+2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 600px) {
+  .ara-announcement {
+    font-size: 8px;
+    letter-spacing: .12em;
+  }
+
+  .ara-header-inner {
+    width: calc(100% - 28px);
+    min-height: 70px;
+  }
+
+  .ara-brand-name {
+    font-size: 25px;
+  }
+
+  .ara-hero {
+    padding: 55px 0 65px;
+  }
+
+  .ara-hero-inner {
+    width: calc(100% - 30px);
+  }
+
+  .ara-hero h1 {
+    font-size: 57px;
+  }
+
+  .ara-hero-actions {
+    flex-direction: column;
+  }
+
+  .ara-btn {
+    width: 100%;
+  }
+
+  .ara-art-frame {
+    width: calc(100% - 25px);
+  }
+
+  .ara-craft-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .ara-craft-item,
+  .ara-craft-item:nth-child(2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ara-craft-item:last-child {
+    border-bottom: 0;
+  }
+
+  .ara-section-heading h2 {
+    font-size: 43px;
+  }
+
+  .ara-footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .ara-footer-brand {
+    grid-column: 1 / -1;
+  }
+
+  .ara-footer-bottom {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* =========================
+   COLLECTION
+========================= */
+
+.ara-collection {
+  width: min(1280px, calc(100% - 60px));
+  margin: auto;
+  padding: 85px 0 110px;
+}
+
+.ara-collection-heading {
+  max-width: 760px;
+  margin: 0 auto 60px;
+  text-align: center;
+}
+
+.ara-collection-heading h1 {
+  margin: 18px 0 12px;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(55px, 6vw, 78px);
+  font-weight: 500;
+  line-height: .95;
+}
+
+.ara-collection-heading p {
+  max-width: 600px;
+  margin: auto;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Controls */
+
+.ara-collection-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 42px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ara-search-box {
+  width: 270px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  background: var(--paper);
+}
+
+.ara-search-box span {
+  color: var(--gold);
+  font-size: 21px;
+}
+
+.ara-search-box input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--brown);
+  font-size: 12px;
+}
+
+.ara-category-filters {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+}
+
+.ara-category-filters button {
+  flex-shrink: 0;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  transition: all .25s ease;
+}
+
+.ara-category-filters button:hover {
+  color: var(--maroon);
+}
+
+.ara-category-filters button.active {
+  border-color: var(--gold);
+  background: rgba(212,175,55,.09);
+  color: var(--maroon);
+}
+
+/* Grid */
+
+.ara-painting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.ara-painting-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  border: 2px solid var(--brown);
+  outline: 1px solid var(--gold);
+  outline-offset: -7px;
+  box-shadow: 0 10px 28px rgba(44, 24, 16, .08);
+  transition:
+    transform .35s ease,
+    box-shadow .35s ease;
+}
+
+.ara-painting-card::before,
+.ara-painting-card::after {
+  content: '';
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.ara-painting-card::before {
+  top: 7px;
+  left: 7px;
+  border-top: 2px solid var(--maroon);
+  border-left: 2px solid var(--maroon);
+}
+
+.ara-painting-card::after {
+  right: 7px;
+  bottom: 7px;
+  border-right: 2px solid var(--maroon);
+  border-bottom: 2px solid var(--maroon);
+}
+
+.ara-painting-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 40px rgba(44, 24, 16, .13);
+}
+
+/* Painting image */
+
+.ara-painting-image {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: .88;
+  margin: 8px 8px 0;
+  background: var(--cream);
+}
+
+.ara-painting-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition:
+    transform .7s ease,
+    filter .7s ease;
+}
+
+.ara-painting-card:hover .ara-painting-image img {
+  transform: scale(1.045);
+  filter: brightness(1.04);
+}
+
+.ara-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle, rgba(212,175,55,.2), transparent 35%),
+    linear-gradient(145deg, #e9d2a3, #6e4028);
+  color: #fff4d0;
+}
+
+.ara-no-image span {
+  font-size: 9px;
+  letter-spacing: .2em;
+}
+
+.ara-no-image strong {
+  margin-top: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px;
+  font-weight: 500;
+}
+
+/* Gold badge */
+
+.ara-gold-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255,244,190,.8);
+  background: var(--maroon);
+  color: var(--gold-light);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: .15em;
+}
+
+/* Image controls */
+
+.ara-image-arrow {
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 50%;
+  background: rgba(44,24,16,.65);
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transition: all .25s ease;
+}
+
+.ara-painting-card:hover .ara-image-arrow {
+  opacity: 1;
+}
+
+.ara-image-arrow:hover {
+  background: var(--maroon);
+  border-color: var(--gold);
+}
+
+.ara-image-prev {
+  left: 12px;
+}
+
+.ara-image-next {
+  right: 12px;
+}
+
+.ara-image-counter {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: rgba(44,24,16,.7);
+  color: white;
+  font-size: 9px;
+}
+
+/* Card information */
+
+.ara-painting-info {
+  padding: 17px 18px 16px;
+}
+
+.ara-painting-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.ara-painting-info h2 {
+  margin: 7px 0 2px;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.ara-painting-artist {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ara-painting-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ara-painting-bottom > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ara-dimensions {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.ara-painting-bottom strong {
+  color: var(--brown);
+  font-size: 15px;
+}
+
+.ara-card-arrow {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--maroon);
+  border-radius: 50%;
+  color: var(--maroon);
+  font-size: 18px;
+  transition: all .3s ease;
+}
+
+.ara-card-arrow:hover {
+  background: var(--maroon);
+  color: var(--gold-light);
+  transform: rotate(-45deg);
+}
+
+/* Loading / empty */
+
+.ara-collection-state {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.ara-collection-state strong {
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+}
+
+.ara-collection-state p {
+  font-size: 12px;
+}
+
+.ara-error-state button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 25px;
+  background: var(--maroon);
+  color: white;
+  cursor: pointer;
+}
+
+.ara-loader {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 15px;
+  border: 2px solid rgba(212,175,55,.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: araSpin .8s linear infinite;
+}
+
+@keyframes araSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Collection responsive */
+
+@media (max-width: 1000px) {
+  .ara-painting-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ara-collection-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ara-search-box {
+    width: 100%;
+  }
+
+  .ara-category-filters {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .ara-collection {
+    width: calc(100% - 30px);
+    padding: 55px 0 75px;
+  }
+
+  .ara-collection-heading {
+    margin-bottom: 40px;
+  }
+
+  .ara-collection-heading h1 {
+    font-size: 48px;
+  }
+
+  .ara-painting-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .ara-painting-image {
+    aspect-ratio: .9;
+    margin: 7px 7px 0;
+  }
+
+  .ara-image-arrow {
+    opacity: 1;
+  }
+}
+
+/* =========================
+   PAINTING DETAILS
+========================= */
+
+.ara-details {
+  width: min(1240px, calc(100% - 60px));
+  margin: auto;
+  padding: 35px 0 110px;
+}
+
+.ara-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 40px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.ara-breadcrumb a:hover {
+  color: var(--maroon);
+}
+
+.ara-breadcrumb strong {
+  color: var(--maroon);
+  font-weight: 500;
+}
+
+/* Layout */
+
+.ara-details-layout {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 80px;
+  align-items: start;
+}
+
+/* Gallery */
+
+.ara-gallery {
+  min-width: 0;
+}
+
+/* =========================
+   ARTWORK VIEWER
+========================= */
+
+.ara-main-image {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background: var(--brown);
+  border: 2px solid var(--gold);
+  box-shadow: 0 20px 45px rgba(44, 24, 16, .14);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ara-main-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 620px);
+  max-height: 68vh;
+  object-fit: contain;
+  animation: araImageReveal .45s ease;
+}
+
+@keyframes araImageReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.025);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ara-gallery-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle, rgba(212,175,55,.2), transparent 35%),
+    linear-gradient(145deg, #e9d2a3, #6e4028);
+  color: #fff4d0;
+}
+
+.ara-gallery-placeholder span {
+  font-size: 10px;
+  letter-spacing: .2em;
+}
+
+.ara-gallery-placeholder strong {
+  margin-top: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px;
+  font-weight: 500;
+}
+
+.ara-detail-gold-badge {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  padding: 8px 13px;
+  background: var(--maroon);
+  border: 1px solid var(--gold);
+  color: var(--gold-light);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .15em;
+}
+
+.ara-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(44,24,16,.72);
+  color: white;
+  cursor: pointer;
+  font-size: 25px;
+  transition: all .25s ease;
+}
+
+.ara-gallery-arrow:hover {
+  background: var(--maroon);
+}
+
+.ara-gallery-prev {
+  left: 28px;
+}
+
+.ara-gallery-next {
+  right: 28px;
+}
+
+/* Thumbnails */
+
+.ara-gallery-thumbnails {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.ara-thumbnail {
+  flex: 0 0 76px;
+  height: 76px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  cursor: pointer;
+  transition: all .25s ease;
+}
+
+.ara-thumbnail img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ara-thumbnail:hover,
+.ara-thumbnail.active {
+  border-color: var(--gold);
+}
+
+/* Information */
+
+.ara-details-info {
+  padding-top: 25px;
+  animation: araReveal .7s ease both;
+}
+
+.ara-detail-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+}
+
+.ara-detail-eyebrow span {
+  width: 30px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.ara-details-info h1 {
+  margin: 18px 0 5px;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 5vw, 70px);
+  line-height: .95;
+  font-weight: 500;
+}
+
+.ara-detail-artist {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ara-detail-artist strong {
+  color: var(--brown);
+  font-weight: 500;
+}
+
+.ara-detail-divider {
+  width: 100%;
+  height: 1px;
+  margin: 28px 0;
+  background: var(--border);
+}
+
+.ara-detail-price {
+  display: flex;
+  align-items: baseline;
+  gap: 13px;
+}
+
+.ara-detail-price strong {
+  color: var(--brown);
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.ara-detail-price span {
+  color: var(--muted);
+  text-decoration: line-through;
+  font-size: 13px;
+}
+
+.ara-detail-description {
+  margin: 25px 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+/* Specifications */
+
+.ara-specifications {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.ara-spec {
+  min-height: 82px;
+  padding: 15px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.ara-spec span {
+  color: var(--gold);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: .15em;
+}
+
+.ara-spec strong {
+  color: var(--brown);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Purchase */
+
+.ara-purchase {
+  margin-top: 28px;
+}
+
+.ara-add-cart {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: 0;
+  border-radius: 30px;
+  background: var(--maroon);
+  color: var(--ivory);
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: .05em;
+  transition: all .3s ease;
+}
+
+.ara-add-cart span {
+  color: var(--gold-light);
+}
+
+.ara-add-cart:hover {
+  background: var(--maroon-light);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(91,18,23,.2);
+}
+
+.ara-purchase p {
+  margin: 12px 10px 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* Assurance */
+
+.ara-detail-assurance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 35px;
+  padding-top: 25px;
+  border-top: 1px solid var(--border);
+}
+
+.ara-detail-assurance > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ara-detail-assurance > div > span {
+  color: var(--gold);
+  font-size: 15px;
+}
+
+.ara-detail-assurance strong,
+.ara-detail-assurance small {
+  display: block;
+}
+
+.ara-detail-assurance strong {
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+}
+
+.ara-detail-assurance small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+/* Detail loading/error */
+
+.ara-details-state {
+  min-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.ara-details-state strong {
+  margin-bottom: 5px;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+}
+
+.ara-details-state p {
+  margin-bottom: 25px;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 950px) {
+  .ara-details-layout {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .ara-details-info {
+    padding-top: 0;
+  }
+
+  .ara-main-image {
+    max-width: 650px;
+    margin: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .ara-details {
+    width: calc(100% - 30px);
+    padding-top: 25px;
+  }
+
+  .ara-breadcrumb {
+    margin-bottom: 25px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .ara-details-layout {
+    gap: 35px;
+  }
+
+  .ara-main-image {
+    padding: 9px;
+  }
+
+  .ara-gallery-arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ara-gallery-prev {
+    left: 17px;
+  }
+
+  .ara-gallery-next {
+    right: 17px;
+  }
+
+  .ara-detail-gold-badge {
+    top: 18px;
+    left: 18px;
+  }
+
+  .ara-details-info h1 {
+    font-size: 47px;
+  }
+
+  .ara-specifications {
+    grid-template-columns: 1fr;
+  }
+
+  .ara-detail-assurance {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   Artwork viewer — add to customer/src/index.css
+   ========================================================= */
+
+/* The image itself is the click target.
+   No browser button styles, border, padding or overlay. */
+.ara-main-image-click-target {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  cursor: zoom-in;
+  line-height: 0;
+}
+
+.ara-main-image-click-target:focus {
+  outline: none;
+}
+
+.ara-main-image-click-target img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 620px);
+  max-height: 68vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+}
+
+/* Full-screen heritage viewer */
+.ara-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: rgba(28, 15, 10, .97);
+  color: var(--paper);
+  animation: araLightboxIn .22s ease;
+}
+
+.ara-lightbox-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(212, 175, 55, .45);
+}
+
+.ara-lightbox-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ara-lightbox-top span {
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.ara-lightbox-top strong {
+  font-family: 'Cormorant Garamond', serif;
   font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
+  font-weight: 600;
+}
+
+.ara-lightbox-close {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--paper);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.ara-lightbox-close:hover {
+  background: var(--gold);
+  color: var(--brown);
+}
+
+.ara-lightbox-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 80px 20px;
+  overflow: hidden;
+}
+
+.ara-lightbox-image-wrap {
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.ara-lightbox-image-wrap img {
+  display: block;
+  max-width: min(82vw, 1100px);
+  max-height: 72vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 2px solid var(--gold);
+  outline: 7px solid var(--brown);
+  outline-offset: -9px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+  transform-origin: center center;
+  transition: transform .18s ease;
+  user-select: none;
+}
+
+.ara-lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(44, 24, 16, .8);
+  color: var(--paper);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  line-height: 40px;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: .2s ease;
+}
+
+.ara-lightbox-arrow:hover {
+  background: var(--gold);
+  color: var(--brown);
+}
+
+.ara-lightbox-prev {
+  left: 24px;
+}
+
+.ara-lightbox-next {
+  right: 24px;
+}
+
+.ara-lightbox-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px 10px;
+}
+
+.ara-lightbox-controls button {
+  min-width: 42px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(212, 175, 55, .75);
+  background: rgba(44, 24, 16, .9);
+  color: var(--paper);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.ara-lightbox-controls button:hover:not(:disabled) {
+  background: var(--gold);
+  color: var(--brown);
+}
+
+.ara-lightbox-controls button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.ara-lightbox-counter {
+  padding: 0 20px 18px;
+  text-align: center;
+  color: rgba(253, 251, 247, .65);
+  font-size: 12px;
+  letter-spacing: .12em;
+}
+
+@keyframes araLightboxIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .ara-lightbox-top {
+    padding: 14px 16px;
+  }
+
+  .ara-lightbox-top strong {
     font-size: 20px;
   }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+  .ara-lightbox-stage {
+    padding: 20px 48px 10px;
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  .ara-lightbox-image-wrap img {
+    max-width: 88vw;
+    max-height: 68vh;
+  }
+
+  .ara-lightbox-arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+    line-height: 34px;
+  }
+
+  .ara-lightbox-prev {
+    left: 8px;
+  }
+
+  .ara-lightbox-next {
+    right: 8px;
+  }
 }

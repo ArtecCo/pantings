@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ToastProvider } from './components/Toast'
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import AdminLogin from './pages/AdminLogin'
@@ -29,10 +29,36 @@ const managementItems = [
   { label: 'Settings', icon: '⚙', path: '/settings' },
 ]
 
+const handleLogout = async () => {
+  try {
+    await fetch('http://localhost/paintings/api/auth/logout.php', {
+      method: 'POST',
+      credentials: 'include',
+    })
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+
+  window.location.href = '/login'
+}
+
 function AdminLayout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
+
+  const handleLogout = async () => {
+  try {
+    await fetch('http://localhost/paintings/api/auth/logout.php', {
+      method: 'POST',
+      credentials: 'include',
+    })
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
+
+  window.location.replace('/login')
+}
 
   return (
     <div className="admin-app">
@@ -77,9 +103,11 @@ function AdminLayout({ children }) {
             </div>
           </div>
 
-          <button className="logout-button">
+          <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>
+
+          
 
         </div>
 
@@ -339,6 +367,76 @@ function PlaceholderPage({ title }) {
   )
 }
 
+function ProtectedRoute({ children }) {
+  const [checking, setChecking] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    fetch('http://localhost/paintings/api/auth/session.php', {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Session check failed')
+        }
+
+        return response.json()
+      })
+      .then((data) => {
+        if (!mounted) return
+
+        setAuthenticated(
+          data.success === true &&
+          data.authenticated === true &&
+          data.two_factor_verified === true
+        )
+
+        setChecking(false)
+      })
+      .catch((error) => {
+        console.error('Authentication check failed:', error)
+
+        if (!mounted) return
+
+        setAuthenticated(false)
+        setChecking(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  if (checking) {
+    return (
+      <div className="admin-app">
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#5b1217',
+            fontFamily: 'Cormorant Garamond, serif',
+            fontSize: '22px',
+          }}
+        >
+          Checking administrator access…
+        </div>
+      </div>
+    )
+  }
+
+  if (!authenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return children
+}
+
 function App() {
   return (
     <ToastProvider>
@@ -347,59 +445,76 @@ function App() {
 
         <Route path="/login" element={<AdminLogin />} />
 
-        <Route path="/" element={<Dashboard />} />
+        <Route
+  path="/"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
   path="/orders"
   element={
-    <AdminLayout>
-      <Orders />
-    </AdminLayout>
+    <ProtectedRoute>
+      <PlaceholderPage title="Orders" />
+    </ProtectedRoute>
   }
 />
 
 <Route
   path="/orders/:id"
   element={
+    <ProtectedRoute>
     <AdminLayout>
       <OrderDetails />
     </AdminLayout>
+    </ProtectedRoute>
   }
 />
 
         <Route
   path="/paintings"
   element={
-    <AdminLayout>
-      <PaintingList />
-    </AdminLayout>
+    <ProtectedRoute>
+      <AdminLayout>
+        <PaintingList />
+      </AdminLayout>
+    </ProtectedRoute>
   }
 />
 
 <Route
   path="/paintings/:id/edit"
   element={
+    <ProtectedRoute>
     <AdminLayout>
       <EditPainting />
     </AdminLayout>
+    </ProtectedRoute>
   }
 />
 
 <Route
   path="/paintings/new"
   element={
-    <AdminLayout>
-      <AddPainting />
-    </AdminLayout>
+    <ProtectedRoute>
+      <AdminLayout>
+        <AddPainting />
+      </AdminLayout>
+    </ProtectedRoute>
   }
 />
 
 <Route
   path="/metadata"
   element={
-    <AdminLayout>
-      <Metadata />
-    </AdminLayout>
+    <ProtectedRoute>
+      <AdminLayout>
+        <Metadata />
+      </AdminLayout>
+    </ProtectedRoute>
   }
 />
 

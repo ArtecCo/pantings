@@ -2,8 +2,18 @@
 
 session_start();
 
-header("Access-Control-Allow-Origin: http://localhost:5174");
-header("Access-Control-Allow-Credentials: true");
+$allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+}
+
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
@@ -15,16 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../config/database.php';
 
-if (!isset($_SESSION['admin_user_id'])) {
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Admin authentication required'
-    ]);
-
-    exit;
-}
+$isAdmin = isset($_SESSION['admin_user_id']);
 
 try {
 
@@ -52,9 +53,17 @@ try {
 
         LEFT JOIN categories c
             ON c.id = p.category_id
-
-        ORDER BY p.created_at DESC
     ";
+
+    /*
+     * Customers only receive active paintings.
+     * Admins receive all paintings.
+     */
+    if (!$isAdmin) {
+        $sql .= " WHERE p.is_active = 1";
+    }
+
+    $sql .= " ORDER BY p.created_at DESC";
 
     $stmt = $pdo->query($sql);
 
@@ -81,8 +90,7 @@ try {
         $painting['images'] = $imageStmt->fetchAll();
 
         /*
-         * Keep image_url for compatibility with the existing UI.
-         * It points to the first image.
+         * Keep image_url for compatibility.
          */
         $painting['image_url'] = !empty($painting['images'])
             ? $painting['images'][0]['image_url']
@@ -97,6 +105,8 @@ try {
     ]);
 
 } catch (Throwable $e) {
+
+    error_log('Painting list error: ' . $e->getMessage());
 
     http_response_code(500);
 

@@ -1,7 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
 html,
 body,
 #root {
   min-height: 100%;
+  font-family: 'DM Sans', sans-serif;
 }
 
 html {
@@ -10,4 +13,13 @@ html {
 
 body {
   min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Cormorant Garamond', serif;
 }

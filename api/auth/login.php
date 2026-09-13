@@ -1,74 +1,72 @@
 <?php
-
+require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/../config/database.php';
-session_start();
-
-header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Method not allowed'
-    ]);
-    exit;
+    jsonResponse(['success'=>false,'message'=>'Method not allowed'],405);
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
+$data=requestJson();
+$email=strtolower(trim((string)($data['email']??'')));
+$password=(string)($data['password']??'');
 
-$email = strtolower(trim($data['email'] ?? ''));
-$password = $data['password'] ?? '';
-
-if (!$email || !$password) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Email and password are required'
-    ]);
-    exit;
+if (!filter_var($email,FILTER_VALIDATE_EMAIL) || $password==='') {
+    jsonResponse(['success'=>false,'message'=>'Email and password are required.'],422);
 }
 
-$stmt = $pdo->prepare(
-    'SELECT id, email, password_hash, first_name, last_name, is_active
-     FROM users
-     WHERE email = ?
-     LIMIT 1'
-);
+try {
+    $stmt=$pdo->prepare('SELECT id,email,password_hash FROM admin_users WHERE LOWER(email)=? LIMIT 1');
+    $stmt->execute([$email]);
+    $admin=$stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt->execute([$email]);
+    if (!$admin || empty($admin['password_hash']) || !password_verify($password,$admin['password_hash'])) {
+        usleep(250000);
+        jsonResponse(['success'=>false,'message'=>'Invalid email or password.'],401);
+    }
 
-$user = $stmt->fetch();
+    $setting=$pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key='2fa_enabled' LIMIT 1");
+    $setting->execute();
+    $twoFa=((string)$setting->fetchColumn()==='1');
 
-if (!$user || !password_verify($password, $user['password_hash'])) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Invalid email or password'
-    ]);
-    exit;
+    if (!$twoFa) {
+        session_regenerate_id(true);
+        $_SESSION['admin_2fa_verified'] = true;
+        $_SESSION['admin_user_id']=(int)$admin['id'];
+        $_SESSION['admin_email']=$admin['email'];
+        $_SESSION['admin_authenticated_at']=time();
+
+        jsonResponse(['success'=>true,'authenticated'=>true,'requires_otp'=>false,
+            'admin'=>['id'=>(int)$admin['id'],'email'=>$admin['email']]]);
+    }
+
+    $pdo->prepare('UPDATE admin_otp_codes SET used_at=NOW() WHERE admin_user_id=? AND used_at IS NULL')
+        ->execute([(int)$admin['id']]);
+
+    $otp=(string)random_int(100000,999999);
+    $hash=password_hash($otp,PASSWORD_DEFAULT);
+
+    $insert=$pdo->prepare(
+        'INSERT INTO admin_otp_codes (admin_user_id,otp_hash,expires_at,used_at,created_at)
+         VALUES (?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE),NULL,NOW())'
+    );
+    $insert->execute([(int)$admin['id'],$hash]);
+
+    $_SESSION['admin_pending_user_id']=(int)$admin['id'];
+    $_SESSION['admin_pending_email']=$admin['email'];
+    $_SESSION['admin_otp_required']=true;
+    unset($_SESSION['admin_user_id'],$_SESSION['admin_email'],$_SESSION['admin_authenticated_at']);
+
+    require_once __DIR__ . '/../emails/send-admin-otp.php';
+    if (!sendAdminOtp($admin['email'],$otp)) {
+        $pdo->prepare('UPDATE admin_otp_codes SET used_at=NOW() WHERE admin_user_id=? AND used_at IS NULL')
+            ->execute([(int)$admin['id']]);
+        unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required']);
+        jsonResponse(['success'=>false,'message'=>'Unable to send the verification code. Please try again.'],500);
+    }
+
+    jsonResponse(['success'=>true,'authenticated'=>false,'requires_otp'=>true,
+        'message'=>'A verification code has been sent to your administrator email.']);
+} catch (Throwable $e) {
+    error_log('ARAmane admin login: '.$e->getMessage());
+    jsonResponse(['success'=>false,'message'=>'Unable to sign in right now.'],500);
 }
-
-if (!$user['is_active']) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Account is inactive'
-    ]);
-    exit;
-}
-
-session_regenerate_id(true);
-
-$_SESSION['user_id'] = (int) $user['id'];
-$_SESSION['user_type'] = 'customer';
-
-echo json_encode([
-    'success' => true,
-    'message' => 'Login successful',
-    'user' => [
-        'id' => (int) $user['id'],
-        'email' => $user['email'],
-        'first_name' => $user['first_name'],
-        'last_name' => $user['last_name']
-    ]
-]);

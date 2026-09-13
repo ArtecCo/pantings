@@ -1,19 +1,6 @@
 <?php
 
-session_start();
-
-$allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5174'
-];
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-if (in_array($origin, $allowedOrigins, true)) {
-    header("Access-Control-Allow-Origin: $origin");
-    header("Access-Control-Allow-Credentials: true");
-}
-
+header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
@@ -24,8 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
-
-$isAdmin = isset($_SESSION['admin_user_id']);
 
 try {
 
@@ -42,12 +27,8 @@ try {
         exit;
     }
 
-    /*
-     * Customers can only see active paintings.
-     * Admins can see both active and inactive paintings.
-     */
-    $sql = "
-        SELECT
+    $stmt = $pdo->prepare(
+        "SELECT
             p.id,
             p.artist_id,
             p.category_id,
@@ -67,55 +48,46 @@ try {
             p.created_at,
             p.updated_at,
             c.name AS category_name
-        FROM paintings p
-        LEFT JOIN categories c
+         FROM paintings p
+         LEFT JOIN categories c
             ON c.id = p.category_id
-        WHERE p.id = ?
-    ";
+         WHERE p.id = ?
+           AND p.is_active = 1
+         LIMIT 1"
+    );
 
-    if (!$isAdmin) {
-        $sql .= " AND p.is_active = 1";
-    }
-
-    $sql .= " LIMIT 1";
-
-    $stmt = $pdo->prepare($sql);
     $stmt->execute([$id]);
 
-    $painting = $stmt->fetch();
+    $painting = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$painting) {
         http_response_code(404);
 
         echo json_encode([
             'success' => false,
-            'message' => 'Painting not found'
+            'message' => 'Painting not found or unavailable'
         ]);
 
         exit;
     }
 
     /*
-     * Load all images.
+     * Load all images for the painting.
      */
-    $imageStmt = $pdo->prepare("
-        SELECT
+    $imageStmt = $pdo->prepare(
+        "SELECT
             id,
             image_url,
-            sort_order,
-            is_primary
-        FROM painting_images
-        WHERE painting_id = ?
-        ORDER BY sort_order ASC, id ASC
-    ");
+            is_primary,
+            sort_order
+         FROM painting_images
+         WHERE painting_id = ?
+         ORDER BY sort_order ASC, id ASC"
+    );
 
     $imageStmt->execute([$id]);
 
-    $painting['images'] = $imageStmt->fetchAll();
-
-    $painting['image_url'] = !empty($painting['images'])
-        ? $painting['images'][0]['image_url']
-        : null;
+    $painting['images'] = $imageStmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'success' => true,
@@ -124,7 +96,7 @@ try {
 
 } catch (Throwable $e) {
 
-    error_log('Painting get error: ' . $e->getMessage());
+    error_log('Customer painting get error: ' . $e->getMessage());
 
     http_response_code(500);
 
