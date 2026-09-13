@@ -1,0 +1,457 @@
+import { useState } from 'react'
+import { ToastProvider } from './components/Toast'
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import AdminLogin from './pages/AdminLogin'
+import Paintings from './pages/Paintings'
+import AddPainting from './pages/AddPainting'
+import Metadata from './pages/Metadata'
+import PaintingList from './pages/PaintingList'
+import EditPainting from './pages/EditPainting'
+import Orders from './pages/Orders'
+import OrderDetails from './pages/OrderDetails'
+import './App.css'
+
+const menuItems = [
+  { label: 'Dashboard', icon: '⌂', path: '/' },
+  { label: 'Orders', icon: '◇', path: '/orders' },
+  { label: 'Paintings', icon: '▧', path: '/paintings' },
+  { label: 'Categories', icon: '◈', path: '/categories' },
+  { label: 'Artists', icon: '♢', path: '/artists' },
+  { label: 'Customers', icon: '♙', path: '/customers' },
+  { label: 'Payments', icon: '₹', path: '/payments' },
+  { label: 'Reports', icon: '▤', path: '/reports' },
+  { label: 'Metadata', icon: '◇', path: '/metadata' },
+]
+
+const managementItems = [
+  { label: 'Administrators', icon: '♙', path: '/administrators' },
+  { label: 'Audit Log', icon: '◌', path: '/audit' },
+  { label: 'Settings', icon: '⚙', path: '/settings' },
+]
+
+function AdminLayout({ children }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const closeMenu = () => setMenuOpen(false)
+
+  return (
+    <div className="admin-app">
+
+      <header className="admin-topbar">
+
+        <div className="admin-brand">
+
+          <button
+            className="mobile-menu-button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <div className="brand-monogram">A</div>
+
+          <div>
+            <div className="brand-name">ARAmane Arts</div>
+            <div className="brand-subtitle">
+              HERITAGE PAINTINGS
+            </div>
+          </div>
+
+        </div>
+
+        <div className="admin-topbar-right">
+
+          <span className="admin-role">
+            SUPER ADMIN
+          </span>
+
+          <div className="admin-profile">
+            <div className="profile-avatar">A</div>
+
+            <div>
+              <strong>Administrator</strong>
+              <small>Administrator</small>
+            </div>
+          </div>
+
+          <button className="logout-button">
+            Logout
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <div className="admin-body">
+
+        {/* Mobile backdrop */}
+        {menuOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={closeMenu}
+          />
+        )}
+
+
+        <aside
+          className={`admin-sidebar ${
+            menuOpen ? 'mobile-open' : ''
+          }`}
+        >
+
+          <button
+            className="mobile-sidebar-close"
+            onClick={closeMenu}
+            aria-label="Close menu"
+          >
+            ×
+          </button>
+
+          <div className="sidebar-heading">
+            ATELIER MANAGEMENT
+          </div>
+
+          <nav>
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `admin-nav-link ${
+                    isActive ? 'active' : ''
+                  }`
+                }
+              >
+                <span className="nav-icon">
+                  {item.icon}
+                </span>
+
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="sidebar-divider" />
+
+          <div className="sidebar-heading">
+            ADMINISTRATION
+          </div>
+
+          <nav>
+            {managementItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `admin-nav-link ${
+                    isActive ? 'active' : ''
+                  }`
+                }
+              >
+                <span className="nav-icon">
+                  {item.icon}
+                </span>
+
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="sidebar-footer">
+            <div className="sidebar-ornament">✦</div>
+            <div>ARAmane Arts</div>
+            <small>
+              Preserving Indian Heritage
+            </small>
+          </div>
+
+        </aside>
+
+
+        <main className="admin-content">
+          {children}
+        </main>
+
+      </div>
+    </div>
+  )
+}
+
+function Dashboard() {
+  return (
+    <AdminLayout>
+
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">ATELIER OVERVIEW</span>
+          <h1>Dashboard</h1>
+          <p>
+            Welcome back. Here is today's overview of ARAmane Arts.
+          </p>
+        </div>
+
+        <button className="gold-outline-button">
+          + Add Painting
+        </button>
+      </div>
+
+      <div className="gold-rule" />
+
+      <section className="dashboard-stats">
+
+        <div className="heritage-card stat-card">
+          <span className="stat-label">PENDING ORDERS</span>
+          <strong>0</strong>
+          <span className="stat-note">Awaiting artist acceptance</span>
+        </div>
+
+        <div className="heritage-card stat-card">
+          <span className="stat-label">PAINTINGS</span>
+          <strong>0</strong>
+          <span className="stat-note">Currently in collection</span>
+        </div>
+
+        <div className="heritage-card stat-card">
+          <span className="stat-label">CUSTOMERS</span>
+          <strong>1</strong>
+          <span className="stat-note">Registered customers</span>
+        </div>
+
+        <div className="heritage-card stat-card">
+          <span className="stat-label">REVENUE</span>
+          <strong>₹0</strong>
+          <span className="stat-note">No completed payments yet</span>
+        </div>
+
+      </section>
+
+      <section className="dashboard-grid">
+
+        <div className="heritage-card large-card">
+          <div className="card-heading">
+            <div>
+              <span className="eyebrow">ORDERS</span>
+              <h2>Recent Orders</h2>
+            </div>
+
+            <button className="text-button">
+              View all →
+            </button>
+          </div>
+
+          <div className="empty-state">
+            <div className="empty-symbol">◇</div>
+            <h3>No orders yet</h3>
+            <p>
+              Customer orders will appear here once they are placed.
+            </p>
+          </div>
+        </div>
+
+        <div className="heritage-card activity-card">
+          <div className="card-heading">
+            <div>
+              <span className="eyebrow">SYSTEM</span>
+              <h2>Recent Activity</h2>
+            </div>
+          </div>
+
+          <div className="activity-item">
+            <div className="activity-dot" />
+            <div>
+              <strong>Admin portal initialized</strong>
+              <span>System ready</span>
+            </div>
+          </div>
+
+          <div className="activity-item">
+            <div className="activity-dot" />
+            <div>
+              <strong>Authentication enabled</strong>
+              <span>Email + password + OTP</span>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <section className="craft-strip">
+
+        <div className="craft-item">
+          <span>01</span>
+          <div>
+            <strong>TRADITION</strong>
+            <small>Rooted in Indian artistry</small>
+          </div>
+        </div>
+
+        <div className="craft-item">
+          <span>02</span>
+          <div>
+            <strong>CRAFTSMANSHIP</strong>
+            <small>Handcrafted with devotion</small>
+          </div>
+        </div>
+
+        <div className="craft-item">
+          <span>03</span>
+          <div>
+            <strong>HERITAGE</strong>
+            <small>Art that carries a story</small>
+          </div>
+        </div>
+
+      </section>
+
+    </AdminLayout>
+  )
+}
+
+function PlaceholderPage({ title }) {
+  return (
+    <AdminLayout>
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">ARAMANE ARTS</span>
+          <h1>{title}</h1>
+          <p>This section will be connected to the marketplace API next.</p>
+        </div>
+      </div>
+
+      <div className="gold-rule" />
+
+      <div className="heritage-card placeholder-card">
+        <div className="empty-state">
+          <div className="empty-symbol">✦</div>
+          <h3>{title}</h3>
+          <p>Management tools for this section are coming next.</p>
+        </div>
+      </div>
+    </AdminLayout>
+  )
+}
+
+function App() {
+  return (
+    <ToastProvider>
+    <BrowserRouter>
+      <Routes>
+
+        <Route path="/login" element={<AdminLogin />} />
+
+        <Route path="/" element={<Dashboard />} />
+
+        <Route
+  path="/orders"
+  element={
+    <AdminLayout>
+      <Orders />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/orders/:id"
+  element={
+    <AdminLayout>
+      <OrderDetails />
+    </AdminLayout>
+  }
+/>
+
+        <Route
+  path="/paintings"
+  element={
+    <AdminLayout>
+      <PaintingList />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/paintings/:id/edit"
+  element={
+    <AdminLayout>
+      <EditPainting />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/paintings/new"
+  element={
+    <AdminLayout>
+      <AddPainting />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/metadata"
+  element={
+    <AdminLayout>
+      <Metadata />
+    </AdminLayout>
+  }
+/>
+
+        <Route
+          path="/categories"
+          element={<PlaceholderPage title="Categories" />}
+        />
+
+        <Route
+          path="/artists"
+          element={<PlaceholderPage title="Artists" />}
+        />
+
+        <Route
+          path="/customers"
+          element={<PlaceholderPage title="Customers" />}
+        />
+
+        <Route
+          path="/payments"
+          element={<PlaceholderPage title="Payments" />}
+        />
+
+        <Route
+          path="/reports"
+          element={<PlaceholderPage title="Reports" />}
+        />
+
+        <Route
+          path="/administrators"
+          element={<PlaceholderPage title="Administrators" />}
+        />
+
+        <Route
+          path="/audit"
+          element={<PlaceholderPage title="Audit Log" />}
+        />
+
+        <Route
+          path="/settings"
+          element={<PlaceholderPage title="Settings" />}
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
+
+      </Routes>
+    </BrowserRouter>
+    </ToastProvider>
+  )
+}
+
+export default App

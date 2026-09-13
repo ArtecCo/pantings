@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Invitation Registration Test</title>
+</head>
+<body>
+
+<h2>Admin Invitation Registration</h2>
+
+<input id="token" placeholder="Invitation token" style="width:500px">
+<br><br>
+
+<input id="firstName" placeholder="First name">
+<br><br>
+
+<input id="lastName" placeholder="Last name">
+<br><br>
+
+<input id="password" type="password" placeholder="Password">
+<br><br>
+
+<button onclick="registerAdmin()">Register Admin</button>
+
+<pre id="result"></pre>
+
+<script>
+
+async function registerAdmin() {
+
+    const token = document.getElementById('token').value;
+
+    const response = await fetch(
+        'http://localhost/paintings/api/admin/register.php',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: token,
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                password: document.getElementById('password').value
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Authentication Test</title>
+</head>
+<body>
+
+<h2>Admin Authentication Test</h2>
+
+<button onclick="requestOtp()">1. Request OTP</button>
+<button onclick="verifyOtp()">2. Verify OTP</button>
+<button onclick="checkSession()">3. Check Session</button>
+<button onclick="createInvitation()">4. Create Invitation</button>
+
+<br><br>
+
+<input
+    id="otp"
+    placeholder="Enter OTP"
+    maxlength="6"
+/>
+
+<pre id="result"></pre>
+
+<script>
+    async function createInvitation() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/admin/create-invitation.php',
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: 'newadmin@example.com',
+                role_id: 2,
+                expires_hours: 48
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function requestOtp() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/admin/request-otp.php',
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+    email: 'systems@domain.com',
+    password: 'Admin@12345'
+})
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function verifyOtp() {
+
+    const otp = document.getElementById('otp').value;
+
+    const response = await fetch(
+        'http://localhost/paintings/api/admin/verify-otp.php',
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                otp: otp
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function checkSession() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/admin/me.php',
+        {
+            credentials: 'include'
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+</script>
+
+</body>
+</html>

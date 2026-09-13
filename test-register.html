@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session Test</title>
+</head>
+<body>
+
+<h2>Session Authentication Test</h2>
+
+<button onclick="login()">1. Login</button>
+<button onclick="checkSession()">2. Check Session</button>
+<button onclick="logout()">3. Logout</button>
+
+<pre id="result"></pre>
+
+<script>
+
+async function login() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/auth/login.php',
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: 'test@example.com',
+                password: 'Test@12345'
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function checkSession() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/auth/me.php',
+        {
+            credentials: 'include'
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+async function logout() {
+
+    const response = await fetch(
+        'http://localhost/paintings/api/auth/logout.php',
+        {
+            method: 'POST',
+            credentials: 'include'
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById('result').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+</script>
+
+</body>
+</html>
