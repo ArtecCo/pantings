@@ -1,6 +1,22 @@
 .ara-page-stage {
+  min-height: calc(100vh - 82px);
   animation: araPageEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: 50% 0;
+}
+
+/* Collection cards: gentle entrance with a small stagger. */
+.ara-painting-card {
+  animation: araCardEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ara-painting-card:nth-child(2) { animation-delay: 70ms; }
+.ara-painting-card:nth-child(3) { animation-delay: 140ms; }
+.ara-painting-card:nth-child(4) { animation-delay: 210ms; }
+.ara-painting-card:nth-child(5) { animation-delay: 280ms; }
+.ara-painting-card:nth-child(6) { animation-delay: 350ms; }
+
+.ara-painting-card:hover {
+  box-shadow: 0 22px 40px rgba(44, 24, 16, .13);
 }
 
 @keyframes araPageEnter {
@@ -14,8 +30,33 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@keyframes araCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
   .ara-page-stage {
+    min-height: calc(100vh - 70px);
+  }
+
+  .ara-painting-card:nth-child(n) {
+    animation-delay: 0ms;
+  }
+
+  .ara-painting-card:nth-child(2) { animation-delay: 60ms; }
+  .ara-painting-card:nth-child(3) { animation-delay: 120ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ara-page-stage,
+  .ara-painting-card {
     animation: none;
   }
 }
