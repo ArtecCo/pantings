@@ -9,10 +9,12 @@ body,
 
 html {
   background: #faf6ee;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  margin: 0;
 }
 
 h1,
@@ -22,4 +24,157 @@ h4,
 h5,
 h6 {
   font-family: 'Cormorant Garamond', serif;
+}
+
+/* ---------------------------------------------------------
+   Admin motion system
+   --------------------------------------------------------- */
+
+@keyframes adminPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminSidebarIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.admin-content {
+  animation: adminPageEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+.admin-content .page-header {
+  animation: adminFadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-content .heritage-card,
+.admin-content .dashboard-stats > *,
+.admin-content .dashboard-grid > *,
+.admin-content .craft-strip > * {
+  animation: adminFadeUp 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-content .dashboard-stats > *:nth-child(2),
+.admin-content .dashboard-grid > *:nth-child(2),
+.admin-content .craft-strip > *:nth-child(2) { animation-delay: 60ms; }
+
+.admin-content .dashboard-stats > *:nth-child(3),
+.admin-content .craft-strip > *:nth-child(3) { animation-delay: 110ms; }
+
+.admin-content .dashboard-stats > *:nth-child(4) { animation-delay: 160ms; }
+
+.admin-sidebar {
+  animation: adminSidebarIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-nav-link {
+  transition:
+    color 0.22s ease,
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-nav-link:hover {
+  transform: translateX(4px);
+}
+
+.admin-nav-link.active {
+  transition-duration: 0.28s;
+}
+
+.admin-content button,
+.admin-content a,
+.admin-content input,
+.admin-content select,
+.admin-content textarea {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-content button:not(:disabled):hover,
+.admin-content a[class*="button"]:hover {
+  transform: translateY(-2px);
+}
+
+.admin-content button:not(:disabled):active,
+.admin-content a[class*="button"]:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.admin-content input:focus,
+.admin-content select:focus,
+.admin-content textarea:focus {
+  transform: translateY(-1px);
+}
+
+.admin-topbar {
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.admin-profile,
+.logout-button,
+.mobile-menu-button,
+.mobile-sidebar-close {
+  transition: transform 0.22s ease, opacity 0.22s ease, background-color 0.22s ease;
+}
+
+.admin-profile:hover {
+  transform: translateY(-1px);
+}
+
+.logout-button:hover,
+.mobile-menu-button:hover,
+.mobile-sidebar-close:hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .admin-content,
+  .admin-content .page-header,
+  .admin-content .heritage-card,
+  .admin-content .dashboard-stats > *,
+  .admin-content .dashboard-grid > *,
+  .admin-content .craft-strip > *,
+  .admin-sidebar {
+    animation: none !important;
+  }
+
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
