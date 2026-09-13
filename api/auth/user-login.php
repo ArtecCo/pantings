@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $data = requestJson();
-$type = $data['type'] ?? 'email'; // 'email' or 'google'
+$type = $data['type'] ?? 'email';
 
 if ($type === 'google') {
     $token = $data['token'] ?? '';
@@ -15,9 +15,7 @@ if ($type === 'google') {
         jsonResponse(['success' => false, 'message' => 'Google token is required'], 400);
     }
 
-    // Verify token with Google public endpoint
     $verifyUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($token);
-    
     $ch = curl_init($verifyUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -30,7 +28,7 @@ if ($type === 'google') {
     }
 
     $googleUser = json_decode($response, true);
-    if (!isset($googleUser['email'])) {
+    if (!is_array($googleUser) || !isset($googleUser['email'])) {
         jsonResponse(['success' => false, 'message' => 'Invalid token payload'], 401);
     }
 
@@ -38,77 +36,92 @@ if ($type === 'google') {
     $firstName = $googleUser['given_name'] ?? 'User';
     $lastName = $googleUser['family_name'] ?? '';
 
-    // Check if user exists
-    $stmt = $pdo->prepare('SELECT id, email, password_hash, first_name, last_name FROM users WHERE email = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id,email,password_hash,phone,first_name,last_name,is_active FROM users WHERE email=? LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        // Create user with empty password hash for Google-only users
-        $stmt = $pdo->prepare(
-            'INSERT INTO users (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?)'
-        );
+        $stmt = $pdo->prepare('INSERT INTO users (email,password_hash,first_name,last_name) VALUES (?,?,?,?)');
         $stmt->execute([$email, '', $firstName, $lastName]);
-        
-        $userId = $pdo->lastInsertId();
+        $userId = (int)$pdo->lastInsertId();
         $user = [
-            'id' => (int)$userId,
-            'email' => $email,
-            'first_name' => $firstName,
-            'last_name' => $lastName
+            'id'=>$userId,
+            'email'=>$email,
+            'phone'=>null,
+            'first_name'=>$firstName,
+            'last_name'=>$lastName,
+            'is_active'=>1
         ];
     }
 
-    // Log the user in
+    if (empty($user['is_active'])) {
+        jsonResponse(['success'=>false,'message'=>'User account is unavailable'],403);
+    }
+
     session_regenerate_id(true);
-    $_SESSION['user_id'] = (int)$user['id'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_authenticated_at'] = time();
+    unset(
+        $_SESSION['admin_user_id'],
+        $_SESSION['admin_user_type'],
+        $_SESSION['admin_email'],
+        $_SESSION['admin_authenticated_at'],
+        $_SESSION['admin_2fa_verified'],
+        $_SESSION['admin_pending_user_id'],
+        $_SESSION['admin_pending_email'],
+        $_SESSION['admin_otp_required']
+    );
+    $_SESSION['user_id']=(int)$user['id'];
+    $_SESSION['user_type']='customer';
+    $_SESSION['user_email']=$user['email'];
+    $_SESSION['user_authenticated_at']=time();
 
-    jsonResponse([
-        'success' => true,
-        'user' => [
-            'id' => (int)$user['id'],
-            'email' => $user['email'],
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name']
-        ]
-    ]);
-} else {
-    // Standard Email/Password login
-    $email = strtolower(trim((string)($data['email'] ?? '')));
-    $password = (string)($data['password'] ?? '');
+    jsonResponse(['success'=>true,'user'=>[
+        'id'=>(int)$user['id'],'email'=>$user['email'],
+        'first_name'=>$user['first_name'],'last_name'=>$user['last_name']
+    ]]);
+}
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
-        jsonResponse(['success' => false, 'message' => 'Email and password are required.'], 422);
+$email = strtolower(trim((string)($data['email'] ?? '')));
+$password = (string)($data['password'] ?? '');
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
+    jsonResponse(['success'=>false,'message'=>'Email and password are required.'],422);
+}
+
+try {
+    $stmt=$pdo->prepare('SELECT id,email,password_hash,phone,first_name,last_name,is_active FROM users WHERE email=? LIMIT 1');
+    $stmt->execute([$email]);
+    $user=$stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user || empty($user['password_hash']) || !password_verify($password,$user['password_hash'])) {
+        usleep(250000);
+        jsonResponse(['success'=>false,'message'=>'Invalid email or password.'],401);
     }
 
-    try {
-        $stmt = $pdo->prepare('SELECT id, email, password_hash, first_name, last_name FROM users WHERE email = ? LIMIT 1');
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {
-            usleep(250000); // Prevent timing attacks
-            jsonResponse(['success' => false, 'message' => 'Invalid email or password.'], 401);
-        }
-
-        session_regenerate_id(true);
-        $_SESSION['user_id'] = (int)$user['id'];
-        $_SESSION['user_email'] = $user['email'];
-        $_SESSION['user_authenticated_at'] = time();
-
-        jsonResponse([
-            'success' => true,
-            'user' => [
-                'id' => (int)$user['id'],
-                'email' => $user['email'],
-                'first_name' => $user['first_name'],
-                'last_name' => $user['last_name']
-            ]
-        ]);
-    } catch (Throwable $e) {
-        error_log('User login: ' . $e->getMessage());
-        jsonResponse(['success' => false, 'message' => 'Unable to sign in right now.'], 500);
+    if (empty($user['is_active'])) {
+        jsonResponse(['success'=>false,'message'=>'User account is unavailable.'],403);
     }
+
+    session_regenerate_id(true);
+    unset(
+        $_SESSION['admin_user_id'],
+        $_SESSION['admin_user_type'],
+        $_SESSION['admin_email'],
+        $_SESSION['admin_authenticated_at'],
+        $_SESSION['admin_2fa_verified'],
+        $_SESSION['admin_pending_user_id'],
+        $_SESSION['admin_pending_email'],
+        $_SESSION['admin_otp_required']
+    );
+    $_SESSION['user_id']=(int)$user['id'];
+    $_SESSION['user_type']='customer';
+    $_SESSION['user_email']=$user['email'];
+    $_SESSION['user_authenticated_at']=time();
+
+    jsonResponse(['success'=>true,'user'=>[
+        'id'=>(int)$user['id'],'email'=>$user['email'],
+        'first_name'=>$user['first_name'],'last_name'=>$user['last_name']
+    ]]);
+} catch (Throwable $e) {
+    error_log('User login: '.$e->getMessage());
+    jsonResponse(['success'=>false,'message'=>'Unable to sign in right now.'],500);
 }
