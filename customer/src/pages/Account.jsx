@@ -1,34 +1,41 @@
 import { useState, useEffect } from 'react';
 import TrackOrders from './TrackOrders';
 
+const API = 'http://localhost/paintings/api';
+
 export default function Account() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch user info from session
-        fetch('http://localhost/paintings/api/auth/session.php', { // Actually wait, auth/session.php is for admin usually. Let's assume we can fetch me.php
+        fetch(`${API}/auth/user-session.php`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            // credentials: 'omit'
+            credentials: 'include',
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.user) {
-                setUser(data.user);
-            } else {
-                // Not logged in, could redirect to /login
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success && data.user) {
+                    setUser(data.user);
+                } else {
+                    window.location.href = '/login';
+                }
+            })
+            .catch((err) => {
+                console.error('User session check failed:', err);
                 window.location.href = '/login';
-            }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoading(false));
+            })
+            .finally(() => setLoading(false));
     }, []);
 
-    const handleLogout = () => {
-        // Mock logout for now or call logout.php
-        fetch('http://localhost/paintings/api/auth/logout.php', { method: 'POST' })
-            .then(() => window.location.href = '/');
+    const handleLogout = async () => {
+        try {
+            await fetch(`${API}/auth/user-logout.php`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+        } finally {
+            window.location.href = '/';
+        }
     };
 
     if (loading) return <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>Loading account details...</div>;
