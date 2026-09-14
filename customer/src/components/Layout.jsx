@@ -25,9 +25,127 @@ export default function Layout({ children }) {
                 .ara-mobile-menu-eyebrow{margin-bottom:14px;color:#d4af37;font-size:9px;letter-spacing:.24em;text-transform:uppercase}
                 .ara-mobile-menu-panel a{display:flex;align-items:center;justify-content:space-between;padding:17px 4px;border-bottom:1px solid rgba(91,18,23,.12);color:#5b1217;font-family:'Cormorant Garamond',serif;font-size:27px}
                 .ara-mobile-menu-panel a span{color:#d4af37;font-family:'DM Sans',sans-serif;font-size:18px;transition:transform .2s ease}
-                @media (max-width:900px){.ara-nav{display:none!important}.ara-menu-toggle{display:flex!important}.ara-account{display:none!important}.ara-header-actions{min-width:auto;gap:9px}}
+
+                /* Responsive foundation */
+                .ara-client,.ara-client *{min-width:0}
+                .ara-client{width:100%;max-width:100%;overflow-x:clip}
+                .ara-page-stage{width:100%;max-width:100%;min-width:0;overflow-x:clip}
+                .ara-client img,.ara-client video,.ara-client svg{max-width:100%}
+                .ara-client img{height:auto}
+                .ara-client main{width:100%;max-width:100%;min-width:0}
+
+                @media (max-width:1100px){
+                    .ara-header-inner{gap:20px}
+                    .ara-hero-inner{width:min(100% - 40px,1180px);gap:45px}
+                    .ara-details-layout{gap:45px}
+                    .ara-collection{width:min(100% - 40px,1280px)}
+                    .ara-details{width:min(100% - 40px,1240px)}
+                }
+
+                @media (max-width:900px){
+                    .ara-nav{display:none!important}
+                    .ara-menu-toggle{display:flex!important}
+                    .ara-account{display:none!important}
+                    .ara-header-actions{min-width:auto;gap:9px}
+                    .ara-hero-inner{grid-template-columns:1fr!important;width:calc(100% - 40px);gap:45px}
+                    .ara-hero-copy{min-width:0}
+                    .ara-hero h1{font-size:clamp(52px,9vw,78px)}
+                    .ara-hero-art{width:100%;min-width:0}
+                    .ara-art-frame{max-width:min(500px,100%)}
+                    .ara-craft-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+                    .ara-footer-inner{grid-template-columns:2fr 1fr 1fr;gap:35px}
+                    .ara-details-layout{grid-template-columns:1fr!important;gap:40px}
+                    .ara-gallery{width:100%;min-width:0}
+                    .ara-main-image{width:fit-content;max-width:100%;margin-inline:auto}
+                    .ara-main-image img{max-width:100%;height:auto}
+                    .ara-details-info{width:100%;min-width:0}
+                    .ara-gallery-thumbnails{max-width:100%;overflow-x:auto}
+                    .ara-painting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+                    .ara-collection-controls{flex-wrap:wrap}
+                }
+
+                @media (max-width:600px){
+                    .ara-announcement{padding-inline:12px;font-size:8px;letter-spacing:.10em;text-align:center}
+                    .ara-header-inner{width:calc(100% - 24px);min-height:68px;gap:10px}
+                    .ara-brand{min-width:0;max-width:calc(100% - 105px)}
+                    .ara-brand-name{font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                    .ara-cart{padding:8px 10px;font-size:11px}
+                    .ara-cart-count{width:18px;height:18px;font-size:9px}
+                    .ara-mobile-menu{inset:68px 0 0}
+                    .ara-mobile-menu-panel{width:min(340px,90vw);padding:26px 22px}
+                    .ara-mobile-menu-panel a{font-size:24px}
+                    .ara-hero{min-height:0;padding:42px 0 55px}
+                    .ara-hero-inner{width:calc(100% - 30px);gap:38px}
+                    .ara-hero h1{font-size:clamp(45px,14vw,62px);line-height:.92;overflow-wrap:anywhere}
+                    .ara-hero-copy>p{font-size:14px}
+                    .ara-hero-actions{flex-direction:column;width:100%}
+                    .ara-btn{width:100%;max-width:100%}
+                    .ara-art-frame{width:100%;max-width:430px;padding:12px}
+                    .ara-stamp{right:6px;bottom:24px;width:72px;height:72px}
+                    .ara-stamp strong{font-size:20px}
+                    .ara-craft-strip{grid-template-columns:1fr}
+                    .ara-craft-item,.ara-craft-item:nth-child(2){border-right:0;border-bottom:1px solid rgba(91,18,23,.18)}
+                    .ara-craft-item:last-child{border-bottom:0}
+                    .ara-craft-item{padding:20px;min-height:105px}
+                    .ara-introduction{width:calc(100% - 30px);padding:70px 0 80px}
+                    .ara-section-heading h2{font-size:42px}
+                    .ara-footer{padding:50px 0 20px}
+                    .ara-footer-inner{width:calc(100% - 30px);grid-template-columns:1fr 1fr;gap:32px}
+                    .ara-footer-brand{grid-column:1/-1}
+                    .ara-footer-bottom{width:calc(100% - 30px);flex-direction:column;gap:8px}
+                    .ara-collection{width:calc(100% - 30px);padding:48px 0 65px}
+                    .ara-collection-heading h1{font-size:clamp(42px,13vw,52px);overflow-wrap:anywhere}
+                    .ara-collection-controls{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+                    .ara-search-box{width:100%;max-width:100%}
+                    .ara-category-filters{width:100%;max-width:100%;overflow-x:auto}
+                    .ara-painting-grid{grid-template-columns:1fr;gap:22px}
+                    .ara-painting-image{width:100%;max-width:100%;margin:7px 7px 0;overflow:hidden}
+                    .ara-painting-image img{width:100%;max-width:100%;height:auto;object-fit:cover}
+                    .ara-painting-info{min-width:0}
+                    .ara-painting-meta,.ara-painting-bottom{min-width:0}
+                    .ara-details{width:calc(100% - 30px);padding:24px 0 70px}
+                    .ara-breadcrumb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:22px}
+                    .ara-details-layout{gap:32px}
+                    .ara-main-image{width:100%!important;max-width:100%!important;padding:7px;overflow:hidden}
+                    .ara-main-image-click-target{width:100%!important;max-width:100%!important}
+                    .ara-main-image-click-target img,.ara-main-image>img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}
+                    .ara-gallery-arrow{width:36px;height:36px}
+                    .ara-gallery-prev{left:12px}
+                    .ara-gallery-next{right:12px}
+                    .ara-detail-gold-badge{top:12px;left:12px;font-size:8px;padding:7px 9px}
+                    .ara-details-info h1{font-size:clamp(40px,12vw,52px);overflow-wrap:anywhere}
+                    .ara-detail-description{font-size:13px}
+                    .ara-specifications{grid-template-columns:1fr}
+                    .ara-detail-assurance{grid-template-columns:1fr}
+
+                    /* Mobile artwork viewer */
+                    .ara-art-viewer{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:100vw!important;overflow:hidden!important}
+                    .ara-art-viewer-head{height:auto!important;min-height:60px!important;flex:0 0 auto!important;padding:9px 12px!important;gap:10px!important}
+                    .ara-art-viewer-title{max-width:calc(100% - 52px)!important;min-width:0!important}
+                    .ara-art-viewer-title small{font-size:7px!important;letter-spacing:.14em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                    .ara-art-viewer-title strong{font-size:18px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+                    .ara-art-viewer-close{width:38px!important;height:38px!important;flex:0 0 38px!important;font-size:24px!important}
+                    .ara-art-viewer-stage{width:100%!important;max-width:100%!important;min-width:0!important;flex:1 1 auto!important;padding:8px 46px!important;overflow:hidden!important}
+                    .ara-art-viewer-canvas{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
+                    .ara-art-viewer-image{width:auto!important;height:auto!important;max-width:calc(100vw - 92px)!important;max-height:calc(100dvh - 140px)!important;border-width:1px!important;box-shadow:0 12px 35px rgba(0,0,0,.5)!important}
+                    .ara-art-viewer-arrow{width:38px!important;height:38px!important;font-size:28px!important;line-height:32px!important}
+                    .ara-art-viewer-prev{left:5px!important}
+                    .ara-art-viewer-next{right:5px!important}
+                    .ara-art-viewer-bar{height:54px!important;flex:0 0 54px!important;gap:6px!important;padding:8px 10px!important}
+                    .ara-art-viewer-bar button{height:34px!important;min-width:36px!important;padding:0 9px!important;font-size:12px!important}
+                    .ara-art-viewer-help{display:none!important}
+                }
+
+                @media (max-width:380px){
+                    .ara-brand-name{font-size:21px}
+                    .ara-cart span:first-child{display:none}
+                    .ara-cart{padding:7px 8px}
+                    .ara-hero-inner,.ara-collection,.ara-details{width:calc(100% - 24px)}
+                    .ara-lightbox-image-wrap img,.ara-art-viewer-image{max-width:calc(100vw - 82px)!important}
+                    .ara-art-viewer-stage{padding-inline:41px!important}
+                }
+
                 @media (min-width:901px){.ara-menu-toggle{display:none!important}.ara-mobile-menu{display:none!important}}
-                @media (max-width:600px){.ara-header-inner{width:calc(100% - 24px);min-height:68px;gap:10px}.ara-brand{min-width:0;max-width:calc(100% - 110px)}.ara-brand-name{font-size:23px;white-space:nowrap}.ara-cart{padding:8px 10px;font-size:11px}.ara-cart-count{width:18px;height:18px;font-size:9px}.ara-mobile-menu{inset:68px 0 0}.ara-mobile-menu-panel{width:min(340px,90vw);padding:26px 22px}.ara-mobile-menu-panel a{font-size:24px}.ara-client{max-width:100%;overflow-x:hidden}.ara-client main{max-width:100%;overflow-x:hidden}}
             `}</style>
             <header className="ara-header">
                 <div className="ara-header-inner">
