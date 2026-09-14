@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast'
 const STATUSES = [
   ['PENDING_ACCEPTANCE', 'Pending Acceptance'], ['ACCEPTED', 'Accepted'], ['PAYMENT_DUE', 'Payment Due'],
   ['PAID', 'Paid'], ['PROCESSING', 'Processing'], ['DISPATCHED', 'Dispatched'], ['DELIVERED', 'Delivered'],
-  ['REJECTED', 'Rejected'], ['CANCELLED', 'Cancelled'],
+  ['REJECTED', 'Rejected'],
 ]
 const API = 'http://localhost/paintings/api'
 const money = value => Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -24,9 +24,10 @@ export default function OrderStatusManager({ order, onUpdated }) {
   const [releasing, setReleasing] = useState(false)
 
   if (!order) return null
+  const cancelled = order.status === 'CANCELLED'
 
   const saveStatus = async () => {
-    if (saving) return
+    if (saving || cancelled) return
     setSaving(true)
     try {
       const response = await fetch(`${API}/orders/update-status.php`, {
@@ -36,49 +37,35 @@ export default function OrderStatusManager({ order, onUpdated }) {
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update order status')
-      setNotes('')
-      onUpdated?.()
-      toast.success('Order status updated')
-    } catch (error) {
-      toast.error(error.message || 'Unable to update order status')
-    } finally { setSaving(false) }
+      setNotes(''); onUpdated?.(); toast.success('Order status updated')
+    } catch (error) { toast.error(error.message || 'Unable to update order status') }
+    finally { setSaving(false) }
   }
 
   const releasePrice = async () => {
-    if (releasing) return
-    const payload = {
-      order_id: order.id,
-      ...Object.fromEntries(Object.entries(pricing).map(([key, value]) => [key, key === 'payment_link' ? value : Number(value || 0)])),
-      notes: notes.trim(),
-    }
+    if (releasing || cancelled) return
+    const payload = { order_id: order.id, ...Object.fromEntries(Object.entries(pricing).map(([key, value]) => [key, key === 'payment_link' ? value : Number(value || 0)])), notes: notes.trim() }
     setReleasing(true)
     try {
-      const response = await fetch(`${API}/orders/release-price.php`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      const response = await fetch(`${API}/orders/release-price.php`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload) })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to release final price')
-      setNotes('')
-      onUpdated?.()
-      toast.success('Final price released. The customer can now view the quotation.')
-    } catch (error) {
-      toast.error(error.message || 'Unable to release final price')
-    } finally { setReleasing(false) }
+      setNotes(''); onUpdated?.(); toast.success('Final price released. The customer can now view the quotation.')
+    } catch (error) { toast.error(error.message || 'Unable to release final price') }
+    finally { setReleasing(false) }
   }
 
-  const canRelease = order.status === 'ACCEPTED' || order.status === 'PAYMENT_DUE'
+  const canRelease = !cancelled && (order.status === 'ACCEPTED' || order.status === 'PAYMENT_DUE')
   const finalAmount = Number(pricing.base_amount || 0) + Number(pricing.customization_amount || 0) + Number(pricing.delivery_amount || 0) - Number(pricing.discount_amount || 0)
 
   return <>
     <section className="heritage-card order-status-manager">
-      <div className="order-status-manager-copy"><span className="eyebrow">ORDER CONTROL</span><h2>Update Order Status</h2><p>Change the customer-facing status. The tracking page refreshes automatically.</p></div>
-      <div className="order-status-manager-controls">
+      <div className="order-status-manager-copy"><span className="eyebrow">ORDER CONTROL</span><h2>{cancelled ? 'Order Cancelled' : 'Update Order Status'}</h2><p>{cancelled ? 'This order was cancelled by the customer and can no longer be edited.' : 'Change the customer-facing status. The tracking page refreshes automatically.'}</p></div>
+      {!cancelled && <div className="order-status-manager-controls">
         <label><span>STATUS</span><select value={status} onChange={event => setStatus(event.target.value)} disabled={saving}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label><span>NOTE <small>(optional)</small></span><input value={notes} onChange={event => setNotes(event.target.value)} maxLength={2000} placeholder="Add an internal status note" disabled={saving} /></label>
         <button type="button" className="order-status-save" onClick={saveStatus} disabled={saving || (status === order.status && !notes.trim())}>{saving ? 'Saving…' : 'Save Status'}</button>
-      </div>
+      </div>}
     </section>
     {canRelease && <section className="heritage-card order-price-release-card">
       <div className="form-section-heading"><span className="eyebrow">FINAL QUOTATION</span><h2>Release Price to Customer</h2><p>The customer will see this breakdown after you release it. The payment link is optional and can be added manually.</p></div>
