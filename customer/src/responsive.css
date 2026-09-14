@@ -1,1 +1,71 @@
-/* Intentionally empty. Mobile gallery styling is defined in index.css. */
+/* Mobile collection cards: preserve the desktop card composition, but make the
+   image frame deterministic so the artwork can never leave an empty block. */
+@media (max-width: 600px) {
+  .ara-collection {
+    width: calc(100% - 40px) !important;
+    margin-inline: auto !important;
+  }
+
+  .ara-painting-grid {
+    width: 100%;
+    grid-template-columns: 1fr !important;
+    gap: 25px;
+  }
+
+  .ara-painting-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ara-painting-image {
+    position: relative;
+    display: block;
+    width: calc(100% - 14px) !important;
+    height: auto !important;
+    aspect-ratio: 0.88 !important;
+    margin: 7px 7px 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--cream);
+  }
+
+  .ara-painting-image > img {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+  }
+
+  .ara-no-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ara-image-arrow {
+    opacity: 1;
+    z-index: 4;
+  }
+
+  .ara-image-counter {
+    z-index: 5;
+  }
+
+  .ara-painting-info {
+    padding: 17px 18px 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ara-collection {
+    width: calc(100% - 30px) !important;
+  }
+
+  .ara-painting-image {
+    aspect-ratio: 0.88 !important;
+  }
+}
