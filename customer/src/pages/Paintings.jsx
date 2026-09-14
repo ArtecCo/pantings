@@ -78,19 +78,13 @@ export default function Paintings() {
     <main className="ara-collection">
       <section className="ara-collection-hero">
         <div className="ara-collection-hero-copy">
-          <div className="ara-collection-kicker"><span></span> THE SWARNA TANJORE COLLECTION</div>
+          <div className="ara-collection-kicker"><span></span> THE ARAmane COLLECTION</div>
           <h1>Art made to<br /><em>be cherished.</em></h1>
           <p>Original Thanjavur paintings, handcrafted with devotion, layered with 22K gold leaf and created to become part of your home and heritage.</p>
-        </div>
-        <div className="ara-collection-hero-note">
-          <span>THE ATELIER</span>
-          <strong>{paintings.length || '—'}</strong>
-          <small>works in the collection</small>
         </div>
       </section>
 
       <section className="ara-collection-toolbar">
-        <div className="ara-collection-result"><span>COLLECTION</span><strong>{filteredPaintings.length} {filteredPaintings.length === 1 ? 'painting' : 'paintings'}</strong></div>
         <div className="ara-search-box"><span>⌕</span><input type="search" placeholder="Search the collection" value={search} onChange={event => setSearch(event.target.value)} /></div>
         <div className="ara-category-filters" aria-label="Filter by category">
           <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All works</button>
@@ -111,7 +105,7 @@ export default function Paintings() {
             return (
               <article className="ara-painting-card" key={painting.id}>
                 <Link to={`/paintings/${painting.id}`} className="ara-painting-image">
-                  {currentImage?.image_url ? <img src={getImageUrl(currentImage.image_url)} alt={painting.name} /> : <div className="ara-no-image"><span>Swarna Tanjore</span><strong>Heritage</strong></div>}
+                  {currentImage?.image_url ? <img src={getImageUrl(currentImage.image_url)} alt={painting.name} /> : <div className="ara-no-image"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
                   {painting.gold_details && <span className="ara-gold-badge">22K GOLD</span>}
                   {images.length > 1 && <>
                     <button type="button" className="ara-image-arrow ara-image-prev" onClick={event => { event.preventDefault(); event.stopPropagation(); changeImage(painting.id, -1, images.length) }} aria-label="Previous image">‹</button>
