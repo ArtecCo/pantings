@@ -14,6 +14,7 @@ export default function Layout({ children }) {
     return (
         <div className="ara-client">
             <style>{`
+                /* Navigation */
                 .ara-menu-toggle{display:none!important;width:42px;height:42px;padding:9px;border:1px solid rgba(91,18,23,.22);border-radius:50%;background:transparent;cursor:pointer;flex-direction:column;justify-content:center;gap:4px;align-items:center}
                 .ara-menu-toggle span{display:block;width:18px;height:1.5px;background:#5b1217;transition:transform .2s ease,opacity .2s ease}
                 .ara-menu-toggle.active span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
@@ -24,22 +25,20 @@ export default function Layout({ children }) {
                 .ara-mobile-menu-panel{position:relative;width:min(370px,88vw);height:100%;padding:34px 28px;background:#fdfbf7;box-shadow:18px 0 45px rgba(44,24,16,.2);display:flex;flex-direction:column;gap:2px;overflow-y:auto}
                 .ara-mobile-menu-eyebrow{margin-bottom:14px;color:#d4af37;font-size:9px;letter-spacing:.24em;text-transform:uppercase}
                 .ara-mobile-menu-panel a{display:flex;align-items:center;justify-content:space-between;padding:17px 4px;border-bottom:1px solid rgba(91,18,23,.12);color:#5b1217;font-family:'Cormorant Garamond',serif;font-size:27px}
-                .ara-mobile-menu-panel a span{color:#d4af37;font-family:'DM Sans',sans-serif;font-size:18px;transition:transform .2s ease}
+                .ara-mobile-menu-panel a span{color:#d4af37;font-family:'DM Sans',sans-serif;font-size:18px}
 
-                /* Responsive foundation */
-                .ara-client,.ara-client *{min-width:0}
-                .ara-client{width:100%;max-width:100%;overflow-x:clip}
-                .ara-page-stage{width:100%;max-width:100%;min-width:0;overflow-x:clip}
-                .ara-client img,.ara-client video,.ara-client svg{max-width:100%}
-                .ara-client img{height:auto}
-                .ara-client main{width:100%;max-width:100%;min-width:0}
+                /* Keep the page itself inside the viewport without changing its content margins. */
+                .ara-client{width:100%;max-width:100%;overflow-x:hidden}
+                .ara-page-stage{width:100%;max-width:100%;min-width:0}
+                .ara-client main{max-width:100%;min-width:0}
+                .ara-client img,.ara-client video{max-width:100%}
 
                 @media (max-width:1100px){
                     .ara-header-inner{gap:20px}
-                    .ara-hero-inner{width:min(100% - 40px,1180px);gap:45px}
+                    .ara-hero-inner{width:min(calc(100% - 40px),1180px);gap:45px}
                     .ara-details-layout{gap:45px}
-                    .ara-collection{width:min(100% - 40px,1280px)}
-                    .ara-details{width:min(100% - 40px,1240px)}
+                    .ara-collection{width:min(calc(100% - 40px),1280px)}
+                    .ara-details{width:min(calc(100% - 40px),1240px)}
                 }
 
                 @media (max-width:900px){
@@ -56,13 +55,22 @@ export default function Layout({ children }) {
                     .ara-footer-inner{grid-template-columns:2fr 1fr 1fr;gap:35px}
                     .ara-details-layout{grid-template-columns:1fr!important;gap:40px}
                     .ara-gallery{width:100%;min-width:0}
-                    .ara-main-image{width:fit-content;max-width:100%;margin-inline:auto}
+                    .ara-main-image{max-width:100%;margin-inline:auto}
                     .ara-main-image img{max-width:100%;height:auto}
                     .ara-details-info{width:100%;min-width:0}
                     .ara-gallery-thumbnails{max-width:100%;overflow-x:auto}
                     .ara-painting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
                     .ara-collection-controls{flex-wrap:wrap}
                 }
+
+                /* Artwork viewer: the viewer owns the viewport; the stage owns the remaining space. */
+                .ara-art-viewer{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}
+                .ara-art-viewer-head{flex:0 0 72px!important;height:72px!important;min-height:72px!important}
+                .ara-art-viewer-stage{flex:1 1 auto!important;min-height:0!important;width:100%!important;max-width:none!important;padding:24px 90px!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important}
+                .ara-art-viewer-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+                .ara-art-viewer-image{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;flex:0 1 auto!important;transform-origin:center center!important}
+                .ara-art-viewer-bar{flex:0 0 62px!important;height:62px!important;min-height:62px!important}
+                .ara-art-viewer-help{flex:0 0 30px!important;height:30px!important;min-height:30px!important}
 
                 @media (max-width:600px){
                     .ara-announcement{padding-inline:12px;font-size:8px;letter-spacing:.10em;text-align:center}
@@ -118,21 +126,21 @@ export default function Layout({ children }) {
                     .ara-specifications{grid-template-columns:1fr}
                     .ara-detail-assurance{grid-template-columns:1fr}
 
-                    /* Mobile artwork viewer */
-                    .ara-art-viewer{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:100vw!important;overflow:hidden!important}
-                    .ara-art-viewer-head{height:auto!important;min-height:60px!important;flex:0 0 auto!important;padding:9px 12px!important;gap:10px!important}
+                    /* Mobile viewer: generous safe margins and controls always visible. */
+                    .ara-art-viewer{height:100dvh!important}
+                    .ara-art-viewer-head{flex-basis:60px!important;height:60px!important;min-height:60px!important;padding:9px 14px!important}
                     .ara-art-viewer-title{max-width:calc(100% - 52px)!important;min-width:0!important}
                     .ara-art-viewer-title small{font-size:7px!important;letter-spacing:.14em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
                     .ara-art-viewer-title strong{font-size:18px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
                     .ara-art-viewer-close{width:38px!important;height:38px!important;flex:0 0 38px!important;font-size:24px!important}
-                    .ara-art-viewer-stage{width:100%!important;max-width:100%!important;min-width:0!important;flex:1 1 auto!important;padding:8px 46px!important;overflow:hidden!important}
-                    .ara-art-viewer-canvas{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
-                    .ara-art-viewer-image{width:auto!important;height:auto!important;max-width:calc(100vw - 92px)!important;max-height:calc(100dvh - 140px)!important;border-width:1px!important;box-shadow:0 12px 35px rgba(0,0,0,.5)!important}
+                    .ara-art-viewer-stage{padding:18px 52px!important}
+                    .ara-art-viewer-canvas{width:100%!important;height:100%!important}
+                    .ara-art-viewer-image{max-width:100%!important;max-height:100%!important}
                     .ara-art-viewer-arrow{width:38px!important;height:38px!important;font-size:28px!important;line-height:32px!important}
-                    .ara-art-viewer-prev{left:5px!important}
-                    .ara-art-viewer-next{right:5px!important}
-                    .ara-art-viewer-bar{height:54px!important;flex:0 0 54px!important;gap:6px!important;padding:8px 10px!important}
-                    .ara-art-viewer-bar button{height:34px!important;min-width:36px!important;padding:0 9px!important;font-size:12px!important}
+                    .ara-art-viewer-prev{left:8px!important}
+                    .ara-art-viewer-next{right:8px!important}
+                    .ara-art-viewer-bar{flex-basis:58px!important;height:58px!important;min-height:58px!important;padding:9px 12px!important;gap:6px!important}
+                    .ara-art-viewer-bar button{height:36px!important;min-width:38px!important;padding:0 9px!important;font-size:12px!important}
                     .ara-art-viewer-help{display:none!important}
                 }
 
@@ -141,8 +149,9 @@ export default function Layout({ children }) {
                     .ara-cart span:first-child{display:none}
                     .ara-cart{padding:7px 8px}
                     .ara-hero-inner,.ara-collection,.ara-details{width:calc(100% - 24px)}
-                    .ara-lightbox-image-wrap img,.ara-art-viewer-image{max-width:calc(100vw - 82px)!important}
-                    .ara-art-viewer-stage{padding-inline:41px!important}
+                    .ara-art-viewer-stage{padding:14px 44px!important}
+                    .ara-art-viewer-prev{left:6px!important}
+                    .ara-art-viewer-next{right:6px!important}
                 }
 
                 @media (min-width:901px){.ara-menu-toggle{display:none!important}.ara-mobile-menu{display:none!important}}
