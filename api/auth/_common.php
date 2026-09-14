@@ -2,13 +2,8 @@
 declare(strict_types=1);
 
 $isHttps = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
-$cookieSecure = $isHttps;
-$cookieDomain = trim((string)(getenv('SESSION_COOKIE_DOMAIN') ?: ''));
 $sameSite = trim((string)(getenv('SESSION_COOKIE_SAMESITE') ?: 'Lax'));
-if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
-    $sameSite = 'Lax';
-}
-if ($sameSite === 'None' && !$isHttps) {
+if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true) || ($sameSite === 'None' && !$isHttps)) {
     $sameSite = 'Lax';
 }
 
@@ -16,8 +11,7 @@ session_name('painting_marketplace_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'domain' => $cookieDomain,
-    'secure' => $cookieSecure,
+    'secure' => $isHttps,
     'httponly' => true,
     'samesite' => $sameSite,
 ]);
