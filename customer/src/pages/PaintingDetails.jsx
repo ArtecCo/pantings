@@ -14,14 +14,6 @@ const viewerStyles = `
 .ara-art-viewer-image{display:block;width:auto;height:auto;max-width:calc(100vw - 170px);max-height:calc(100vh - 190px);object-fit:contain;border:2px solid #d4af37;box-shadow:0 18px 55px rgba(0,0,0,.5);transform-origin:center center;will-change:transform;user-select:none}
 .ara-art-viewer-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:48px;height:48px;border:1px solid #d4af37;border-radius:50%;background:rgba(22,12,8,.88);color:#fdfbf7;font:38px/38px 'Cormorant Garamond',serif;cursor:pointer}.ara-art-viewer-arrow:hover{background:#d4af37;color:#2c1810}.ara-art-viewer-prev{left:18px}.ara-art-viewer-next{right:18px}
 .ara-art-viewer-bar{height:62px;flex:0 0 62px;display:flex;align-items:center;justify-content:center;gap:8px;border-top:1px solid rgba(212,175,55,.25);background:#21110c}.ara-art-viewer-bar button{height:38px;min-width:42px;padding:0 13px;border:1px solid rgba(212,175,55,.75);background:#2c1810;color:#fdfbf7;cursor:pointer;font:500 13px 'DM Sans',sans-serif}.ara-art-viewer-bar button:hover:not(:disabled){background:#d4af37;color:#2c1810}.ara-art-viewer-bar button:disabled{opacity:.35;cursor:default}.ara-art-viewer-help{height:30px;flex:0 0 30px;text-align:center;color:rgba(253,251,247,.55);font:9px/30px 'DM Sans',sans-serif;letter-spacing:.1em;background:#21110c}
-.ara-detail-intro{width:min(900px,calc(100% - 48px));margin:0 auto;padding:48px 0 54px;text-align:center}.ara-detail-intro-kicker{display:flex;justify-content:center;align-items:center;gap:12px;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase}.ara-detail-intro-kicker span{width:28px;height:1px;background:var(--gold)}.ara-detail-intro h1{margin:13px 0 12px;color:var(--maroon);font-family:'Cormorant Garamond',serif;font-size:clamp(34px,4vw,52px);line-height:1;font-weight:500}.ara-detail-intro-artist{margin:0 0 22px;color:var(--muted);font-size:12px}.ara-detail-intro-artist strong{color:var(--brown);font-weight:600}.ara-detail-intro-description{max-width:720px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.9;text-align:left}.ara-detail-intro-description p{margin:0 0 13px}.ara-detail-intro-description p:last-child{margin-bottom:0}
-.ara-detail-body{border-top:1px solid var(--border);padding-top:58px}
-.ara-detail-body .ara-details-info> .ara-detail-eyebrow{display:none}
-.ara-detail-body .ara-details-info>h1{display:none}
-.ara-detail-body .ara-details-info>.ara-detail-artist{display:none}
-.ara-detail-body .ara-details-info>.ara-detail-description{display:none}
-.ara-detail-body .ara-detail-assurance{display:none!important}
-@media(max-width:600px){.ara-detail-intro{width:min(100% - 30px,900px);padding:34px 0 38px}.ara-detail-intro h1{font-size:35px}.ara-detail-intro-description{font-size:13px;line-height:1.8}.ara-detail-body{padding-top:34px}}
 @media(max-width:600px){.ara-art-viewer-head{height:60px;flex-basis:60px;padding:9px 12px}.ara-art-viewer-title small{font-size:8px}.ara-art-viewer-title strong{font-size:19px;max-width:72vw}.ara-art-viewer-close{width:38px;height:38px;flex-basis:38px;font-size:25px}.ara-art-viewer-stage{padding:10px 12px}.ara-art-viewer-canvas{width:100%;height:100%}.ara-art-viewer-image{max-width:calc(100vw - 24px);max-height:calc(100vh - 132px)}.ara-art-viewer-arrow{width:38px;height:38px;font-size:29px;line-height:32px}.ara-art-viewer-prev{left:6px}.ara-art-viewer-next{right:6px}.ara-art-viewer-bar{height:54px;flex-basis:54px}.ara-art-viewer-bar button{height:34px;min-width:38px;padding:0 10px}.ara-art-viewer-help{display:none}}
 @media(min-width:901px){.ara-menu-toggle{display:none!important}}
 @media(max-width:600px){.ara-main-image{width:100%!important;max-width:100%!important;overflow:hidden}.ara-main-image-click-target{width:100%!important;max-width:100%!important}.ara-main-image-click-target img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}}
@@ -96,21 +88,12 @@ export default function PaintingDetails() {
   if (loading) return <div className="ara-details-state"><span className="ara-loader"></span><p>Preparing the artwork...</p></div>
   if (error || !painting) return <div className="ara-details-state"><strong>Artwork unavailable</strong><p>{error || 'This painting could not be found.'}</p><Link to="/paintings" className="ara-btn ara-btn-primary">Return to Collection</Link></div>
   const currentImage = images[activeImage]
-  const descriptionParagraphs = String(painting.description || 'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.').split(/\n\s*\n|\r?\n/).map(text => text.trim()).filter(Boolean)
 
   return <>
     <style>{viewerStyles}</style>
     <main className="ara-details">
       <div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div>
-
-      <header className="ara-detail-intro">
-        <div className="ara-detail-intro-kicker"><span></span>{painting.category_name || 'Heritage Art'}<span></span></div>
-        <h1>{painting.name}</h1>
-        {painting.artist_name && <p className="ara-detail-intro-artist">Crafted by <strong>{painting.artist_name}</strong></p>}
-        <div className="ara-detail-intro-description">{descriptionParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
-      </header>
-
-      <section className="ara-details-layout ara-detail-body">
+      <section className="ara-details-layout">
         <div className="ara-gallery">
           <div className="ara-main-image">
             {currentImage?.image_url ? <button type="button" className="ara-main-image-click-target" onClick={openViewer} aria-label={`Open ${painting.name} in artwork viewer`}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></button> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
