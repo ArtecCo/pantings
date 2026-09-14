@@ -11,6 +11,7 @@ session_name('painting_marketplace_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
+    'domain' => trim((string)(getenv('SESSION_COOKIE_DOMAIN') ?: '')),
     'secure' => $isHttps,
     'httponly' => true,
     'samesite' => $sameSite,
@@ -28,9 +29,8 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: {$origin}");
     header('Access-Control-Allow-Credentials: true');
-    header('Vary: Origin');
 }
-
+header('Vary: Origin');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Accept');
 
@@ -50,14 +50,14 @@ function jsonResponse(array $payload, int $status = 200): never {
 }
 
 function requestJson(): array {
-    $raw = file_get_contents('php://input') ?: '{}';
-    $data = json_decode($raw, true);
+    $data = json_decode(file_get_contents('php://input') ?: '{}', true);
     return is_array($data) ? $data : [];
 }
 
 function requireCustomer(): int {
-    if (!isset($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'customer') {
-        jsonResponse(['success' => false, 'message' => 'User authentication required'], 401);
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    if ($userId <= 0 || ($_SESSION['user_type'] ?? '') !== 'customer') {
+        jsonResponse(['success' => false, 'authenticated' => false, 'message' => 'User authentication required'], 401);
     }
-    return (int)$_SESSION['user_id'];
+    return $userId;
 }
