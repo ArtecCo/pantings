@@ -1,21 +1,55 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-
-const API = 'http://localhost/paintings/api'
+import { apiUrl } from '../config/api'
+import { useToast } from '../components/ToastProvider'
 
 export default function PaintingDetails() {
-  const { id } = useParams(); const navigate = useNavigate()
-  const [painting,setPainting]=useState(null),[images,setImages]=useState([]),[activeImage,setActiveImage]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState(''),[cartMessage,setCartMessage]=useState('')
-  const [viewerOpen,setViewerOpen]=useState(false),[zoom,setZoom]=useState(1),[pan,setPan]=useState({x:0,y:0}),[dragging,setDragging]=useState(false); const dragStart=useRef(null)
-  const getImageUrl=url=>!url?'':url.startsWith('http')?url:`http://localhost${url}`
-  useEffect(()=>{loadPainting()},[id])
-  const loadPainting=async()=>{try{setLoading(true);setError('');const r=await fetch(`${API}/paintings/get.php?id=${id}`);const d=await r.json();if(!d.success)throw new Error(d.message||'Unable to load painting.');const item=d.painting||d.data;if(!item)throw new Error('Painting not found.');setPainting(item);setImages(Array.isArray(item.images)&&item.images.length?item.images:item.image_url?[{image_url:item.image_url}]:[])}catch(e){setError(e.message||'Unable to load painting.')}finally{setLoading(false)}}
-  const addToCart=async()=>{try{setCartMessage('');const r=await fetch(`${API}/cart/add-item.php`,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({painting_id:Number(id),quantity:1})});const d=await r.json().catch(()=>({}));if(r.status===401){navigate('/login');return}if(!r.ok||!d.success)throw new Error(d.message||'Unable to add this painting to your cart.');setCartMessage('Added to your cart.');setTimeout(()=>navigate('/cart'),500)}catch(e){setCartMessage(e.message)}}
-  useEffect(()=>{if(!viewerOpen)return;const k=e=>{if(e.key==='Escape')setViewerOpen(false);if(images.length>1&&e.key==='ArrowLeft')setActiveImage(c=>(c-1+images.length)%images.length);if(images.length>1&&e.key==='ArrowRight')setActiveImage(c=>(c+1)%images.length)};document.addEventListener('keydown',k);document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',k);document.body.style.overflow=''}},[viewerOpen,images.length])
-  const displayPrice=Number(painting?.discount_price||painting?.price||0),hasDiscount=painting?.discount_price&&Number(painting.discount_price)<Number(painting.price)
-  const formatPrice=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(v||0))
-  if(loading)return <div className="ara-details-state"><span className="ara-loader"></span><p>Preparing the artwork...</p></div>
-  if(error||!painting)return <div className="ara-details-state"><strong>Artwork unavailable</strong><p>{error||'This painting could not be found.'}</p><Link to="/paintings" className="ara-btn ara-btn-primary">Return to Collection</Link></div>
-  const currentImage=images[activeImage]
-  return <><main className="ara-details"><div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div><section className="ara-details-layout"><div className="ara-gallery"><div className="ara-main-image">{currentImage?.image_url?<div className="ara-main-image-click-target" onClick={()=>setViewerOpen(true)} role="button" tabIndex={0}><img src={getImageUrl(currentImage.image_url)} alt={painting.name}/></div>:<div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}{painting.gold_details&&<div className="ara-detail-gold-badge">✦ 22K GOLD</div>}{images.length>1&&<><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={()=>setActiveImage((activeImage-1+images.length)%images.length)}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={()=>setActiveImage((activeImage+1)%images.length)}>›</button></>}</div>{images.length>1&&<div className="ara-gallery-thumbnails">{images.map((image,i)=><button type="button" key={image.id||image.image_url||i} className={i===activeImage?'ara-thumbnail active':'ara-thumbnail'} onClick={()=>setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i+1}`}/></button>)}</div>}</div><div className="ara-details-info"><div className="ara-detail-eyebrow"><span></span>{painting.category_name||'HERITAGE ART'}</div><h1>{painting.name}</h1>{painting.artist_name&&<p className="ara-detail-artist">Crafted by <strong>{painting.artist_name}</strong></p>}<div className="ara-detail-divider"></div><div className="ara-detail-price"><strong>{formatPrice(displayPrice)}</strong>{hasDiscount&&<span>{formatPrice(painting.price)}</span>}</div><p className="ara-detail-description">{painting.description||'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.'}</p><div className="ara-specifications">{(painting.width||painting.height)&&<div className="ara-spec"><span>DIMENSIONS</span><strong>{painting.width} × {painting.height} in</strong></div>}{painting.medium&&<div className="ara-spec"><span>MEDIUM</span><strong>{painting.medium}</strong></div>}{painting.frame&&<div className="ara-spec"><span>FRAME</span><strong>{painting.frame}</strong></div>}{painting.gold_details&&<div className="ara-spec"><span>GOLD DETAILS</span><strong>{painting.gold_details}</strong></div>}</div><div className="ara-purchase"><button type="button" className="ara-add-cart" onClick={addToCart}>Add to Cart<span>✦</span></button>{cartMessage&&<p>{cartMessage}</p>}<p>Your order will first be reviewed by our artist before payment is requested.</p></div><div className="ara-detail-assurance"><div><span>✦</span><div><strong>Handcrafted</strong><small>Traditional craftsmanship</small></div></div><div><span>✦</span><div><strong>Heritage Quality</strong><small>Made for generations</small></div></div></div></div></section></main>{viewerOpen&&images.length>0&&<div className="ara-lightbox" role="dialog" aria-modal="true" onClick={e=>e.target===e.currentTarget&&setViewerOpen(false)}><div className="ara-lightbox-top"><div><span>ARAmane Arts</span><strong>{painting.name}</strong></div><button type="button" className="ara-lightbox-close" onClick={()=>setViewerOpen(false)}>×</button></div><div className="ara-lightbox-stage">{images.length>1&&<button type="button" className="ara-lightbox-arrow ara-lightbox-prev" onClick={()=>setActiveImage((activeImage-1+images.length)%images.length)}>‹</button>}<img src={getImageUrl(images[activeImage].image_url)} alt={painting.name}/>{images.length>1&&<button type="button" className="ara-lightbox-arrow ara-lightbox-next" onClick={()=>setActiveImage((activeImage+1)%images.length)}>›</button>}</div></div>}</>
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const [painting, setPainting] = useState(null), [images, setImages] = useState([]), [activeImage, setActiveImage] = useState(0), [loading, setLoading] = useState(true), [error, setError] = useState('')
+  const [viewerOpen, setViewerOpen] = useState(false), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 }), [dragging, setDragging] = useState(false)
+  const dragStart = useRef(null)
+  const getImageUrl = url => !url ? '' : url.startsWith('http') ? url : `${new URL(apiUrl('')).origin}${url}`
+
+  useEffect(() => { loadPainting() }, [id])
+
+  const loadPainting = async () => {
+    try {
+      setLoading(true); setError('')
+      const r = await fetch(apiUrl(`paintings/get.php?id=${encodeURIComponent(id)}`))
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.success) throw new Error(d.message || 'Unable to load painting.')
+      const item = d.painting || d.data
+      if (!item) throw new Error('Painting not found.')
+      setPainting(item)
+      setImages(Array.isArray(item.images) && item.images.length ? item.images : item.image_url ? [{ image_url: item.image_url }] : [])
+    } catch (e) { setError(e.message || 'Unable to load painting.') }
+    finally { setLoading(false) }
+  }
+
+  const addToCart = async () => {
+    try {
+      const r = await fetch(apiUrl('cart/add-item.php'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ painting_id: Number(id), quantity: 1 }) })
+      const d = await r.json().catch(() => ({}))
+      if (r.status === 401) { toast.error('Please sign in to add items to your cart.'); navigate('/login'); return }
+      if (!r.ok || !d.success) throw new Error(d.message || 'Unable to add this painting to your cart.')
+      toast.success('Painting added to your cart.')
+      setTimeout(() => navigate('/cart'), 500)
+    } catch (e) { toast.error(e.message || 'Unable to add this painting to your cart.') }
+  }
+
+  useEffect(() => {
+    if (!viewerOpen) return
+    const k = e => { if (e.key === 'Escape') setViewerOpen(false); if (images.length > 1 && e.key === 'ArrowLeft') setActiveImage(c => (c - 1 + images.length) % images.length); if (images.length > 1 && e.key === 'ArrowRight') setActiveImage(c => (c + 1) % images.length) }
+    document.addEventListener('keydown', k); document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', k); document.body.style.overflow = '' }
+  }, [viewerOpen, images.length])
+
+  const displayPrice = Number(painting?.discount_price || painting?.price || 0), hasDiscount = painting?.discount_price && Number(painting.discount_price) < Number(painting.price)
+  const formatPrice = v => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(v || 0))
+  if (loading) return <div className="ara-details-state"><span className="ara-loader"></span><p>Preparing the artwork...</p></div>
+  if (error || !painting) return <div className="ara-details-state"><strong>Artwork unavailable</strong><p>{error || 'This painting could not be found.'}</p><Link to="/paintings" className="ara-btn ara-btn-primary">Return to Collection</Link></div>
+  const currentImage = images[activeImage]
+  return <><main className="ara-details"><div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div><section className="ara-details-layout"><div className="ara-gallery"><div className="ara-main-image">{currentImage?.image_url ? <div className="ara-main-image-click-target" onClick={() => setViewerOpen(true)} role="button" tabIndex={0}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></div> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}{painting.gold_details && <div className="ara-detail-gold-badge">✦ 22K GOLD</div>}{images.length > 1 && <><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={() => setActiveImage((activeImage + 1) % images.length)}>›</button></>}</div>{images.length > 1 && <div className="ara-gallery-thumbnails">{images.map((image, i) => <button type="button" key={image.id || image.image_url || i} className={i === activeImage ? 'ara-thumbnail active' : 'ara-thumbnail'} onClick={() => setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i + 1}`} /></button>)}</div>}</div><div className="ara-details-info"><div className="ara-detail-eyebrow"><span></span>{painting.category_name || 'HERITAGE ART'}</div><h1>{painting.name}</h1>{painting.artist_name && <p className="ara-detail-artist">Crafted by <strong>{painting.artist_name}</strong></p>}<div className="ara-detail-divider"></div><div className="ara-detail-price"><strong>{formatPrice(displayPrice)}</strong>{hasDiscount && <span>{formatPrice(painting.price)}</span>}</div><p className="ara-detail-description">{painting.description || 'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.'}</p><div className="ara-specifications">{(painting.width || painting.height) && <div className="ara-spec"><span>DIMENSIONS</span><strong>{painting.width} × {painting.height} in</strong></div>}{painting.medium && <div className="ara-spec"><span>MEDIUM</span><strong>{painting.medium}</strong></div>}{painting.frame && <div className="ara-spec"><span>FRAME</span><strong>{painting.frame}</strong></div>}{painting.gold_details && <div className="ara-spec"><span>GOLD DETAILS</span><strong>{painting.gold_details}</strong></div>}</div><div className="ara-purchase"><button type="button" className="ara-add-cart" onClick={addToCart}>Add to Cart<span>✦</span></button><p>Your order will first be reviewed by our artist before payment is requested.</p></div><div className="ara-detail-assurance"><div><span>✦</span><div><strong>Handcrafted</strong><small>Traditional craftsmanship</small></div></div><div><span>✦</span><div><strong>Heritage Quality</strong><small>Made for generations</small></div></div></div></div></section></main>{viewerOpen && images.length > 0 && <div className="ara-lightbox" role="dialog" aria-modal="true" onClick={e => e.target === e.currentTarget && setViewerOpen(false)}><div className="ara-lightbox-top"><div><span>ARAmane Arts</span><strong>{painting.name}</strong></div><button type="button" className="ara-lightbox-close" onClick={() => setViewerOpen(false)}>×</button></div><div className="ara-lightbox-stage">{images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-prev" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)}>‹</button>}<img src={getImageUrl(images[activeImage].image_url)} alt={painting.name} />{images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-next" onClick={() => setActiveImage((activeImage + 1) % images.length)}>›</button>}</div></div>}</>
 }

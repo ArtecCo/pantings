@@ -11,21 +11,14 @@ $data = requestJson();
 $paintingId = (int)($data['painting_id'] ?? 0);
 $quantity = filter_var($data['quantity'] ?? 1, FILTER_VALIDATE_INT);
 
-if ($paintingId <= 0) {
-    jsonResponse(['success' => false, 'message' => 'Invalid painting'], 422);
-}
-if ($quantity === false || $quantity < 1) {
-    jsonResponse(['success' => false, 'message' => 'Quantity must be at least 1'], 422);
-}
+if ($paintingId <= 0) jsonResponse(['success' => false, 'message' => 'Invalid painting'], 422);
+if ($quantity === false || $quantity < 1) jsonResponse(['success' => false, 'message' => 'Quantity must be at least 1'], 422);
 
 try {
     $stmt = $pdo->prepare('SELECT id, is_active FROM paintings WHERE id = ? LIMIT 1');
     $stmt->execute([$paintingId]);
     $painting = $stmt->fetch();
-
-    if (!$painting || !(int)$painting['is_active']) {
-        jsonResponse(['success' => false, 'message' => 'Painting is unavailable'], 404);
-    }
+    if (!$painting || !(int)$painting['is_active']) jsonResponse(['success' => false, 'message' => 'Painting is unavailable'], 404);
 
     $stmt = $pdo->prepare('SELECT id, quantity FROM cart_items WHERE user_id = ? AND painting_id = ? LIMIT 1');
     $stmt->execute([$userId, $paintingId]);
@@ -33,7 +26,7 @@ try {
 
     if ($existing) {
         $newQuantity = (int)$existing['quantity'] + $quantity;
-        $stmt = $pdo->prepare('UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
+        $stmt = $pdo->prepare('UPDATE cart_items SET quantity = ? WHERE id = ? AND user_id = ?');
         $stmt->execute([$newQuantity, (int)$existing['id'], $userId]);
         $cartItemId = (int)$existing['id'];
     } else {
@@ -44,9 +37,7 @@ try {
 
     jsonResponse(['success' => true, 'cart_item_id' => $cartItemId, 'message' => 'Painting added to cart']);
 } catch (PDOException $e) {
-    if ((string)$e->getCode() === '23000') {
-        jsonResponse(['success' => false, 'message' => 'This painting is already in your cart. Please try again.'], 409);
-    }
+    if ((string)$e->getCode() === '23000') jsonResponse(['success' => false, 'message' => 'This painting is already in your cart. Please try again.'], 409);
     error_log('Cart add error: ' . $e->getMessage());
     jsonResponse(['success' => false, 'message' => 'Unable to add painting to cart'], 500);
 } catch (Throwable $e) {
