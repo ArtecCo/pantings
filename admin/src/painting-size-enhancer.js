@@ -1,3 +1,5 @@
+import './metadata-enhancer.js'
+
 const API = 'http://localhost/paintings/api'
 const state = { options: [], route: '' }
 const normalize = option => ({ name: String(option.name || '').trim(), width: option.width, height: option.height, unit: option.unit || 'in', price: option.price, is_standard: Boolean(option.is_standard) })
