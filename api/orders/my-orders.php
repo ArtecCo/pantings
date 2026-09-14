@@ -6,11 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
-if (!isset($_SESSION['user_id'])) {
-    jsonResponse(['success' => false, 'message' => 'User authentication required'], 401);
-}
-
-$userId = (int)$_SESSION['user_id'];
+$userId = requireCustomer();
 
 try {
     $sql = "
@@ -46,11 +42,7 @@ try {
     $stmt->execute([$userId]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    jsonResponse([
-        'success' => true,
-        'orders' => $orders
-    ]);
-
+    jsonResponse(['success' => true, 'orders' => $orders]);
 } catch (Throwable $e) {
     error_log('Error fetching user orders: ' . $e->getMessage());
     jsonResponse(['success' => false, 'message' => 'Unable to load your orders'], 500);
