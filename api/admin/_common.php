@@ -27,7 +27,7 @@ header('Content-Type: application/json; charset=utf-8');
 $configuredOrigins = trim((string)(getenv('ALLOWED_ADMIN_ORIGINS') ?: getenv('ALLOWED_ORIGINS') ?: ''));
 $allowedOrigins = $configuredOrigins !== ''
     ? array_values(array_filter(array_map('trim', explode(',', $configuredOrigins))))
-    : ['http://localhost:5174'];
+    : ['http://localhost:5173', 'http://localhost:5174'];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
