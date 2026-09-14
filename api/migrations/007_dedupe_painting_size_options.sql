@@ -28,4 +28,7 @@ INNER JOIN painting_size_options keeper
    AND keeper.price = duplicate_option.price
    AND keeper.id < duplicate_option.id;
 
+ALTER TABLE painting_size_options
+    ADD UNIQUE KEY uq_painting_size_definition (painting_id,name,width,height,unit,price);
+
 COMMIT;
