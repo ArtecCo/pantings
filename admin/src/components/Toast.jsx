@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 const ToastContext = createContext(null)
 
@@ -6,26 +6,13 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const removeToast = (id) => {
-    setToasts(current =>
-      current.filter(toast => toast.id !== id)
-    )
+    setToasts(current => current.filter(toast => toast.id !== id))
   }
 
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random()
-
-    setToasts(current => [
-      ...current,
-      {
-        id,
-        message,
-        type
-      }
-    ])
-
-    setTimeout(() => {
-      removeToast(id)
-    }, 4000)
+    setToasts(current => [...current, { id, message, type }])
+    setTimeout(() => removeToast(id), 4000)
   }
 
   const toast = {
@@ -35,23 +22,23 @@ export function ToastProvider({ children }) {
     info: (message) => showToast(message, 'info')
   }
 
+  useEffect(() => {
+    window.__araToast = toast
+    return () => { delete window.__araToast }
+  }, [toast])
+
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-
       <div className="ara-toast-viewport">
         {toasts.map(item => (
-          <div
-            key={item.id}
-            className={`ara-toast ara-toast-${item.type}`}
-          >
+          <div key={item.id} className={`ara-toast ara-toast-${item.type}`}>
             <div className="ara-toast-icon">
               {item.type === 'success' && '✓'}
               {item.type === 'error' && '×'}
               {item.type === 'warning' && '!'}
               {item.type === 'info' && 'i'}
             </div>
-
             <div className="ara-toast-content">
               <div className="ara-toast-title">
                 {item.type === 'success' && 'Success'}
@@ -59,20 +46,9 @@ export function ToastProvider({ children }) {
                 {item.type === 'warning' && 'Please check'}
                 {item.type === 'info' && 'ARAmane Arts'}
               </div>
-
-              <div className="ara-toast-message">
-                {item.message}
-              </div>
+              <div className="ara-toast-message">{item.message}</div>
             </div>
-
-            <button
-              type="button"
-              className="ara-toast-close"
-              onClick={() => removeToast(item.id)}
-              aria-label="Close notification"
-            >
-              ×
-            </button>
+            <button type="button" className="ara-toast-close" onClick={() => removeToast(item.id)} aria-label="Close notification">×</button>
           </div>
         ))}
       </div>
@@ -82,12 +58,6 @@ export function ToastProvider({ children }) {
 
 export function useToast() {
   const context = useContext(ToastContext)
-
-  if (!context) {
-    throw new Error(
-      'useToast must be used inside ToastProvider'
-    )
-  }
-
+  if (!context) throw new Error('useToast must be used inside ToastProvider')
   return context
 }
