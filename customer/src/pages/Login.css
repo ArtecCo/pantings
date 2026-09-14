@@ -1,0 +1,240 @@
+.ara-login-page {
+  min-height: calc(100vh - 116px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 70px 24px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(212, 175, 55, 0.09), transparent 28%),
+    radial-gradient(circle at 85% 80%, rgba(91, 18, 23, 0.07), transparent 30%),
+    var(--ivory);
+}
+
+.ara-login-shell {
+  width: min(100%, 520px);
+  padding: 48px 52px 38px;
+  background: rgba(253, 251, 247, 0.96);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(44, 24, 16, 0.11);
+  animation: araLoginReveal 0.65s ease both;
+}
+
+.ara-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.ara-login-brand .ara-brand-small {
+  margin-bottom: 7px;
+}
+
+.ara-login-brand .ara-brand-name {
+  font-size: 36px;
+}
+
+.ara-login-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 25px 0;
+}
+
+.ara-login-divider span {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.ara-login-divider b {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.ara-login-heading {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.ara-login-eyebrow {
+  margin: 0 0 9px;
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+}
+
+.ara-login-heading h1 {
+  margin: 0;
+  color: var(--maroon);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.ara-login-heading > p:last-child {
+  max-width: 380px;
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.ara-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ara-login-name-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ara-login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ara-login-form label > span {
+  color: var(--brown);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ara-login-form input {
+  width: 100%;
+  height: 48px;
+  padding: 0 15px;
+  border: 1px solid rgba(91, 18, 23, 0.22);
+  outline: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--brown);
+  font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ara-login-form input::placeholder {
+  color: rgba(110, 91, 83, 0.55);
+}
+
+.ara-login-form input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.ara-login-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--maroon);
+  color: var(--ivory);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ara-login-submit:hover:not(:disabled) {
+  background: var(--maroon-light);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(91, 18, 23, 0.18);
+}
+
+.ara-login-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.ara-google-button {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.ara-login-switch {
+  margin-top: 25px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ara-login-switch button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--maroon);
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.ara-login-switch button:hover {
+  color: var(--gold);
+}
+
+.ara-login-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ara-login-footer i {
+  color: var(--gold);
+  font-style: normal;
+}
+
+@keyframes araLoginReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .ara-login-page {
+    min-height: calc(100vh - 100px);
+    padding: 35px 15px;
+  }
+
+  .ara-login-shell {
+    padding: 36px 24px 30px;
+  }
+
+  .ara-login-brand .ara-brand-name {
+    font-size: 31px;
+  }
+
+  .ara-login-heading h1 {
+    font-size: 39px;
+  }
+
+  .ara-login-name-grid {
+    grid-template-columns: 1fr;
+  }
+}
