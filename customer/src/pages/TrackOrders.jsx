@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-
-const API = 'http://localhost/paintings/api'
+import { apiUrl } from '../config/api'
 
 export default function TrackOrders() {
   const [orders, setOrders] = useState([])
@@ -17,7 +16,7 @@ export default function TrackOrders() {
     try {
       setLoading(true)
       setError('')
-      const response = await fetch(`${API}/orders/my-orders.php`, {
+      const response = await fetch(apiUrl('orders/my-orders.php'), {
         method: 'GET',
         credentials: 'include',
       })
@@ -27,9 +26,7 @@ export default function TrackOrders() {
         setAuthenticated(false)
         return
       }
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Unable to load your orders.')
-      }
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load your orders.')
       setAuthenticated(true)
       setOrders(data.orders || [])
     } catch (err) {
@@ -70,7 +67,7 @@ export default function TrackOrders() {
                 <div><p className="text-sm font-medium text-gray-700">Total Amount</p><p className="text-lg font-bold">₹{Number(order.total_amount || 0).toLocaleString('en-IN')}</p></div>
                 <div><p className="text-sm font-medium text-gray-700">Shipping Details</p><p className="text-sm text-gray-600">{order.shipping_name}</p><p className="text-sm text-gray-600">{order.shipping_city}, {order.shipping_country}</p></div>
               </div>
-              {(order.tracking_courier || order.tracking_id) && <div className="mt-5 pt-5 border-t"><p className="text-sm font-medium text-gray-700">Tracking</p><p className="text-sm text-gray-600">{order.tracking_courier || 'Courier'} {order.tracking_id ? `· ${order.tracking_id}` : ''}</p>{order.tracking_url && <a href={order.tracking_url} target="_blank" rel="noreferrer" className="text-sm underline">Track shipment</a>}</div>}
+              {(order.tracking_courier || order.tracking_id) && <div className="mt-5 pt-5 border-t"><p className="text-sm font-medium text-gray-700">Tracking</p><p className="text-sm text-gray-600">{order.tracking_courier || 'Courier'} {order.tracking_id ? `· ${order.tracking_id}` : ''}</p>{order.tracking_url && <a href={order.tracking_url} target="_blank" rel="noreferrer" className="text-sm underline">Track shipment</a></div>}
             </div>
           ))}
         </div>
