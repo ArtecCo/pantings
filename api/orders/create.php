@@ -1,70 +1,18 @@
 <?php
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../config/database.php';
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
-$userId = requireCustomer();
-$data = requestJson();
-
-$shippingName = trim((string)($data['shipping_name'] ?? ''));
-$shippingPhone = trim((string)($data['shipping_phone'] ?? ''));
-$shippingCity = trim((string)($data['shipping_city'] ?? ''));
-$shippingState = trim((string)($data['shipping_state'] ?? ''));
-$shippingPostalCode = trim((string)($data['shipping_postal_code'] ?? ''));
-$shippingCountry = trim((string)($data['shipping_country'] ?? ''));
-
-if ($shippingName === '' || $shippingPhone === '' || $shippingCity === '' || $shippingState === '' || $shippingPostalCode === '' || $shippingCountry === '') {
-    jsonResponse(['success' => false, 'message' => 'Complete shipping details are required'], 422);
-}
-
-// Customer checkout records the artwork/base value only. The artist releases
-// customization, delivery and discount amounts after accepting the order.
-$deliveryAmount = 0.00;
-$customizationAmount = 0.00;
-$discountAmount = 0.00;
-$status = 'PENDING_ACCEPTANCE';
-
-try {
-    $pdo->beginTransaction();
-    $stmt = $pdo->prepare("SELECT ci.id AS cart_item_id, ci.painting_id, ci.quantity, p.name, p.price, p.discount_price, p.is_active FROM cart_items ci INNER JOIN carts cart ON cart.id = ci.cart_id INNER JOIN paintings p ON p.id = ci.painting_id WHERE cart.user_id = ? ORDER BY ci.id ASC FOR UPDATE");
-    $stmt->execute([$userId]);
-    $cartItems = $stmt->fetchAll();
-    if (!$cartItems) { $pdo->rollBack(); jsonResponse(['success' => false, 'message' => 'Your cart is empty'], 409); }
-
-    $baseAmount = 0.00;
-    foreach ($cartItems as $item) {
-        $quantity = (int)$item['quantity'];
-        if (!(int)$item['is_active']) { $pdo->rollBack(); jsonResponse(['success' => false, 'message' => 'One or more paintings in your cart are no longer available'], 409); }
-        if ($quantity < 1) { $pdo->rollBack(); jsonResponse(['success' => false, 'message' => 'One or more cart quantities are invalid'], 422); }
-        $unitPrice = $item['discount_price'] !== null && (float)$item['discount_price'] > 0 ? (float)$item['discount_price'] : (float)$item['price'];
-        if ($unitPrice < 0) { $pdo->rollBack(); jsonResponse(['success' => false, 'message' => 'Invalid painting price'], 500); }
-        $baseAmount += $unitPrice * $quantity;
-    }
-    $baseAmount = round($baseAmount, 2);
-    $totalAmount = $baseAmount;
-    $orderNumber = 'ORD-' . strtoupper(bin2hex(random_bytes(8)));
-
-    $stmt = $pdo->prepare("INSERT INTO orders (order_number, user_id, status, subtotal, base_amount, customization_amount, shipping_amount, delivery_amount, discount_amount, total_amount, shipping_name, shipping_phone, shipping_city, shipping_state, shipping_postal_code, shipping_country, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
-    $stmt->execute([$orderNumber, $userId, $status, $baseAmount, $baseAmount, $customizationAmount, $deliveryAmount, $deliveryAmount, $discountAmount, $totalAmount, $shippingName, $shippingPhone, $shippingCity, $shippingState, $shippingPostalCode, $shippingCountry]);
-    $orderId = (int)$pdo->lastInsertId();
-
-    $itemStmt = $pdo->prepare("INSERT INTO order_items (order_id, painting_id, painting_name, quantity, unit_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-    foreach ($cartItems as $item) {
-        $quantity = (int)$item['quantity'];
-        $unitPrice = $item['discount_price'] !== null && (float)$item['discount_price'] > 0 ? (float)$item['discount_price'] : (float)$item['price'];
-        $itemStmt->execute([$orderId, (int)$item['painting_id'], (string)$item['name'], $quantity, $unitPrice, round($unitPrice * $quantity, 2)]);
-    }
-
-    $historyStmt = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, NULL, ?, ?, 'USER', 'Initial order creation')");
-    $historyStmt->execute([$orderId, $status, $userId]);
-
-    $clearCartStmt = $pdo->prepare("DELETE ci FROM cart_items ci INNER JOIN carts cart ON cart.id = ci.cart_id WHERE cart.user_id = ?");
-    $clearCartStmt->execute([$userId]);
-    $pdo->commit();
-
-    jsonResponse(['success' => true, 'message' => 'Order created successfully', 'order_number' => $orderNumber, 'order_id' => $orderId, 'base_amount' => $baseAmount, 'customization_amount' => $customizationAmount, 'delivery_amount' => $deliveryAmount, 'discount_amount' => $discountAmount, 'total_amount' => $totalAmount], 201);
-} catch (Throwable $e) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log('Order creation error: ' . $e->getMessage());
-    jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
-}
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['success'=>false,'message'=>'Method not allowed'],405);
+$userId=requireCustomer();$data=requestJson();
+$shippingName=trim((string)($data['shipping_name']??''));$shippingPhone=trim((string)($data['shipping_phone']??''));$customerEmail=trim((string)($data['shipping_email']??''));$shippingAddress=trim((string)($data['shipping_address']??''));$shippingCity=trim((string)($data['shipping_city']??''));$shippingState=trim((string)($data['shipping_state']??''));$shippingPostalCode=trim((string)($data['shipping_postal_code']??''));$shippingCountry=trim((string)($data['shipping_country']??''));
+if($shippingName===''||$shippingPhone===''||$customerEmail===''||!filter_var($customerEmail,FILTER_VALIDATE_EMAIL)||$shippingAddress===''||$shippingCity===''||$shippingState===''||$shippingPostalCode===''||$shippingCountry==='')jsonResponse(['success'=>false,'message'=>'Complete contact and delivery details are required'],422);
+$status='PENDING_ACCEPTANCE';$deliveryAmount=0.00;$customizationAmount=0.00;$discountAmount=0.00;
+try{
+ $pdo->beginTransaction();$stmt=$pdo->prepare('SELECT ci.id AS cart_item_id,ci.painting_id,ci.size_option_id,ci.quantity,p.name,p.price,p.discount_price,p.is_active FROM cart_items ci INNER JOIN carts cart ON cart.id=ci.cart_id INNER JOIN paintings p ON p.id=ci.painting_id WHERE cart.user_id=? ORDER BY ci.id ASC FOR UPDATE');$stmt->execute([$userId]);$cartItems=$stmt->fetchAll();if(!$cartItems){$pdo->rollBack();jsonResponse(['success'=>false,'message'=>'Your cart is empty'],409);}
+ $optionStmt=$pdo->prepare('SELECT id,name,width,height,unit,price FROM painting_size_options WHERE id=? AND painting_id=? LIMIT 1');$baseAmount=0.00;
+ foreach($cartItems as &$item){$quantity=(int)$item['quantity'];if(!(int)$item['is_active']){$pdo->rollBack();jsonResponse(['success'=>false,'message'=>'One or more paintings in your order are no longer available'],409);}if($quantity<1){$pdo->rollBack();jsonResponse(['success'=>false,'message'=>'Invalid order quantity'],422);}if($item['size_option_id']!==null){$optionStmt->execute([(int)$item['size_option_id'],(int)$item['painting_id']]);$option=$optionStmt->fetch();}else{$optionStmt=$pdo->prepare('SELECT id,name,width,height,unit,price FROM painting_size_options WHERE painting_id=? ORDER BY is_standard DESC,sort_order ASC,id ASC LIMIT 1');$optionStmt->execute([(int)$item['painting_id']]);$option=$optionStmt->fetch();}$item['size']=$option?:null;$unitPrice=$option?(float)$option['price']:($item['discount_price']!==null&&(float)$item['discount_price']>0?(float)$item['discount_price']:(float)$item['price']);$baseAmount+=max(0,$unitPrice)*$quantity;}
+unset($item);$baseAmount=round($baseAmount,2);$totalAmount=$baseAmount;$orderNumber='ORD-'.strtoupper(bin2hex(random_bytes(8)));
+ $stmt=$pdo->prepare('INSERT INTO orders(order_number,user_id,status,subtotal,base_amount,customization_amount,shipping_amount,delivery_amount,discount_amount,total_amount,shipping_name,shipping_phone,customer_email,shipping_address,shipping_city,shipping_state,shipping_postal_code,shipping_country,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())');$stmt->execute([$orderNumber,$userId,$status,$baseAmount,$baseAmount,$customizationAmount,$deliveryAmount,$deliveryAmount,$discountAmount,$totalAmount,$shippingName,$shippingPhone,$customerEmail,$shippingAddress,$shippingCity,$shippingState,$shippingPostalCode,$shippingCountry]);$orderId=(int)$pdo->lastInsertId();
+ $itemStmt=$pdo->prepare('INSERT INTO order_items(order_id,painting_id,size_option_id,size_name,size_width,size_height,size_unit,painting_name,quantity,unit_price,total_price,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,NOW())');
+ foreach($cartItems as $item){$quantity=(int)$item['quantity'];$size=$item['size'];$unitPrice=$size?(float)$size['price']:($item['discount_price']!==null&&(float)$item['discount_price']>0?(float)$item['discount_price']:(float)$item['price']);$itemStmt->execute([$orderId,(int)$item['painting_id'],$size?(int)$size['id']:null,$size?(string)$size['name']:null,$size?(float)$size['width']:null,$size?(float)$size['height']:null,$size?(string)$size['unit']:null,(string)$item['name'],$quantity,$unitPrice,round($unitPrice*$quantity,2)]);}
+ $historyStmt=$pdo->prepare("INSERT INTO order_status_history(order_id,old_status,new_status,changed_by,changed_by_type,notes) VALUES(?,NULL,?,?,'USER','Initial order request')");$historyStmt->execute([$orderId,$status,$userId]);$pdo->prepare('DELETE ci FROM cart_items ci INNER JOIN carts cart ON cart.id=ci.cart_id WHERE cart.user_id=?')->execute([$userId]);$pdo->commit();jsonResponse(['success'=>true,'message'=>'Order request submitted successfully','order_number'=>$orderNumber,'order_id'=>$orderId,'base_amount'=>$baseAmount,'total_amount'=>$totalAmount],201);
+}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();error_log('Order creation error: '.$e->getMessage());jsonResponse(['success'=>false,'message'=>'Unable to submit your order request'],500);}
