@@ -41,13 +41,13 @@ try {
             ci.painting_id,
             ci.quantity,
             p.name,
-            p.artist_name,
             p.price,
             p.discount_price,
             p.is_active
         FROM cart_items ci
-        INNER JOIN paintings p ON p.id = ci.painting_id
-        WHERE ci.user_id = ?
+INNER JOIN carts cart ON cart.id = ci.cart_id
+INNER JOIN paintings p ON p.id = ci.painting_id
+WHERE cart.user_id = ?
         ORDER BY ci.id ASC
         FOR UPDATE
     ");
@@ -106,8 +106,8 @@ try {
 
     $itemStmt = $pdo->prepare("
         INSERT INTO order_items (
-            order_id, painting_id, painting_name, artist_name, quantity, unit_price, total_price, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            order_id, painting_id, painting_name, quantity, unit_price, total_price, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");
 
     foreach ($cartItems as $item) {
@@ -121,7 +121,7 @@ try {
             $orderId,
             (int)$item['painting_id'],
             (string)$item['name'],
-            (string)($item['artist_name'] ?? ''),
+            
             $quantity,
             $unitPrice,
             $lineTotal
@@ -137,8 +137,13 @@ try {
 
     // Clear the cart in the same transaction so an order cannot be created while
     // leaving the purchased cart items behind.
-    $clearCartStmt = $pdo->prepare('DELETE FROM cart_items WHERE user_id = ?');
-    $clearCartStmt->execute([$userId]);
+    $clearCartStmt = $pdo->prepare("
+    DELETE ci
+    FROM cart_items ci
+    INNER JOIN carts cart ON cart.id = ci.cart_id
+    WHERE cart.user_id = ?
+");
+$clearCartStmt->execute([$userId]);
 
     $pdo->commit();
 
@@ -156,6 +161,11 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+
     error_log('Order creation error: ' . $e->getMessage());
-    jsonResponse(['success' => false, 'message' => 'Unable to create order'], 500);
+
+    jsonResponse([
+        'success' => false,
+        'message' => $e->getMessage()
+    ], 500);
 }

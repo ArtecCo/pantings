@@ -15,7 +15,12 @@ if ($cartItemId <= 0) {
 }
 
 try {
-    $stmt = $pdo->prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?');
+    $stmt = $pdo->prepare('DELETE ci
+FROM cart_items ci
+INNER JOIN carts c
+    ON c.id = ci.cart_id
+WHERE ci.id = ?
+  AND c.user_id = ?');
     $stmt->execute([$cartItemId, $userId]);
 
     if ($stmt->rowCount() === 0) {

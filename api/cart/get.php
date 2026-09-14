@@ -26,15 +26,16 @@ try {
             c.name AS category_name,
             pi.image_url
          FROM cart_items ci
-         INNER JOIN paintings p ON p.id=ci.painting_id
-         LEFT JOIN categories c ON c.id=p.category_id
+         INNER JOIN carts cart ON cart.id=ci.cart_id
+INNER JOIN paintings p ON p.id=ci.painting_id
+LEFT JOIN categories c ON c.id=p.category_id
          LEFT JOIN painting_images pi ON pi.id=(
              SELECT pi2.id FROM painting_images pi2
              WHERE pi2.painting_id=p.id
              ORDER BY pi2.is_primary DESC, pi2.sort_order ASC, pi2.id ASC
              LIMIT 1
          )
-         WHERE ci.user_id=?
+         WHERE cart.user_id=?
          ORDER BY ci.id ASC'
     );
     $stmt->execute([$userId]);
