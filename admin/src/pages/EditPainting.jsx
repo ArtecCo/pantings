@@ -20,8 +20,11 @@ export default function EditPainting() {
   const [categories, setCategories] = useState([])
   const [frames, setFrames] = useState([])
   const [sizes, setSizes] = useState([])
+  const [images, setImages] = useState([])
+  const [newImages, setNewImages] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [imageBusy, setImageBusy] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
   const [form, setForm] = useState({ name:'', category:'', description:'', price:'', width:'', height:'', frame:'', goldDetails:'', status:'available' })
 
@@ -48,8 +51,11 @@ export default function EditPainting() {
       setCategories(categoriesData.categories || [])
       setFrames(framesData.frames || [])
       setSizes(sizesData.sizes || [])
+      setImages(painting.images || [])
+      setNewImages([])
       setForm({ name:painting.name || '', category:painting.category_name || '', description:painting.description || '', price:painting.price || '', width:painting.width || '', height:painting.height || '', frame:painting.frame || '', goldDetails:painting.gold_details || '', status:Number(painting.is_active) === 1 ? 'available' : 'unavailable' })
-      const matchingSize = (sizesData.sizes || []).find(size => Number(size.width) === Number(painting.width) && Number(size.height) === Number(painting.height))
+      const standardOption = (painting.size_options || []).find(size => Number(size.is_standard) === 1)
+      const matchingSize = (sizesData.sizes || []).find(size => standardOption ? (Number(size.width) === Number(standardOption.width) && Number(size.height) === Number(standardOption.height) && String(size.unit || 'in') === String(standardOption.unit || 'in')) : (Number(size.width) === Number(painting.width) && Number(size.height) === Number(painting.height)))
       setSelectedSize(matchingSize ? String(matchingSize.id) : '')
     } catch (error) {
       console.error('Edit painting load error:', error)
@@ -65,26 +71,92 @@ export default function EditPainting() {
     if (selected) setForm(previous => ({ ...previous, width:selected.width, height:selected.height }))
   }
 
+  const handleNewImageChange = event => {
+    const files = Array.from(event.target.files || [])
+    event.target.value = ''
+    if (!files.length) return
+    const valid = files.filter(file => {
+      if (!file.type.startsWith('image/')) { toast.error(`${file.name} is not a valid image.`); return false }
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is larger than 10 MB.`); return false }
+      return true
+    })
+    if (!valid.length) return
+    setNewImages(previous => [...previous, ...valid])
+  }
+
+  const removePendingImage = index => setNewImages(previous => previous.filter((_, itemIndex) => itemIndex !== index))
+
+  const uploadNewImages = async () => {
+    if (!newImages.length) return
+    const formData = new FormData()
+    formData.append('painting_id', id)
+    newImages.forEach(file => formData.append('images[]', file))
+    const response = await fetch(apiUrl('paintings/upload-images.php'), { method:'POST', credentials:'include', body:formData })
+    const raw = await response.text()
+    let data
+    try { data = JSON.parse(raw) } catch { throw new Error(`Image upload returned an invalid response (HTTP ${response.status})`) }
+    if (!response.ok || !data.success) throw new Error(data.message || 'Unable to upload painting images')
+    setImages(previous => [...previous, ...(data.images || [])])
+    setNewImages([])
+  }
+
+  const deleteImage = async image => {
+    if (imageBusy) return
+    setImageBusy(true)
+    try {
+      const response = await fetch(apiUrl('paintings/delete-image.php'), { method:'DELETE', credentials:'include', headers:{ 'Content-Type':'application/json', Accept:'application/json' }, body:JSON.stringify({ image_id:Number(image.id) }) })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to delete image')
+      setImages(previous => previous.filter(item => Number(item.id) !== Number(image.id)))
+      if (Number(image.is_primary) === 1) setImages(previous => previous.map((item, index) => ({ ...item, is_primary: index === 0 ? 1 : 0 })))
+      toast.success('Image deleted successfully')
+    } catch (error) {
+      console.error('Painting image delete error:', error)
+      toast.error(error.message || 'Unable to delete image')
+    } finally { setImageBusy(false) }
+  }
+
+  const setPrimaryImage = async image => {
+    if (imageBusy || Number(image.is_primary) === 1) return
+    setImageBusy(true)
+    try {
+      const response = await fetch(apiUrl('paintings/set-primary-image.php'), { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json', Accept:'application/json' }, body:JSON.stringify({ painting_id:Number(id), image_id:Number(image.id) }) })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to set primary image')
+      setImages(previous => previous.map(item => ({ ...item, is_primary:Number(item.id) === Number(image.id) ? 1 : 0 })))
+      toast.success('Primary image updated')
+    } catch (error) {
+      console.error('Primary image update error:', error)
+      toast.error(error.message || 'Unable to set primary image')
+    } finally { setImageBusy(false) }
+  }
+
   const handleSubmit = async event => {
     event.preventDefault()
     if (saving) return
     setSaving(true)
     try {
-      const response = await fetch(apiUrl('paintings/update.php'), {
-        method:'PUT', credentials:'include', headers:{ 'Content-Type':'application/json', Accept:'application/json' },
-        body:JSON.stringify({ id, ...form })
-      })
+      const response = await fetch(apiUrl('paintings/update.php'), { method:'PUT', credentials:'include', headers:{ 'Content-Type':'application/json', Accept:'application/json' }, body:JSON.stringify({ id, ...form }) })
       const raw = await response.text()
       let data
       try { data = JSON.parse(raw) } catch { throw new Error(`Server returned an invalid response (HTTP ${response.status})`) }
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update painting')
+      if (newImages.length) {
+        setImageBusy(true)
+        toast.info('Painting updated. Uploading images...')
+        await uploadNewImages()
+        setImageBusy(false)
+      }
       toast.success('Painting updated successfully')
-      setTimeout(() => navigate('/paintings'), 1200)
+      setTimeout(() => navigate('/paintings'), 900)
     } catch (error) {
       console.error('Painting update error:', error)
+      setImageBusy(false)
       toast.error(error.message || 'Unable to update painting')
     } finally { setSaving(false) }
   }
+
+  const imageSrc = image => image.image_url?.startsWith('http') ? image.image_url : image.image_url
 
   if (loading) return <div className="painting-form-page"><div className="page-header"><div><span className="eyebrow">ART COLLECTION</span><h1>Edit Painting</h1><p>Loading artwork details...</p></div></div><div className="gold-rule" /><div className="heritage-card metadata-loading">Loading painting...</div></div>
 
@@ -107,8 +179,27 @@ export default function EditPainting() {
           <div className="form-field"><label>Frame</label><select name="frame" value={form.frame} onChange={handleChange} onKeyDown={openNativeSelect}><option value="">Select frame</option>{frames.filter(frame => Number(frame.is_active) === 1).map(frame => <option key={frame.id} value={frame.name}>{frame.name}</option>)}</select></div>
           <div className="form-field form-field-wide"><label>Gold Details</label><input name="goldDetails" value={form.goldDetails} onChange={handleChange} placeholder="22K gold foil, embossed details..." /></div>
         </div></section>
-        <section className="heritage-card form-section"><div className="form-section-heading"><span className="eyebrow">03 · IMAGES</span><h2>Painting Images</h2><p>Image management will be connected next.</p></div><div className="image-upload-area"><div className="upload-symbol">✦</div><h3>Image management</h3><p>Existing image upload controls will be connected after the artwork editing workflow is complete.</p></div></section>
-        <div className="form-actions"><button type="button" className="cancel-button" onClick={() => navigate('/paintings')} disabled={saving}>Cancel</button><button type="submit" className="gold-outline-button" disabled={saving}>{saving ? 'Saving...' : 'Update Painting'}</button></div>
+        <section className="heritage-card form-section">
+          <div className="form-section-heading"><span className="eyebrow">03 · IMAGES</span><h2>Painting Images</h2><p>Manage the existing artwork images, add new images and choose the primary image.</p></div>
+          <div className="image-upload-area">
+            <label className="upload-button">Add Images<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleNewImageChange} /></label>
+            {(images.length > 0 || newImages.length > 0) && <div className="image-carousel">
+              {images.map((image, index) => <div className={`image-carousel-card ${Number(image.is_primary) === 1 ? 'image-carousel-card-primary' : ''}`} key={`existing-${image.id}`}>
+                <img src={imageSrc(image)} alt={`Artwork image ${index + 1}`} />
+                <div className="image-carousel-info"><span>{Number(image.is_primary) === 1 ? 'Primary image' : `Image ${index + 1}`}</span><small>Uploaded artwork image</small></div>
+                <div className="image-carousel-actions"><button type="button" className="gold-outline-button" onClick={() => setPrimaryImage(image)} disabled={imageBusy || Number(image.is_primary) === 1}>{Number(image.is_primary) === 1 ? 'Primary' : 'Make Primary'}</button><button type="button" className="cancel-button" onClick={() => deleteImage(image)} disabled={imageBusy}>Delete</button></div>
+              </div>)}
+              {newImages.map((file, index) => <div className="image-carousel-card" key={`new-${file.name}-${index}`}>
+                <img src={URL.createObjectURL(file)} alt={`New artwork image ${index + 1}`} />
+                <div className="image-carousel-info"><span>Pending upload</span><small>{file.name}</small></div>
+                <div className="image-carousel-actions"><button type="button" className="cancel-button" onClick={() => removePendingImage(index)} disabled={imageBusy}>Remove</button></div>
+              </div>)}
+            </div>}
+            {!images.length && !newImages.length && <div className="metadata-loading">No images uploaded for this painting yet.</div>}
+            <p className="image-upload-note">Images are saved to the painting record. Deleting an existing image removes both its database record and uploaded file.</p>
+          </div>
+        </section>
+        <div className="form-actions"><button type="button" className="cancel-button" onClick={() => navigate('/paintings')} disabled={saving || imageBusy}>Cancel</button><button type="submit" className="gold-outline-button" disabled={saving || imageBusy}>{saving || imageBusy ? 'Saving...' : 'Update Painting'}</button></div>
       </form>
     </div>
   )
