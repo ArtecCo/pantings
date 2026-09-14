@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiUrl } from '../config/api'
+import './TrackOrders.css'
 
 const STATUS_LABELS={PENDING_ACCEPTANCE:'Pending Acceptance',ACCEPTED:'Accepted',PAYMENT_DUE:'Payment Due',PAID:'Paid',PROCESSING:'Processing',DISPATCHED:'Dispatched',DELIVERED:'Delivered',REJECTED:'Rejected',CANCELLED:'Cancelled'}
 const getImageUrl=url=>!url?'':url.startsWith('http')?url:`http://localhost${url}`
