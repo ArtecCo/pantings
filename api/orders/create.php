@@ -23,8 +23,8 @@ if (strlen($shippingName) > 150 || strlen($shippingPhone) > 40 || strlen($shippi
     jsonResponse(['success' => false, 'message' => 'One or more shipping details are too long'], 422);
 }
 
-// Shipping is intentionally calculated by the server. The client never supplies
-// subtotal, discount, shipping, or total amounts.
+// All monetary values are calculated from current database values. The client
+// never supplies subtotal, discount, shipping, or total amounts.
 $shippingAmount = 25.00;
 $discountAmount = 0.00;
 $status = 'Order created';
@@ -32,7 +32,9 @@ $status = 'Order created';
 try {
     $pdo->beginTransaction();
 
-    // Lock the cart rows and their paintings for the duration of checkout.
+    // Lock only this customer's cart rows while converting the cart into an order.
+    // There is intentionally no inventory/stock check or decrement: paintings are
+    // sold on demand and multiple customers may order the same painting.
     $stmt = $pdo->prepare("
         SELECT
             ci.id AS cart_item_id,
@@ -42,7 +44,6 @@ try {
             p.artist_name,
             p.price,
             p.discount_price,
-            p.stock,
             p.is_active
         FROM cart_items ci
         INNER JOIN paintings p ON p.id = ci.painting_id
@@ -61,14 +62,13 @@ try {
     $subtotal = 0.00;
     foreach ($cartItems as $item) {
         $quantity = (int)$item['quantity'];
-        $stock = (int)$item['stock'];
         if (!(int)$item['is_active']) {
             $pdo->rollBack();
             jsonResponse(['success' => false, 'message' => 'One or more paintings in your cart are no longer available'], 409);
         }
-        if ($quantity < 1 || $quantity > $stock) {
+        if ($quantity < 1) {
             $pdo->rollBack();
-            jsonResponse(['success' => false, 'message' => 'One or more paintings no longer have the requested quantity available'], 409);
+            jsonResponse(['success' => false, 'message' => 'One or more cart quantities are invalid'], 422);
         }
 
         $unitPrice = $item['discount_price'] !== null && (float)$item['discount_price'] > 0
@@ -98,19 +98,8 @@ try {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     ");
     $stmt->execute([
-        $orderNumber,
-        $userId,
-        $status,
-        $subtotal,
-        $shippingAmount,
-        $discountAmount,
-        $totalAmount,
-        $shippingName,
-        $shippingPhone,
-        $shippingCity,
-        $shippingState,
-        $shippingPostalCode,
-        $shippingCountry
+        $orderNumber, $userId, $status, $subtotal, $shippingAmount, $discountAmount, $totalAmount,
+        $shippingName, $shippingPhone, $shippingCity, $shippingState, $shippingPostalCode, $shippingCountry
     ]);
 
     $orderId = (int)$pdo->lastInsertId();
@@ -120,7 +109,6 @@ try {
             order_id, painting_id, painting_name, artist_name, quantity, unit_price, total_price, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stockStmt = $pdo->prepare('UPDATE paintings SET stock = stock - ? WHERE id = ? AND stock >= ?');
 
     foreach ($cartItems as $item) {
         $quantity = (int)$item['quantity'];
@@ -138,11 +126,6 @@ try {
             $unitPrice,
             $lineTotal
         ]);
-
-        $stockStmt->execute([$quantity, (int)$item['painting_id'], $quantity]);
-        if ($stockStmt->rowCount() !== 1) {
-            throw new RuntimeException('Stock changed during checkout');
-        }
     }
 
     $historyStmt = $pdo->prepare("
@@ -152,6 +135,8 @@ try {
     ");
     $historyStmt->execute([$orderId, $status, $userId]);
 
+    // Clear the cart in the same transaction so an order cannot be created while
+    // leaving the purchased cart items behind.
     $clearCartStmt = $pdo->prepare('DELETE FROM cart_items WHERE user_id = ?');
     $clearCartStmt->execute([$userId]);
 
