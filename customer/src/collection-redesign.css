@@ -1,0 +1,41 @@
+/* Premium collection redesign — intentionally scoped to collection markup */
+.ara-collection{width:min(1320px,calc(100% - 72px));padding:72px 0 120px}
+.ara-collection-hero{display:grid;grid-template-columns:minmax(0,1fr) 220px;align-items:end;gap:60px;padding:28px 0 58px;border-bottom:1px solid var(--border)}
+.ara-collection-hero-copy{max-width:820px}
+.ara-collection-kicker{display:flex;align-items:center;gap:12px;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.22em}
+.ara-collection-kicker span{width:38px;height:1px;background:var(--gold)}
+.ara-collection-hero h1{margin:20px 0 20px;color:var(--maroon);font-family:'Cormorant Garamond',serif;font-size:clamp(64px,7vw,98px);font-weight:500;line-height:.82;letter-spacing:-.025em}
+.ara-collection-hero h1 em{color:var(--brown);font-weight:400}
+.ara-collection-hero-copy p{max-width:650px;margin:0;color:var(--muted);font-size:14px;line-height:1.9}
+.ara-collection-hero-note{padding:20px 0 4px 28px;border-left:1px solid var(--gold)}
+.ara-collection-hero-note span{display:block;color:var(--gold);font-size:9px;font-weight:600;letter-spacing:.2em}
+.ara-collection-hero-note strong{display:block;margin:5px 0 0;color:var(--maroon);font:500 60px/.9 'Cormorant Garamond',serif}
+.ara-collection-hero-note small{color:var(--muted);font-size:10px;letter-spacing:.04em}
+.ara-collection-toolbar{display:grid;grid-template-columns:auto 280px minmax(0,1fr);align-items:center;gap:28px;padding:25px 0 30px}
+.ara-collection-result{display:flex;flex-direction:column;gap:5px;white-space:nowrap}
+.ara-collection-result span{color:var(--gold);font-size:9px;font-weight:600;letter-spacing:.18em}
+.ara-collection-result strong{color:var(--brown);font:500 20px/1 'Cormorant Garamond',serif}
+.ara-search-box{width:100%;height:46px;border-radius:0!important;background:var(--paper)!important;border:1px solid rgba(91,18,23,.2)!important;box-shadow:0 4px 16px rgba(44,24,16,.035);}
+.ara-search-box:focus-within{border-color:var(--gold)!important;box-shadow:0 6px 20px rgba(44,24,16,.06)}
+.ara-category-filters{justify-content:flex-end;gap:4px}
+.ara-category-filters button{padding:8px 12px;border-radius:0;font-size:10px;letter-spacing:.03em}
+.ara-category-filters button.active{background:var(--maroon);border-color:var(--maroon);color:var(--gold-light)}
+.ara-painting-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:38px 28px}
+.ara-painting-card{border:1px solid rgba(44,24,16,.18);outline:1px solid rgba(212,175,55,.45);outline-offset:-6px;box-shadow:0 12px 30px rgba(44,24,16,.055);background:var(--paper);transition:transform .35s ease,box-shadow .35s ease}
+.ara-painting-card::before,.ara-painting-card::after{width:10px;height:10px}
+.ara-painting-card:hover{transform:translateY(-7px);box-shadow:0 24px 48px rgba(44,24,16,.12)}
+.ara-painting-image{aspect-ratio:.82;margin:7px 7px 0;background:var(--cream)}
+.ara-painting-image img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.ara-painting-info{padding:19px 19px 18px}
+.ara-painting-meta{font-size:8px;letter-spacing:.16em}
+.ara-painting-info h2{margin:9px 0 3px;font-size:25px;line-height:1.02}
+.ara-painting-artist{font-size:10px}
+.ara-painting-bottom{margin-top:18px;padding-top:14px}
+.ara-painting-bottom strong{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600}
+.ara-card-arrow{width:40px;height:40px;border:1px solid rgba(91,18,23,.2);background:transparent;color:var(--maroon);transition:all .25s ease}
+.ara-painting-card:hover .ara-card-arrow{background:var(--maroon);border-color:var(--maroon);color:var(--gold-light);transform:translateX(2px)}
+.ara-gold-badge{top:14px;left:14px;font-size:7px;letter-spacing:.18em}
+.ara-collection-state{margin:30px 0;padding:70px 20px;border:1px solid var(--border);background:rgba(253,251,247,.55);text-align:center}
+@media(max-width:1050px){.ara-collection-hero{grid-template-columns:minmax(0,1fr) 160px;gap:35px}.ara-collection-toolbar{grid-template-columns:auto 240px}.ara-category-filters{grid-column:1/-1;justify-content:flex-start}.ara-painting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.ara-collection{width:calc(100% - 28px);padding:42px 0 80px}.ara-collection-hero{display:block;padding:12px 0 38px}.ara-collection-hero h1{font-size:clamp(53px,15vw,72px);line-height:.86}.ara-collection-hero-copy p{font-size:12px;line-height:1.75}.ara-collection-hero-note{display:flex;align-items:baseline;gap:9px;margin-top:30px;padding:12px 0 0;border-left:0;border-top:1px solid var(--gold)}.ara-collection-hero-note strong{font-size:38px}.ara-collection-hero-note small{font-size:9px}.ara-collection-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:15px;padding:20px 0 24px}.ara-collection-result{flex-direction:row;align-items:baseline;justify-content:space-between}.ara-category-filters{width:100%;overflow-x:auto;justify-content:flex-start;padding-bottom:3px}.ara-painting-grid{grid-template-columns:1fr;gap:26px}.ara-painting-image{aspect-ratio:.88}.ara-painting-info h2{font-size:23px}}
+@media(max-width:380px){.ara-collection{width:calc(100% - 20px)}.ara-collection-hero h1{font-size:51px}}
