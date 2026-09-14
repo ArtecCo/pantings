@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiUrl } from '../config/api';
 import { useToast } from '../components/ToastProvider';
+import './Login.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '329379769166-igtg18ou4c67e0va4qe8hrs4evfs0m46.apps.googleusercontent.com';
 
@@ -19,7 +20,6 @@ export default function Login() {
 
     useEffect(() => {
         if (mode !== 'login' || !GOOGLE_CLIENT_ID || !googleButtonRef.current) return undefined;
-
         let cancelled = false;
 
         const handleGoogleCredential = async ({ credential }) => {
@@ -27,30 +27,20 @@ export default function Login() {
                 if (!cancelled) toastRef.current.error('Google sign-in did not return a valid credential.');
                 return;
             }
-
             setLoading(true);
             try {
                 const res = await fetch(apiUrl('auth/user-login.php'), {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ type: 'google', token: credential }),
                 });
-
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.success) {
-                    throw new Error(data.message || 'Google sign-in failed.');
-                }
-
+                if (!res.ok || !data.success) throw new Error(data.message || 'Google sign-in failed.');
                 toastRef.current.success('Signed in with Google.');
                 window.location.replace('/account');
             } catch (err) {
-                if (!cancelled) {
-                    toastRef.current.error(err.message || 'Google sign-in failed.');
-                }
+                if (!cancelled) toastRef.current.error(err.message || 'Google sign-in failed.');
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -58,29 +48,18 @@ export default function Login() {
 
         const renderGoogle = () => {
             if (cancelled || !window.google?.accounts?.id || !googleButtonRef.current) return;
-
             googleButtonRef.current.innerHTML = '';
-            window.google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleGoogleCredential,
-            });
+            window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
             window.google.accounts.id.renderButton(googleButtonRef.current, {
-                type: 'standard',
-                theme: 'outline',
-                size: 'large',
-                width: 372,
-                text: 'continue_with',
-                shape: 'rectangular',
+                type: 'standard', theme: 'outline', size: 'large', width: 372, text: 'continue_with', shape: 'rectangular',
             });
         };
 
-        if (window.google?.accounts?.id) {
-            renderGoogle();
-        } else {
+        if (window.google?.accounts?.id) renderGoogle();
+        else {
             const existing = document.querySelector('script[data-google-gsi]');
-            if (existing) {
-                existing.addEventListener('load', renderGoogle, { once: true });
-            } else {
+            if (existing) existing.addEventListener('load', renderGoogle, { once: true });
+            else {
                 const script = document.createElement('script');
                 script.src = 'https://accounts.google.com/gsi/client';
                 script.async = true;
@@ -100,40 +79,20 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-
         try {
             const endpoint = mode === 'login' ? 'auth/user-login.php' : 'auth/user-register.php';
             const body = mode === 'login'
-                ? {
-                    type: 'email',
-                    email: email.trim().toLowerCase(),
-                    password,
-                }
-                : {
-                    email: email.trim().toLowerCase(),
-                    password,
-                    first_name: firstName.trim(),
-                    last_name: lastName.trim(),
-                };
-
+                ? { type: 'email', email: email.trim().toLowerCase(), password }
+                : { email: email.trim().toLowerCase(), password, first_name: firstName.trim(), last_name: lastName.trim() };
             const res = await fetch(apiUrl(endpoint), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify(body),
             });
-
             const data = await res.json().catch(() => ({}));
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || 'Unable to continue.');
-            }
-
-            toastRef.current.success(
-                mode === 'login' ? 'Signed in successfully.' : 'Account created successfully.'
-            );
+            if (!res.ok || !data.success) throw new Error(data.message || 'Unable to continue.');
+            toastRef.current.success(mode === 'login' ? 'Signed in successfully.' : 'Account created successfully.');
             window.location.replace('/account');
         } catch (err) {
             toastRef.current.error(err.message || 'Unable to continue.');
@@ -154,100 +113,29 @@ export default function Login() {
                     <span className="ara-brand-small">THE HOUSE OF</span>
                     <span className="ara-brand-name">ARAmane Arts</span>
                 </div>
-
                 <div className="ara-login-divider"><span /><b>✦</b><span /></div>
-
                 <div className="ara-login-heading">
-                    <p className="ara-login-eyebrow">
-                        {mode === 'login' ? 'WELCOME BACK' : 'JOIN ARAMANE ARTS'}
-                    </p>
+                    <p className="ara-login-eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'JOIN ARAMANE ARTS'}</p>
                     <h1>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
-                    <p>
-                        {mode === 'login'
-                            ? 'Sign in to track your orders and manage your account.'
-                            : 'Create an account to save your details and track your orders.'}
-                    </p>
+                    <p>{mode === 'login' ? 'Sign in to track your orders and manage your account.' : 'Create an account to save your details and track your orders.'}</p>
                 </div>
-
                 <form className="ara-login-form" onSubmit={handleSubmit}>
                     {mode === 'register' && (
                         <div className="ara-login-name-grid">
-                            <label>
-                                <span>First name</span>
-                                <input
-                                    value={firstName}
-                                    onChange={e => setFirstName(e.target.value)}
-                                    placeholder="First name"
-                                    autoComplete="given-name"
-                                    required
-                                />
-                            </label>
-                            <label>
-                                <span>Last name</span>
-                                <input
-                                    value={lastName}
-                                    onChange={e => setLastName(e.target.value)}
-                                    placeholder="Last name"
-                                    autoComplete="family-name"
-                                />
-                            </label>
+                            <label><span>First name</span><input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" autoComplete="given-name" required /></label>
+                            <label><span>Last name</span><input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" autoComplete="family-name" /></label>
                         </div>
                     )}
-
-                    <label>
-                        <span>Email address</span>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="you@example.com"
-                            autoComplete="email"
-                            required
-                        />
-                    </label>
-
-                    <label>
-                        <span>Password</span>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            placeholder="At least 8 characters"
-                            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                            minLength={8}
-                            required
-                        />
-                    </label>
-
-                    <button className="ara-login-submit" type="submit" disabled={loading}>
-                        {loading
-                            ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
-                            : (mode === 'login' ? 'Sign in' : 'Create account')}
-                    </button>
+                    <label><span>Email address</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
+                    <label><span>Password</span><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required /></label>
+                    <button className="ara-login-submit" type="submit" disabled={loading}>{loading ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : (mode === 'login' ? 'Sign in' : 'Create account')}</button>
                 </form>
-
-                {mode === 'login' && (
-                    <>
-                        <div className="ara-login-divider"><span /><b>OR</b><span /></div>
-                        <div className="ara-google-button" ref={googleButtonRef} />
-                    </>
-                )}
-
+                {mode === 'login' && <><div className="ara-login-divider"><span /><b>OR</b><span /></div><div className="ara-google-button" ref={googleButtonRef} /></>}
                 <div className="ara-login-switch">
                     {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
-                    <button
-                        type="button"
-                        onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                    >
-                        {mode === 'login' ? ' Create one' : ' Sign in'}
-                    </button>
+                    <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? ' Create one' : ' Sign in'}</button>
                 </div>
-
-                <div className="ara-login-footer">
-                    <span>ARAmane Arts</span>
-                    <i>•</i>
-                    <span>Heritage paintings</span>
-                </div>
+                <div className="ara-login-footer"><span>ARAmane Arts</span><i>•</i><span>Heritage paintings</span></div>
             </section>
         </main>
     );
