@@ -1,63 +1,22 @@
 <?php
+declare(strict_types=1);
+require_once __DIR__ . '/../auth/require-admin.php';
 
-session_start();
-
-header("Access-Control-Allow-Origin: http://localhost:5174");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-require_once __DIR__ . '/../config/database.php';
-
-if (!isset($_SESSION['admin_user_id'])) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Administrator authentication required'
-    ]);
-    exit;
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
 try {
-
     $paintingId = (int)($_GET['painting_id'] ?? 0);
-
     if ($paintingId <= 0) {
-        throw new Exception('Invalid painting ID');
+        adminJsonResponse(['success' => false, 'message' => 'Invalid painting ID'], 400);
     }
 
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            painting_id,
-            image_url,
-            sort_order,
-            is_primary,
-            created_at
-        FROM painting_images
-        WHERE painting_id = ?
-        ORDER BY sort_order ASC, id ASC
-    ");
-
+    $stmt = $pdo->prepare('SELECT id,painting_id,image_url,sort_order,is_primary,created_at FROM painting_images WHERE painting_id=? ORDER BY sort_order ASC,id ASC');
     $stmt->execute([$paintingId]);
 
-    echo json_encode([
-        'success' => true,
-        'images' => $stmt->fetchAll()
-    ]);
-
+    adminJsonResponse(['success' => true, 'images' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 } catch (Throwable $e) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    error_log('Painting image list error: '.$e->getMessage());
+    adminJsonResponse(['success' => false, 'message' => 'Unable to load painting images'], 500);
 }
