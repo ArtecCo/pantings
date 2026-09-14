@@ -11,6 +11,7 @@ import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
 import { apiUrl } from './config/api'
 import './App.css'
+import './pages/Orders.css'
 
 const menuItems = [
   { label: 'Dashboard', icon: '⌂', path: '/' }, { label: 'Orders', icon: '◇', path: '/orders' },
