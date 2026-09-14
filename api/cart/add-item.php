@@ -19,15 +19,12 @@ if ($quantity === false || $quantity < 1) {
 }
 
 try {
-    $stmt = $pdo->prepare('SELECT id, stock, is_active FROM paintings WHERE id = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, is_active FROM paintings WHERE id = ? LIMIT 1');
     $stmt->execute([$paintingId]);
     $painting = $stmt->fetch();
 
     if (!$painting || !(int)$painting['is_active']) {
         jsonResponse(['success' => false, 'message' => 'Painting is unavailable'], 404);
-    }
-    if ($quantity > (int)$painting['stock']) {
-        jsonResponse(['success' => false, 'message' => 'Requested quantity is not available'], 409);
     }
 
     $stmt = $pdo->prepare('SELECT id, quantity FROM cart_items WHERE user_id = ? AND painting_id = ? LIMIT 1');
@@ -36,9 +33,6 @@ try {
 
     if ($existing) {
         $newQuantity = (int)$existing['quantity'] + $quantity;
-        if ($newQuantity > (int)$painting['stock']) {
-            jsonResponse(['success' => false, 'message' => 'Requested quantity is not available'], 409);
-        }
         $stmt = $pdo->prepare('UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
         $stmt->execute([$newQuantity, (int)$existing['id'], $userId]);
         $cartItemId = (int)$existing['id'];
