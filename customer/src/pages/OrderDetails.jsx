@@ -5,7 +5,7 @@ import './OrderDetails.css'
 
 const STATUS_LABELS={PENDING_ACCEPTANCE:'Pending Acceptance',ACCEPTED:'Accepted',PAYMENT_DUE:'Payment Due',PAID:'Paid',PROCESSING:'Processing',DISPATCHED:'Dispatched',DELIVERED:'Delivered',REJECTED:'Rejected',CANCELLED:'Cancelled'}
 const money=value=>Number(value||0).toLocaleString('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2})
-const formatDate=value=>value?new Date(String(value).replace(' ','T')).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+const formatDate=value=>value?new Date(String(value).replace(' ','T')).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'
 
 export default function OrderDetails(){
  const {id}=useParams();const navigate=useNavigate();const [order,setOrder]=useState(null);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [cancelling,setCancelling]=useState(false)
