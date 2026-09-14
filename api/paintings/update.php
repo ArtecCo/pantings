@@ -1,20 +1,10 @@
 <?php
-
-header("Access-Control-Allow-Origin: http://localhost:5174");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: PUT, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/require-admin.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-    jsonResponse(['success'=>false,'message'=>'Method not allowed'],405);
+    adminJsonResponse(['success'=>false,'message'=>'Method not allowed'],405);
 }
 
 try {
@@ -22,19 +12,21 @@ try {
     $adminEmail=$_SESSION['admin_email']??null;
     $input=json_decode(file_get_contents('php://input'),true);
 
-    if (!is_array($input)) throw new Exception('Invalid request data');
+    if (!is_array($input)) {
+        throw new Exception('Invalid request data');
+    }
 
     $id=isset($input['id'])?(int)$input['id']:0;
     if ($id<=0) throw new Exception('Invalid painting ID');
 
-    $name=trim($input['name']??'');
-    $category=trim($input['category']??'');
-    $description=trim($input['description']??'');
+    $name=trim((string)($input['name']??''));
+    $category=trim((string)($input['category']??''));
+    $description=trim((string)($input['description']??''));
     $price=$input['price']??'';
     $width=$input['width']??'';
     $height=$input['height']??'';
-    $frame=trim($input['frame']??'');
-    $goldDetails=trim($input['goldDetails']??'');
+    $frame=trim((string)($input['frame']??''));
+    $goldDetails=trim((string)($input['goldDetails']??''));
     $status=$input['status']??'available';
 
     if ($name==='') throw new Exception('Painting name is required');
@@ -50,10 +42,10 @@ try {
     if (!$categoryRow) throw new Exception('Selected category was not found');
     $categoryId=(int)$categoryRow['id'];
 
-    $existingStmt=$pdo->prepare('SELECT id,name FROM paintings WHERE id=? LIMIT 1');
+    $existingStmt=$pdo->prepare('SELECT id FROM paintings WHERE id=? LIMIT 1');
     $existingStmt->execute([$id]);
     if (!$existingStmt->fetch()) {
-        jsonResponse(['success'=>false,'message'=>'Painting not found'],404);
+        adminJsonResponse(['success'=>false,'message'=>'Painting not found'],404);
     }
 
     $baseSlug=strtolower(trim($name));
@@ -88,8 +80,8 @@ try {
         $_SERVER['REMOTE_ADDR']??null,$_SERVER['HTTP_USER_AGENT']??null
     ]);
 
-    echo json_encode(['success'=>true,'message'=>'Painting updated successfully','painting_id'=>$id]);
+    adminJsonResponse(['success'=>true,'message'=>'Painting updated successfully','painting_id'=>$id]);
 } catch (Throwable $e) {
     error_log('Painting update error: '.$e->getMessage());
-    jsonResponse(['success'=>false,'message'=>$e->getMessage()],500);
+    adminJsonResponse(['success'=>false,'message'=>$e->getMessage()],500);
 }
