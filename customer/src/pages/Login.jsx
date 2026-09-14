@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { apiUrl } from '../config/api';
 
-const API = 'http://localhost/paintings/api';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export default function Login() {
@@ -27,7 +27,7 @@ export default function Login() {
                 callback: async ({ credential }) => {
                     clearMessages(); setLoading(true);
                     try {
-                        const res = await fetch(`${API}/auth/user-login.php`, {
+                        const res = await fetch(apiUrl('auth/user-login.php'), {
                             method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                             body: JSON.stringify({ type: 'google', token: credential }),
                         });
@@ -62,7 +62,7 @@ export default function Login() {
             const body = mode === 'login'
                 ? { type: 'email', email: email.trim().toLowerCase(), password }
                 : { email: email.trim().toLowerCase(), password, first_name: firstName.trim(), last_name: lastName.trim() };
-            const res = await fetch(`${API}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+            const res = await fetch(apiUrl(endpoint), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data.success) throw new Error(data.message || 'Unable to continue.');
             window.location.replace('/account');
