@@ -14,8 +14,7 @@ import './App.css'
 
 const menuItems = [
   { label: 'Dashboard', icon: '⌂', path: '/' }, { label: 'Orders', icon: '◇', path: '/orders' },
-  { label: 'Paintings', icon: '▧', path: '/paintings' }, { label: 'Categories', icon: '◈', path: '/categories' },
-  { label: 'Artists', icon: '♢', path: '/artists' }, { label: 'Customers', icon: '♙', path: '/customers' },
+  { label: 'Paintings', icon: '▧', path: '/paintings' }, { label: 'Customers', icon: '♙', path: '/customers' },
   { label: 'Payments', icon: '₹', path: '/payments' }, { label: 'Reports', icon: '▤', path: '/reports' },
   { label: 'Metadata', icon: '◇', path: '/metadata' },
 ]
@@ -58,5 +57,5 @@ function ProtectedRoute({ children }) {
   return state === 'authenticated' ? children : <Navigate to="/login" replace />
 }
 
-function App() { return <ToastProvider><BrowserRouter><Routes><Route path="/login" element={<AdminLogin />} /><Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /><Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} /><Route path="/orders/:id" element={<ProtectedRoute><AdminLayout><OrderDetails /></AdminLayout></ProtectedRoute>} /><Route path="/paintings" element={<ProtectedRoute><AdminLayout><PaintingList /></AdminLayout></ProtectedRoute>} /><Route path="/paintings/:id/edit" element={<ProtectedRoute><AdminLayout><EditPainting /></AdminLayout></ProtectedRoute>} /><Route path="/paintings/new" element={<ProtectedRoute><AdminLayout><AddPainting /></AdminLayout></ProtectedRoute>} /><Route path="/metadata" element={<ProtectedRoute><AdminLayout><Metadata /></AdminLayout></ProtectedRoute>} />{managementItems.concat(menuItems.filter(item => !['/','/orders','/paintings','/metadata'].includes(item.path))).map(item => <Route key={item.path} path={item.path} element={<ProtectedRoute><PlaceholderPage title={item.label} /></ProtectedRoute>} />)}<Route path="*" element={<Navigate to="/" replace />} /></Routes></BrowserRouter></ToastProvider> }
+function App() { return <ToastProvider><BrowserRouter><Routes><Route path="/login" element={<AdminLogin />} /><Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /><Route path="/orders" element={<ProtectedRoute><AdminLayout><Orders /></AdminLayout></ProtectedRoute>} /><Route path="/orders/:id" element={<ProtectedRoute><AdminLayout><OrderDetails /></AdminLayout></ProtectedRoute>} /><Route path="/paintings" element={<ProtectedRoute><AdminLayout><PaintingList /></AdminLayout></ProtectedRoute>} /><Route path="/paintings/:id/edit" element={<ProtectedRoute><AdminLayout><EditPainting /></AdminLayout></ProtectedRoute>} /><Route path="/paintings/new" element={<ProtectedRoute><AdminLayout><AddPainting /></AdminLayout></ProtectedRoute>} /><Route path="/metadata" element={<ProtectedRoute><AdminLayout><Metadata /></AdminLayout></ProtectedRoute>} />{managementItems.concat(menuItems.filter(item => !['/','/orders','/paintings','/metadata'].includes(item.path))).map(item => <Route key={item.path} path={item.path} element={<ProtectedRoute><PlaceholderPage title={item.label} /></ProtectedRoute>} />)}<Route path="*" element={<Navigate to="/" replace />} /></Routes></BrowserRouter></ToastProvider> }
 export default App
