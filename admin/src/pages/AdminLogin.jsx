@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const API = 'http://localhost/paintings/api'
+import { apiUrl } from '../config/api'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -25,25 +24,19 @@ export default function AdminLogin() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${API}/auth/login.php`, {
+      const response = await fetch(apiUrl('auth/login.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          password
-        })
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password })
       })
 
       const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Unable to sign in.')
-      }
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to sign in.')
 
       if (data.requires_otp) {
         setStep('otp')
-        setMessage('A verification code has been sent to your registered email.')
+        setMessage(data.message || 'A verification code has been sent to your registered email.')
       } else {
         navigate('/', { replace: true })
       }
@@ -64,9 +57,8 @@ export default function AdminLogin() {
     }
 
     setLoading(true)
-
     try {
-      const response = await fetch(`${API}/auth/verify-otp.php`, {
+      const response = await fetch(apiUrl('auth/verify-otp.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -74,11 +66,7 @@ export default function AdminLogin() {
       })
 
       const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Invalid verification code.')
-      }
-
+      if (!response.ok || !data.success) throw new Error(data.message || 'Invalid verification code.')
       navigate('/', { replace: true })
     } catch (err) {
       setError(err.message || 'Unable to verify the code.')
@@ -92,104 +80,32 @@ export default function AdminLogin() {
       <section className="ara-login-shell">
         <div className="ara-login-brand">
           <div className="ara-login-mark">A</div>
-          <div>
-            <div className="ara-login-brand-name">ARAmane Arts</div>
-            <div className="ara-login-brand-subtitle">Heritage Paintings</div>
-          </div>
+          <div><div className="ara-login-brand-name">ARAmane Arts</div><div className="ara-login-brand-subtitle">Heritage Paintings</div></div>
         </div>
-
-        <div className="ara-login-divider">
-          <span />
-          <b>✦</b>
-          <span />
-        </div>
-
+        <div className="ara-login-divider"><span /><b>✦</b><span /></div>
         <div className="ara-login-heading">
           <p className="ara-login-eyebrow">ADMINISTRATION</p>
           <h1>{step === 'credentials' ? 'Welcome back' : 'Verify your identity'}</h1>
-          <p>
-            {step === 'credentials'
-              ? 'Sign in to manage the ARAmane Arts collection.'
-              : 'Enter the verification code sent to your registered email address.'}
-          </p>
+          <p>{step === 'credentials' ? 'Sign in to manage the ARAmane Arts collection.' : 'Enter the verification code sent to your registered email address.'}</p>
         </div>
 
         {step === 'credentials' ? (
           <form className="ara-login-form" onSubmit={handleLogin}>
-            <label>
-              <span>Email address</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
-                autoComplete="username"
-                required
-              />
-            </label>
-
-            <label>
-              <span>Password</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                required
-              />
-            </label>
-
-            <button className="ara-login-submit" type="submit" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign in'}
-              {!loading && <span>→</span>}
-            </button>
+            <label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" autoComplete="username" required /></label>
+            <label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" required /></label>
+            <button className="ara-login-submit" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}{!loading && <span>→</span>}</button>
           </form>
         ) : (
           <form className="ara-login-form" onSubmit={handleVerifyOtp}>
-            <label>
-              <span>Verification code</span>
-              <input
-                className="ara-otp-input"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                autoComplete="one-time-code"
-                autoFocus
-                required
-              />
-            </label>
-
-            <button className="ara-login-submit" type="submit" disabled={loading}>
-              {loading ? 'Verifying…' : 'Verify & continue'}
-              {!loading && <span>→</span>}
-            </button>
-
-            <button
-              className="ara-login-back"
-              type="button"
-              onClick={() => {
-                clearMessages()
-                setOtp('')
-                setStep('credentials')
-              }}
-            >
-              ← Back to sign in
-            </button>
+            <label><span>Verification code</span><input className="ara-otp-input" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" autoComplete="one-time-code" autoFocus required /></label>
+            <button className="ara-login-submit" type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify & continue'}{!loading && <span>→</span>}</button>
+            <button className="ara-login-back" type="button" onClick={() => { clearMessages(); setOtp(''); setStep('credentials') }}>← Back to sign in</button>
           </form>
         )}
 
         {message && <div className="ara-login-message">{message}</div>}
         {error && <div className="ara-login-error">{error}</div>}
-
-        <div className="ara-login-footer">
-          <span>ARAmane Arts</span>
-          <i>•</i>
-          <span>Private administration</span>
-        </div>
+        <div className="ara-login-footer"><span>ARAmane Arts</span><i>•</i><span>Private administration</span></div>
       </section>
     </main>
   )
