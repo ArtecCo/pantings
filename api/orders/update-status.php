@@ -12,16 +12,24 @@ $orderId = (int)($data['order_id'] ?? 0);
 $action = trim((string)($data['action'] ?? ''));
 $notes = trim((string)($data['notes'] ?? ''));
 
-if ($orderId <= 0) {
-    adminJsonResponse(['success' => false, 'message' => 'Invalid order'], 400);
-}
-if (strlen($notes) > 2000) {
-    adminJsonResponse(['success' => false, 'message' => 'Notes are too long'], 422);
-}
+if ($orderId <= 0) adminJsonResponse(['success' => false, 'message' => 'Invalid order'], 400);
+if (strlen($notes) > 2000) adminJsonResponse(['success' => false, 'message' => 'Notes are too long'], 422);
 
-$validStatuses = ['Order created', 'Artist to get in touch', 'Accepted', 'Processing', 'Dispatched', 'Delivered', 'REJECTED'];
+$validStatuses = [
+    'Order created',
+    'Artist to get in touch',
+    'Accepted',
+    'Payment Due',
+    'Paid',
+    'Processing',
+    'Dispatched',
+    'Delivered',
+    'REJECTED',
+    'CANCELLED',
+];
+
 if (!in_array($action, $validStatuses, true)) {
-    adminJsonResponse(['success' => false, 'message' => 'Invalid order action/status'], 400);
+    adminJsonResponse(['success' => false, 'message' => 'Invalid order status'], 400);
 }
 
 try {
@@ -36,30 +44,29 @@ try {
     }
 
     $oldStatus = (string)$order['status'];
-    $newStatus = $action;
-
-    if ($oldStatus === $newStatus && $notes === '') {
+    if ($oldStatus === $action && $notes === '') {
         $pdo->rollBack();
         adminJsonResponse(['success' => false, 'message' => 'Order is already in this status'], 409);
     }
 
-    $updateQuery = 'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP';
-    $params = [$newStatus];
+    $query = 'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP';
+    $params = [$action];
     if ($notes !== '') {
-        $updateQuery .= ', artist_notes = ?';
+        $query .= ', artist_notes = ?';
         $params[] = $notes;
     }
-    if ($newStatus === 'Accepted' && $oldStatus !== 'Accepted') $updateQuery .= ', accepted_at = CURRENT_TIMESTAMP';
-    if ($newStatus === 'Dispatched' && $oldStatus !== 'Dispatched') $updateQuery .= ', dispatched_at = CURRENT_TIMESTAMP';
-    if ($newStatus === 'Delivered' && $oldStatus !== 'Delivered') $updateQuery .= ', delivered_at = CURRENT_TIMESTAMP';
-    $updateQuery .= ' WHERE id = ?';
+    if ($action === 'Accepted' && $oldStatus !== 'Accepted') $query .= ', accepted_at = CURRENT_TIMESTAMP';
+    if ($action === 'Paid' && $oldStatus !== 'Paid') $query .= ', paid_at = CURRENT_TIMESTAMP';
+    if ($action === 'Dispatched' && $oldStatus !== 'Dispatched') $query .= ', dispatched_at = CURRENT_TIMESTAMP';
+    if ($action === 'Delivered' && $oldStatus !== 'Delivered') $query .= ', delivered_at = CURRENT_TIMESTAMP';
+    $query .= ' WHERE id = ?';
     $params[] = $orderId;
 
-    $stmt = $pdo->prepare($updateQuery);
+    $stmt = $pdo->prepare($query);
     $stmt->execute($params);
 
-    $historyStmt = $pdo->prepare('INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, ?, ?, \'ADMIN\', ?)');
-    $historyStmt->execute([$orderId, $oldStatus, $newStatus, $adminId, $notes !== '' ? $notes : null]);
+    $historyStmt = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, ?, ?, 'ADMIN', ?)");
+    $historyStmt->execute([$orderId, $oldStatus, $action, $adminId, $notes !== '' ? $notes : null]);
 
     $pdo->commit();
 
@@ -69,7 +76,7 @@ try {
         'order_id' => $orderId,
         'order_number' => $order['order_number'],
         'old_status' => $oldStatus,
-        'new_status' => $newStatus
+        'new_status' => $action,
     ]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
