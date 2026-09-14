@@ -103,14 +103,7 @@ export default function PaintingDetails() {
     <main className="ara-details">
       <div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div>
 
-      <header className="ara-detail-intro">
-        <div className="ara-detail-intro-kicker"><span></span>{painting.category_name || 'Heritage Art'}<span></span></div>
-        <h1>{painting.name}</h1>
-        {painting.artist_name && <p className="ara-detail-intro-artist">Crafted by <strong>{painting.artist_name}</strong></p>}
-        <div className="ara-detail-intro-description">{descriptionParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
-      </header>
-
-      <section className="ara-details-layout ara-detail-body">
+      <section className="ara-product-top">
         <div className="ara-gallery">
           <div className="ara-main-image">
             {currentImage?.image_url ? <button type="button" className="ara-main-image-click-target" onClick={openViewer} aria-label={`Open ${painting.name} in artwork viewer`}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></button> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
@@ -119,17 +112,20 @@ export default function PaintingDetails() {
           </div>
           {images.length > 1 && <div className="ara-gallery-thumbnails">{images.map((image, i) => <button type="button" key={image.id || image.image_url || i} className={i === activeImage ? 'ara-thumbnail active' : 'ara-thumbnail'} onClick={() => setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i + 1}`} /></button>)}</div>}
         </div>
-        <div className="ara-details-info">
-          <div className="ara-detail-eyebrow"><span></span>{painting.category_name || 'HERITAGE ART'}</div>
+
+        <div className="ara-product-info">
+          <div className="ara-detail-eyebrow"><span></span>{painting.category_name || 'HERITAGE ART'}<span></span></div>
           <h1>{painting.name}</h1>
           {painting.artist_name && <p className="ara-detail-artist">Crafted by <strong>{painting.artist_name}</strong></p>}
           <div className="ara-detail-divider"></div>
           <div className="ara-detail-price"><strong>{formatPrice(displayPrice)}</strong>{hasDiscount && <span>{formatPrice(painting.price)}</span>}</div>
-          <p className="ara-detail-description">{painting.description || 'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.'}</p>
           <div className="ara-specifications">{(painting.width || painting.height) && <div className="ara-spec"><span>DIMENSIONS</span><strong>{painting.width} × {painting.height} in</strong></div>}{painting.medium && <div className="ara-spec"><span>MEDIUM</span><strong>{painting.medium}</strong></div>}{painting.frame && <div className="ara-spec"><span>FRAME</span><strong>{painting.frame}</strong></div>}{painting.gold_details && <div className="ara-spec"><span>GOLD DETAILS</span><strong>{painting.gold_details}</strong></div>}</div>
           <div className="ara-purchase"><button type="button" className="ara-add-cart" onClick={addToCart}>Add to Cart<span>✦</span></button><p>Your order will first be reviewed by our artist before payment is requested.</p></div>
-          <div className="ara-detail-assurance"><div><span>✦</span><div><strong>Handcrafted</strong><small>Traditional craftsmanship</small></div></div><div><span>✦</span><div><strong>Heritage Quality</strong><small>Made for generations</small></div></div></div>
         </div>
+      </section>
+
+      <section className="ara-artwork-description">
+        <div className="ara-detail-intro-description">{descriptionParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
       </section>
     </main>
 
