@@ -1,13 +1,14 @@
 <?php
 declare(strict_types=1);
 
-// Session cookies must be configured before session_start(). Keep local HTTP
-// development working while automatically enabling Secure cookies on HTTPS.
 $isHttps = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
 $cookieSecure = $isHttps;
 $cookieDomain = trim((string)(getenv('SESSION_COOKIE_DOMAIN') ?: ''));
 $sameSite = trim((string)(getenv('SESSION_COOKIE_SAMESITE') ?: 'Lax'));
 if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
+    $sameSite = 'Lax';
+}
+if ($sameSite === 'None' && !$isHttps) {
     $sameSite = 'Lax';
 }
 
@@ -27,7 +28,7 @@ header('Content-Type: application/json; charset=utf-8');
 $configuredOrigins = trim((string)(getenv('ALLOWED_ORIGINS') ?: ''));
 $allowedOrigins = $configuredOrigins !== ''
     ? array_values(array_filter(array_map('trim', explode(',', $configuredOrigins))))
-    : ['http://localhost:5173', 'http://localhost:5174'];
+    : ['http://localhost:5173'];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
@@ -64,6 +65,5 @@ function requireCustomer(): int {
     if (!isset($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'customer') {
         jsonResponse(['success' => false, 'message' => 'User authentication required'], 401);
     }
-
     return (int)$_SESSION['user_id'];
 }
