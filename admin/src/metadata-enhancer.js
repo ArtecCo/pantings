@@ -13,7 +13,12 @@ document.head.appendChild(style)
 
 const toast = (message, type = 'success') => window.__araToast?.[type]?.(message)
 
-function closeDialog(overlay) { overlay.remove() }
+function getType() {
+  const activeTab = [...document.querySelectorAll('.metadata-tab.active')].find(tab => tab.textContent?.trim())
+  return TYPE_CONFIG[activeTab?.textContent?.trim() || 'Categories'] || null
+}
+
+function closeDialog(overlay) { overlay?.remove() }
 
 function createField(label, value = '', kind = 'input') {
   const field = document.createElement('div'); field.className = 'ara-metadata-field'
@@ -66,14 +71,24 @@ function enhance(){
   if(location.pathname!=='/metadata')return
   const config=getType(); if(!config)return
   document.querySelectorAll('.metadata-item').forEach(item=>{
-    if(item.dataset.metadataEnhanced==='1')return
-    const main=item.querySelector('.metadata-item-main'); if(!main?.querySelector('h3'))return
-    item.dataset.metadataEnhanced='1'
-    const actions=document.createElement('div'); actions.className='ara-metadata-actions'
-    const edit=document.createElement('button'); edit.type='button'; edit.className='ara-metadata-action'; edit.textContent='Edit'; edit.onclick=async()=>{try{edit.disabled=true;const record=await resolveRecord(item,config);showEdit(config,record)}catch(error){toast(error.message||'Unable to edit metadata','error')}finally{edit.disabled=false}}
-    const remove=document.createElement('button'); remove.type='button'; remove.className='ara-metadata-action ara-metadata-delete'; remove.textContent='Delete'; remove.onclick=async()=>{try{remove.disabled=true;const record=await resolveRecord(item,config);showDelete(config,record)}catch(error){toast(error.message||'Unable to delete metadata','error')}finally{remove.disabled=false}}
-    actions.append(edit,remove); item.appendChild(actions)
+    if(item.dataset.metadataEditBound!=='1'){
+      const edit=item.querySelector('.metadata-edit')
+      if(edit){
+        item.dataset.metadataEditBound='1'
+        edit.addEventListener('click',async event=>{
+          event.preventDefault(); event.stopPropagation()
+          try{edit.disabled=true;const record=await resolveRecord(item,config);showEdit(config,record)}catch(error){toast(error.message||'Unable to edit metadata','error')}finally{edit.disabled=false}
+        })
+      }
+    }
+
+    const right=item.querySelector('.metadata-item-right')
+    if(right && !right.querySelector('.ara-metadata-delete')){
+      const remove=document.createElement('button'); remove.type='button'; remove.className='metadata-edit ara-metadata-delete'; remove.textContent='Delete'
+      remove.addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();try{remove.disabled=true;const record=await resolveRecord(item,config);showDelete(config,record)}catch(error){toast(error.message||'Unable to delete metadata','error')}finally{remove.disabled=false}})
+      right.appendChild(remove)
+    }
   })
 }
 
-const observer=new MutationObserver(()=>enhance()); observer.observe(document.body,{childList:true,subtree:true}); window.addEventListener('load',enhance)
+const observer=new MutationObserver(()=>enhance()); observer.observe(document.body,{childList:true,subtree:true}); window.addEventListener('load',enhance); enhance()
