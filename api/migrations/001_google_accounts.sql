@@ -6,7 +6,5 @@ CREATE TABLE IF NOT EXISTS user_google_accounts (
     PRIMARY KEY (id),
     UNIQUE KEY uq_user_google_accounts_sub (google_sub),
     UNIQUE KEY uq_user_google_accounts_user (user_id),
-    CONSTRAINT fk_user_google_accounts_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE
+    KEY idx_user_google_accounts_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
