@@ -19,7 +19,6 @@ foreach (['base amount' => $baseAmount, 'customization amount' => $customization
 }
 if ($paymentLink !== '' && !filter_var($paymentLink, FILTER_VALIDATE_URL)) adminJsonResponse(['success' => false, 'message' => 'Payment link must be a valid URL'], 422);
 if (strlen($paymentLink) > 1000 || strlen($notes) > 2000) adminJsonResponse(['success' => false, 'message' => 'Payment link or notes are too long'], 422);
-
 $finalAmount = round($baseAmount + $customizationAmount + $deliveryAmount - $discountAmount, 2);
 if ($finalAmount < 0) adminJsonResponse(['success' => false, 'message' => 'Discount cannot exceed the quoted amount'], 422);
 
@@ -29,18 +28,20 @@ try {
     $stmt->execute([$orderId]);
     $order = $stmt->fetch();
     if (!$order) { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404); }
-    if (strtoupper((string)$order['status']) !== 'ACCEPTED' && strtoupper((string)$order['status']) !== 'PAYMENT_DUE') {
+    $currentStatus = strtoupper((string)$order['status']);
+    if ($currentStatus === 'CANCELLED') {
+        $pdo->rollBack();
+        adminJsonResponse(['success' => false, 'message' => 'Customer-cancelled orders cannot be edited'], 409);
+    }
+    if ($currentStatus !== 'ACCEPTED' && $currentStatus !== 'PAYMENT_DUE') {
         $pdo->rollBack();
         adminJsonResponse(['success' => false, 'message' => 'The order must be accepted before its price can be released'], 409);
     }
-
     $update = $pdo->prepare('UPDATE orders SET base_amount = ?, subtotal = ?, customization_amount = ?, delivery_amount = ?, shipping_amount = ?, discount_amount = ?, total_amount = ?, payment_link = ?, price_released_at = CURRENT_TIMESTAMP, price_released_by = ?, status = ?, artist_notes = CASE WHEN ? <> \'\' THEN ? ELSE artist_notes END, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
     $update->execute([$baseAmount, $baseAmount, $customizationAmount, $deliveryAmount, $deliveryAmount, $discountAmount, $finalAmount, $paymentLink !== '' ? $paymentLink : null, $adminId, 'PAYMENT_DUE', $notes, $notes, $orderId]);
-
     $history = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, 'PAYMENT_DUE', ?, 'ADMIN', ?)");
-    $history->execute([$orderId, strtoupper((string)$order['status']), $adminId, $notes !== '' ? $notes : 'Final price released']);
+    $history->execute([$orderId, $currentStatus, $adminId, $notes !== '' ? $notes : 'Final price released']);
     $pdo->commit();
-
     adminJsonResponse(['success' => true, 'message' => 'Final price released successfully', 'order_id' => $orderId, 'order_number' => $order['order_number'], 'new_status' => 'PAYMENT_DUE', 'base_amount' => $baseAmount, 'customization_amount' => $customizationAmount, 'delivery_amount' => $deliveryAmount, 'discount_amount' => $discountAmount, 'total_amount' => $finalAmount, 'payment_link' => $paymentLink]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
