@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../admin/_common.php';
+require_once __DIR__ . '/../config/database.php';
 
 $verified = filter_var($_SESSION['admin_2fa_verified'] ?? false, FILTER_VALIDATE_BOOLEAN);
 if (!isset($_SESSION['admin_user_id'])
