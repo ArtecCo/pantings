@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import TrackOrders from './TrackOrders';
 import { apiUrl } from '../config/api';
+import { useToast } from '../components/ToastProvider';
 
 export default function Account() {
+    const { toast } = useToast();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -15,12 +17,16 @@ export default function Account() {
                 const data = await res.json().catch(() => ({}));
                 if (res.ok && data.success && data.user) {
                     setUser(data.user);
+                } else if (res.status !== 401) {
+                    toast.error(data.message || 'Unable to load your account.');
+                    window.location.href = '/login';
                 } else {
                     window.location.href = '/login';
                 }
             })
             .catch((err) => {
                 console.error('User session check failed:', err);
+                toast.error('Unable to load your account.');
                 window.location.href = '/login';
             })
             .finally(() => setLoading(false));
@@ -28,12 +34,17 @@ export default function Account() {
 
     const handleLogout = async () => {
         try {
-            await fetch(apiUrl('auth/user-logout.php'), {
+            const response = await fetch(apiUrl('auth/user-logout.php'), {
                 method: 'POST',
                 credentials: 'include',
             });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || 'Unable to sign out.');
+            toast.success('Signed out successfully.');
+        } catch (error) {
+            toast.error(error.message || 'Unable to sign out.');
         } finally {
-            window.location.href = '/';
+            setTimeout(() => { window.location.href = '/'; }, 500);
         }
     };
 
@@ -51,10 +62,7 @@ export default function Account() {
                     Sign Out
                 </button>
             </div>
-
-            <div style={{ marginTop: '2rem' }}>
-                <TrackOrders />
-            </div>
+            <div style={{ marginTop: '2rem' }}><TrackOrders /></div>
         </div>
     );
 }
