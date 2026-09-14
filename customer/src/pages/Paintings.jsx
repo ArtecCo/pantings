@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useToast } from '../components/ToastProvider'
 
 const API = 'http://localhost/paintings/api'
 
 export default function Paintings() {
+  const { toast } = useToast()
   const [paintings, setPaintings] = useState([])
   const [categories, setCategories] = useState([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [imageIndexes, setImageIndexes] = useState({})
 
   const getImageUrl = (url) => {
@@ -26,14 +27,13 @@ export default function Paintings() {
   const loadPaintings = async () => {
     try {
       setLoading(true)
-      setError('')
       const response = await fetch(`${API}/paintings/list.php`)
-      const data = await response.json()
-      if (!data.success) throw new Error(data.message || 'Unable to load paintings.')
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load paintings.')
       const available = (data.paintings || data.data || []).filter(painting => Number(painting.is_active) === 1)
       setPaintings(available)
     } catch (err) {
-      setError(err.message || 'Unable to load the collection.')
+      toast.error(err.message || 'Unable to load the collection.')
     } finally {
       setLoading(false)
     }
@@ -42,10 +42,11 @@ export default function Paintings() {
   const loadCategories = async () => {
     try {
       const response = await fetch(`${API}/categories/list.php`)
-      const data = await response.json()
-      if (data.success) setCategories(data.categories || data.data || [])
-    } catch {
-      // Category loading should not prevent the collection from loading.
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load categories.')
+      setCategories(data.categories || data.data || [])
+    } catch (err) {
+      toast.error(err.message || 'Unable to load categories.')
     }
   }
 
@@ -93,10 +94,9 @@ export default function Paintings() {
       </section>
 
       {loading && <div className="ara-collection-state"><span className="ara-loader"></span><p>Preparing the collection...</p></div>}
-      {!loading && error && <div className="ara-collection-state ara-error-state"><strong>Unable to load the collection</strong><p>{error}</p><button type="button" onClick={loadPaintings}>Try Again</button></div>}
-      {!loading && !error && filteredPaintings.length === 0 && <div className="ara-collection-state"><strong>No paintings found.</strong><p>Try another search or category.</p></div>}
+      {!loading && filteredPaintings.length === 0 && <div className="ara-collection-state"><strong>No paintings found.</strong><p>Try another search or category.</p></div>}
 
-      {!loading && !error && filteredPaintings.length > 0 && (
+      {!loading && filteredPaintings.length > 0 && (
         <section className="ara-painting-grid">
           {filteredPaintings.map(painting => {
             const images = getImages(painting)
