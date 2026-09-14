@@ -17,7 +17,7 @@ if ($cartItemId <= 0 || $quantity === false || $quantity < 1) {
 
 try {
     $stmt = $pdo->prepare('
-        SELECT ci.id, p.stock, p.is_active
+        SELECT ci.id, p.is_active
         FROM cart_items ci
         INNER JOIN paintings p ON p.id = ci.painting_id
         WHERE ci.id = ? AND ci.user_id = ?
@@ -31,9 +31,6 @@ try {
     }
     if (!(int)$item['is_active']) {
         jsonResponse(['success' => false, 'message' => 'Painting is unavailable'], 409);
-    }
-    if ($quantity > (int)$item['stock']) {
-        jsonResponse(['success' => false, 'message' => 'Requested quantity is not available'], 409);
     }
 
     $stmt = $pdo->prepare('UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
