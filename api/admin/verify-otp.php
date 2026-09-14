@@ -1,255 +1,109 @@
 <?php
-
+require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/../config/database.php';
 
-session_start();
-
-header("Access-Control-Allow-Origin: http://localhost:5174");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-header('Content-Type: application/json');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Method not allowed'
-    ]);
-
-    exit;
+    adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
+$data = adminRequestJson();
+$otp = trim((string)($data['otp'] ?? ''));
+$adminId = (int)($_SESSION['pending_admin_id'] ?? 0);
+$twoFactorPending = !empty($_SESSION['admin_2fa_pending']);
 
-$otp = trim($data['otp'] ?? '');
-
-$adminId = $_SESSION['pending_admin_id'] ?? null;
-$twoFactorPending = $_SESSION['admin_2fa_pending'] ?? false;
-
-if (!$adminId || !$twoFactorPending) {
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'No OTP verification is pending'
-    ]);
-
-    exit;
+if ($adminId <= 0 || !$twoFactorPending) {
+    adminJsonResponse(['success' => false, 'message' => 'No OTP verification is pending'], 401);
 }
-
 if (!preg_match('/^\d{6}$/', $otp)) {
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'OTP must be six digits'
-    ]);
-
-    exit;
+    adminJsonResponse(['success' => false, 'message' => 'OTP must be six digits'], 400);
 }
 
+try {
+    $stmt = $pdo->prepare(
+        'SELECT id, otp_hash, expires_at, attempts
+         FROM admin_otp_codes
+         WHERE admin_user_id = ? AND used_at IS NULL
+         ORDER BY id DESC LIMIT 1'
+    );
+    $stmt->execute([$adminId]);
+    $otpRecord = $stmt->fetch();
 
-/*
- * Get the latest unused OTP.
- */
-$stmt = $pdo->prepare(
-    'SELECT id, otp_hash, expires_at, attempts
-     FROM admin_otp_codes
-     WHERE admin_user_id = ?
-     AND used_at IS NULL
-     ORDER BY id DESC
-     LIMIT 1'
-);
+    if (!$otpRecord) {
+        adminJsonResponse(['success' => false, 'message' => 'OTP is invalid or has expired'], 401);
+    }
+    if ((int)$otpRecord['attempts'] >= 5) {
+        adminJsonResponse(['success' => false, 'message' => 'Too many incorrect attempts'], 429);
+    }
+    if (strtotime($otpRecord['expires_at']) < time()) {
+        adminJsonResponse(['success' => false, 'message' => 'OTP has expired'], 401);
+    }
 
-$stmt->execute([(int) $adminId]);
+    $candidateHash = hash('sha256', $otp);
+    if (!hash_equals((string)$otpRecord['otp_hash'], $candidateHash)) {
+        $stmt = $pdo->prepare('UPDATE admin_otp_codes SET attempts = attempts + 1 WHERE id = ? AND used_at IS NULL');
+        $stmt->execute([(int)$otpRecord['id']]);
+        adminJsonResponse(['success' => false, 'message' => 'Incorrect OTP'], 401);
+    }
 
-$otpRecord = $stmt->fetch();
+    $stmt = $pdo->prepare('UPDATE admin_otp_codes SET used_at = NOW() WHERE id = ? AND used_at IS NULL');
+    $stmt->execute([(int)$otpRecord['id']]);
+    if ($stmt->rowCount() !== 1) {
+        adminJsonResponse(['success' => false, 'message' => 'OTP is invalid or has already been used'], 409);
+    }
 
-if (!$otpRecord) {
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'OTP is invalid or has expired'
-    ]);
-
-    exit;
-}
-
-
-/*
- * Limit failed attempts.
- */
-if ((int) $otpRecord['attempts'] >= 5) {
-
-    http_response_code(429);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Too many incorrect attempts'
-    ]);
-
-    exit;
-}
-
-
-/*
- * Check expiry.
- */
-if (strtotime($otpRecord['expires_at']) < time()) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'OTP has expired'
-    ]);
-
-    exit;
-}
-
-
-/*
- * Check OTP.
- */
-if (!hash_equals(
-    $otpRecord['otp_hash'],
-    hash('sha256', $otp)
-)) {
+    session_regenerate_id(true);
+    $_SESSION['admin_user_id'] = $adminId;
+    $_SESSION['admin_user_type'] = 'admin';
+    $_SESSION['admin_authenticated_at'] = time();
+    unset($_SESSION['pending_admin_id'], $_SESSION['pending_admin_email'], $_SESSION['admin_2fa_pending'], $_SESSION['admin_otp_requested_at']);
 
     $stmt = $pdo->prepare(
-        'UPDATE admin_otp_codes
-         SET attempts = attempts + 1
-         WHERE id = ?'
+        'SELECT id, email, first_name, last_name
+         FROM admin_users WHERE id = ? AND is_active = 1 LIMIT 1'
     );
+    $stmt->execute([$adminId]);
+    $admin = $stmt->fetch();
 
-    $stmt->execute([(int) $otpRecord['id']]);
+    if (!$admin) {
+        unset($_SESSION['admin_user_id'], $_SESSION['admin_user_type'], $_SESSION['admin_authenticated_at']);
+        adminJsonResponse(['success' => false, 'message' => 'Administrator account is unavailable'], 401);
+    }
 
-    http_response_code(401);
+    $stmt = $pdo->prepare('UPDATE admin_users SET last_login_at = NOW() WHERE id = ?');
+    $stmt->execute([$adminId]);
 
-    echo json_encode([
-        'success' => false,
-        'message' => 'Incorrect OTP'
+    try {
+        $stmt = $pdo->prepare(
+            'INSERT INTO audit_logs
+            (admin_user_id, admin_email, action, module, record_type, record_id, description, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            $adminId,
+            $admin['email'],
+            'LOGIN',
+            'AUTH',
+            'ADMIN_USER',
+            $adminId,
+            'Administrator completed 2FA login',
+            $_SERVER['REMOTE_ADDR'] ?? null,
+            $_SERVER['HTTP_USER_AGENT'] ?? null
+        ]);
+    } catch (Throwable $auditError) {
+        error_log('Admin login audit error: ' . $auditError->getMessage());
+    }
+
+    adminJsonResponse([
+        'success' => true,
+        'message' => 'Admin login successful',
+        'admin' => [
+            'id' => (int)$admin['id'],
+            'email' => $admin['email'],
+            'first_name' => $admin['first_name'],
+            'last_name' => $admin['last_name']
+        ]
     ]);
-
-    exit;
+} catch (Throwable $e) {
+    error_log('Admin OTP verification error: ' . $e->getMessage());
+    adminJsonResponse(['success' => false, 'message' => 'Unable to verify the code'], 500);
 }
-
-
-/*
- * OTP is valid.
- */
-$stmt = $pdo->prepare(
-    'UPDATE admin_otp_codes
-     SET used_at = NOW()
-     WHERE id = ?'
-);
-
-$stmt->execute([(int) $otpRecord['id']]);
-
-
-/*
- * Prevent session fixation.
- */
-session_regenerate_id(true);
-
-
-/*
- * Establish authenticated admin session.
- */
-$_SESSION['admin_user_id'] = (int) $adminId;
-$_SESSION['admin_user_type'] = 'admin';
-
-unset(
-    $_SESSION['pending_admin_id'],
-    $_SESSION['pending_admin_email'],
-    $_SESSION['admin_2fa_pending']
-);
-
-
-/*
- * Get admin information.
- */
-$stmt = $pdo->prepare(
-    'SELECT id, email, first_name, last_name
-     FROM admin_users
-     WHERE id = ?
-     AND is_active = 1
-     LIMIT 1'
-);
-
-$stmt->execute([(int) $adminId]);
-
-$admin = $stmt->fetch();
-
-if (!$admin) {
-    session_destroy();
-
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Administrator account is unavailable'
-    ]);
-
-    exit;
-}
-
-
-/*
- * Update last login time.
- */
-$stmt = $pdo->prepare(
-    'UPDATE admin_users
-     SET last_login_at = NOW()
-     WHERE id = ?'
-);
-
-$stmt->execute([(int) $adminId]);
-
-$stmt = $pdo->prepare(
-    'INSERT INTO audit_logs
-    (
-        admin_user_id,
-        admin_email,
-        action,
-        module,
-        record_type,
-        record_id,
-        description,
-        ip_address,
-        user_agent
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-);
-
-$stmt->execute([
-    (int) $adminId,
-    $admin['email'],
-    'LOGIN',
-    'AUTH',
-    'ADMIN_USER',
-    (int) $adminId,
-    'Administrator completed 2FA login',
-    $_SERVER['REMOTE_ADDR'] ?? null,
-    $_SERVER['HTTP_USER_AGENT'] ?? null
-]);
-
-echo json_encode([
-    'success' => true,
-    'message' => 'Admin login successful',
-    'admin' => [
-        'id' => (int) $admin['id'],
-        'email' => $admin['email'],
-        'first_name' => $admin['first_name'],
-        'last_name' => $admin['last_name']
-    ]
-]);
