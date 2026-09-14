@@ -14,6 +14,7 @@ import './App.css'
 import './pages/Orders.css'
 import './pages/OrderDetails.css'
 import './pages/OrderStatusManager.css'
+import './pages/OrderHeritageFixes.css'
 
 const menuItems = [
   { label: 'Dashboard', icon: '⌂', path: '/' }, { label: 'Orders', icon: '◇', path: '/orders' },
