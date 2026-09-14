@@ -1,0 +1,26 @@
+.ara-orders .ara-order-list{gap:14px}
+.ara-orders .ara-order-banner{grid-template-columns:220px minmax(0,1fr);min-height:158px;border:1px solid rgba(44,24,16,.16);box-shadow:0 8px 24px rgba(44,24,16,.055);background:var(--paper);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.ara-orders .ara-order-banner::before{left:219px;top:18px;bottom:18px;width:1px;opacity:.65}
+.ara-orders .ara-order-banner:hover{transform:translateY(-2px);border-color:rgba(212,175,55,.7);box-shadow:0 14px 30px rgba(44,24,16,.09)}
+.ara-orders .ara-order-art{min-height:158px}
+.ara-orders .ara-order-art img{transition:transform .5s ease}
+.ara-orders .ara-order-main{padding:20px 28px 18px 30px;background:var(--paper)}
+.ara-orders .ara-order-topline{gap:16px;padding-bottom:11px}
+.ara-orders .ara-order-label{font-size:8px;letter-spacing:.16em;margin-bottom:3px}
+.ara-orders .ara-order-topline h3{font-size:20px;font-weight:600}
+.ara-orders .ara-order-status{padding:6px 10px;font-size:7px;letter-spacing:.12em}
+.ara-orders .ara-order-content{gap:22px;padding:14px 0 12px}
+.ara-orders .ara-order-painting strong{font-size:24px}
+.ara-orders .ara-order-category{font-size:8px;margin-bottom:4px}
+.ara-orders .ara-order-more{margin-top:5px;font-size:9px}
+.ara-orders .ara-order-meta{gap:18px;padding-left:16px}
+.ara-orders .ara-order-meta div{min-width:55px}
+.ara-orders .ara-order-meta span{font-size:7px;letter-spacing:.14em}
+.ara-orders .ara-order-meta strong{margin-top:4px;font-size:10px}
+.ara-orders .ara-order-tracking{padding-top:9px}
+.ara-orders .ara-order-tracking strong{font-size:9px}
+.ara-orders .ara-order-arrow{left:201px;bottom:15px;width:30px;height:30px;font-size:14px;box-shadow:0 3px 8px rgba(44,24,16,.1)}
+
+@media(max-width:900px){.ara-orders .ara-order-banner{grid-template-columns:190px minmax(0,1fr)}.ara-orders .ara-order-banner::before{left:189px}.ara-orders .ara-order-art{min-height:158px}.ara-orders .ara-order-main{padding:19px 22px 17px 26px}.ara-orders .ara-order-arrow{left:174px}.ara-orders .ara-order-painting strong{font-size:22px}.ara-orders .ara-order-meta{gap:12px;padding-left:13px}}
+@media(max-width:680px){.ara-orders .ara-order-banner{display:block;min-height:0}.ara-orders .ara-order-banner::before{left:16px;right:16px;top:149px;bottom:auto;width:auto;height:1px}.ara-orders .ara-order-art{height:150px;min-height:150px}.ara-orders .ara-order-main{padding:18px 18px 17px}.ara-orders .ara-order-topline h3{font-size:19px}.ara-orders .ara-order-content{padding:14px 0 11px}.ara-orders .ara-order-painting strong{font-size:23px}.ara-orders .ara-order-meta{margin-top:13px;padding:11px 0 0;border-left:0;border-top:1px solid var(--border);gap:20px}.ara-orders .ara-order-arrow{left:auto;right:16px;top:121px;bottom:auto;width:30px;height:30px}.ara-orders .ara-order-status{max-width:145px}}
+@media(max-width:430px){.ara-orders .ara-order-art{height:135px;min-height:135px}.ara-orders .ara-order-banner::before{top:134px}.ara-orders .ara-order-main{padding:16px 14px}.ara-orders .ara-order-topline h3{font-size:18px}.ara-orders .ara-order-painting strong{font-size:21px}.ara-orders .ara-order-arrow{top:106px;right:14px}.ara-orders .ara-order-meta{gap:15px}}
