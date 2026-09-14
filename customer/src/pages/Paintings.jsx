@@ -30,8 +30,7 @@ export default function Paintings() {
       const response = await fetch(`${API}/paintings/list.php`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load paintings.')
-      const available = (data.paintings || data.data || []).filter(painting => Number(painting.is_active) === 1)
-      setPaintings(available)
+      setPaintings(data.paintings || data.data || [])
     } catch (err) {
       toast.error(err.message || 'Unable to load the collection.')
     } finally {
@@ -53,11 +52,14 @@ export default function Paintings() {
   const filteredPaintings = useMemo(() => {
     const term = search.trim().toLowerCase()
     return paintings.filter(painting => {
-      const matchesCategory = category === 'all' || String(painting.category_id) === String(category)
-      const matchesSearch = !term || String(painting.name || '').toLowerCase().includes(term) || String(painting.artist_name || '').toLowerCase().includes(term) || String(painting.category_name || '').toLowerCase().includes(term)
+      const paintingCategoryId = painting.category_id ?? painting.categoryId ?? ''
+      const paintingCategoryName = String(painting.category_name ?? painting.category ?? '').trim().toLowerCase()
+      const selectedCategoryName = categories.find(item => String(item.id) === String(category))?.name?.trim().toLowerCase() || ''
+      const matchesCategory = category === 'all' || String(paintingCategoryId) === String(category) || (!paintingCategoryId && selectedCategoryName && paintingCategoryName === selectedCategoryName)
+      const matchesSearch = !term || String(painting.name || '').toLowerCase().includes(term) || String(painting.artist_name || '').toLowerCase().includes(term) || paintingCategoryName.includes(term)
       return matchesCategory && matchesSearch
     })
-  }, [paintings, search, category])
+  }, [paintings, search, category, categories])
 
   const getImages = painting => {
     if (Array.isArray(painting.images) && painting.images.length) return painting.images
@@ -114,7 +116,7 @@ export default function Paintings() {
                   </>}
                 </Link>
                 <div className="ara-painting-info">
-                  <div className="ara-painting-meta"><span>{painting.category_name || 'Heritage Art'}</span>{painting.medium && <span>{painting.medium}</span>}</div>
+                  <div className="ara-painting-meta"><span>{painting.category_name || painting.category || 'Heritage Art'}</span>{painting.medium && <span>{painting.medium}</span>}</div>
                   <h2>{painting.name}</h2>
                   {painting.artist_name && <p className="ara-painting-artist">By {painting.artist_name}</p>}
                   <div className="ara-painting-bottom">
