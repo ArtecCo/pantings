@@ -19,7 +19,7 @@ try {
     $stmt->execute([$email]);
     $admin=$stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$admin || !$admin['is_active'] || empty($admin['password_hash']) || !password_verify($password,$admin['password_hash'])) {
+    if (!$admin || !(int)$admin['is_active'] || empty($admin['password_hash']) || !password_verify($password,$admin['password_hash'])) {
         usleep(250000);
         jsonResponse(['success'=>false,'message'=>'Invalid email or password.'],401);
     }
@@ -30,14 +30,14 @@ try {
 
     if (!$twoFa) {
         session_regenerate_id(true);
-        unset($_SESSION['user_id'],$_SESSION['user_type'],$_SESSION['user_email'],$_SESSION['user_authenticated_at']);
-        $_SESSION['admin_2fa_verified']=true;
         $_SESSION['admin_user_id']=(int)$admin['id'];
         $_SESSION['admin_user_type']='admin';
         $_SESSION['admin_email']=$admin['email'];
         $_SESSION['admin_authenticated_at']=time();
-        unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required']);
+        $_SESSION['admin_2fa_verified']=true;
+        unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required'],$_SESSION['pending_admin_id'],$_SESSION['pending_admin_email'],$_SESSION['admin_2fa_pending']);
 
+        $pdo->prepare('UPDATE admin_users SET last_login_at=NOW() WHERE id=?')->execute([(int)$admin['id']]);
         jsonResponse(['success'=>true,'authenticated'=>true,'requires_otp'=>false,
             'admin'=>['id'=>(int)$admin['id'],'email'=>$admin['email']]]);
     }
@@ -46,30 +46,18 @@ try {
         ->execute([(int)$admin['id']]);
 
     $otp=(string)random_int(100000,999999);
-    $hash=password_hash($otp,PASSWORD_DEFAULT);
-
+    $hash=hash('sha256',$otp);
     $insert=$pdo->prepare(
         'INSERT INTO admin_otp_codes (admin_user_id,otp_hash,expires_at,used_at,created_at)
          VALUES (?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE),NULL,NOW())'
     );
     $insert->execute([(int)$admin['id'],$hash]);
 
-    unset(
-        $_SESSION['user_id'],$_SESSION['user_type'],$_SESSION['user_email'],$_SESSION['user_authenticated_at'],
-        $_SESSION['admin_user_id'],$_SESSION['admin_user_type'],$_SESSION['admin_email'],
-        $_SESSION['admin_authenticated_at'],$_SESSION['admin_2fa_verified']
-    );
-    $_SESSION['admin_pending_user_id']=(int)$admin['id'];
-    $_SESSION['admin_pending_email']=$admin['email'];
-    $_SESSION['admin_otp_required']=true;
-
-    require_once __DIR__ . '/../emails/send-admin-otp.php';
-    if (!sendAdminOtp($admin['email'],$otp)) {
-        $pdo->prepare('UPDATE admin_otp_codes SET used_at=NOW() WHERE admin_user_id=? AND used_at IS NULL')
-            ->execute([(int)$admin['id']]);
-        unset($_SESSION['admin_pending_user_id'],$_SESSION['admin_pending_email'],$_SESSION['admin_otp_required']);
-        jsonResponse(['success'=>false,'message'=>'Unable to send the verification code. Please try again.'],500);
-    }
+    unset($_SESSION['admin_user_id'],$_SESSION['admin_user_type'],$_SESSION['admin_email'],$_SESSION['admin_authenticated_at'],$_SESSION['admin_2fa_verified']);
+    $_SESSION['pending_admin_id']=(int)$admin['id'];
+    $_SESSION['pending_admin_email']=$admin['email'];
+    $_SESSION['admin_2fa_pending']=true;
+    $_SESSION['admin_otp_requested_at']=time();
 
     jsonResponse(['success'=>true,'authenticated'=>false,'requires_otp'=>true,
         'message'=>'A verification code has been sent to your administrator email.']);
