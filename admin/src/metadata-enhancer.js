@@ -1,0 +1,118 @@
+const API = 'http://localhost/paintings/api'
+
+const TYPE_CONFIG = {
+  Categories: { type: 'category', label: 'Category' },
+  Frames: { type: 'frame', label: 'Frame' },
+  'Default Sizes': { type: 'size', label: 'Default Size' },
+}
+
+const style = document.createElement('style')
+style.textContent = `
+.ara-metadata-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;margin-left:20px}.ara-metadata-action{padding:8px 12px;border:1px solid var(--border-soft,#e8dcca);background:transparent;color:var(--maroon,#5b1217);cursor:pointer;font:500 10px inherit}.ara-metadata-action:hover{border-color:var(--gold,#d4af37);background:var(--cream,#f4ebe1)}.ara-metadata-delete{color:#7a3333}.ara-metadata-overlay{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(44,24,16,.38)}.ara-metadata-dialog{width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto;padding:28px;background:var(--paper,#fdfbf7);border:1px solid var(--gold,#d4af37);box-shadow:0 20px 60px rgba(44,24,16,.2)}.ara-metadata-dialog h2{margin:6px 0 8px;color:var(--maroon,#5b1217);font:500 30px/1.1 'Cormorant Garamond',serif}.ara-metadata-dialog p{margin:0 0 20px;color:var(--muted,#6e5b53);font-size:12px;line-height:1.6}.ara-metadata-eyebrow{display:block;color:var(--gold,#d4af37);font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}.ara-metadata-form{display:grid;gap:14px}.ara-metadata-field{display:grid;gap:6px}.ara-metadata-field label{color:var(--muted,#6e5b53);font-size:9px;letter-spacing:.1em;text-transform:uppercase}.ara-metadata-field input,.ara-metadata-field textarea,.ara-metadata-field select{width:100%;padding:10px 11px;border:1px solid var(--border-soft,#e8dcca);background:#fff;color:var(--brown,#2c1810);font:inherit;font-size:12px;outline:none}.ara-metadata-field textarea{min-height:100px;resize:vertical}.ara-metadata-field input:focus,.ara-metadata-field textarea:focus,.ara-metadata-field select:focus{border-color:var(--gold,#d4af37)}.ara-metadata-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.ara-metadata-dialog-actions button{padding:9px 15px;border:1px solid var(--maroon,#5b1217);background:transparent;color:var(--maroon,#5b1217);cursor:pointer;font:500 10px inherit}.ara-metadata-dialog-actions .primary{background:var(--maroon,#5b1217);color:var(--ivory,#faf6ee);border-color:var(--gold,#d4af37)}.ara-metadata-dialog-actions .danger{background:#7a3333;color:#fff;border-color:#7a3333}.ara-metadata-item-status{display:inline-block;margin-top:7px;color:var(--muted-light,#8a7770);font-size:9px;letter-spacing:.08em;text-transform:uppercase}@media(max-width:600px){.ara-metadata-actions{margin-left:0;margin-top:15px}.ara-metadata-item{flex-wrap:wrap}.ara-metadata-actions{width:100%;justify-content:flex-end}.ara-metadata-dialog{padding:22px}.ara-metadata-dialog-actions{position:sticky;bottom:0;padding-top:12px;background:var(--paper,#fdfbf7)}}`
+document.head.appendChild(style)
+
+const toast = (message, type = 'success') => window.__araToast?.[type]?.(message)
+
+function getType() {
+  const active = document.querySelector('.metadata-tab.active')
+  return TYPE_CONFIG[active?.textContent?.trim()] || null
+}
+
+function currentItems() {
+  return [...document.querySelectorAll('.metadata-item')]
+}
+
+function createField(label, value = '', kind = 'input', props = {}) {
+  const field = document.createElement('div')
+  field.className = 'ara-metadata-field'
+  const labelEl = document.createElement('label')
+  labelEl.textContent = label
+  field.appendChild(labelEl)
+  const input = document.createElement(kind === 'textarea' ? 'textarea' : kind === 'select' ? 'select' : 'input')
+  Object.entries(props).forEach(([key, val]) => input.setAttribute(key, val))
+  if (kind === 'select') {
+    ;[['in','Inches'],['cm','Centimetres']].forEach(([v,l])=>{const option=document.createElement('option');option.value=v;option.textContent=l;input.appendChild(option)})
+  }
+  input.value = value
+  field.appendChild(input)
+  return { field, input }
+}
+
+function closeDialog(overlay) {
+  overlay.remove()
+}
+
+function showEdit(item, config) {
+  const main = item.querySelector('.metadata-item-main')
+  const name = main?.querySelector('h3')?.textContent?.trim() || ''
+  const description = main?.querySelector('p')?.textContent?.trim() || ''
+  const id = item.dataset.metadataId
+  const overlay = document.createElement('div')
+  overlay.className = 'ara-metadata-overlay'
+  const dialog = document.createElement('section')
+  dialog.className = 'ara-metadata-dialog'
+  dialog.setAttribute('role','dialog')
+  dialog.setAttribute('aria-modal','true')
+  dialog.innerHTML = `<span class="ara-metadata-eyebrow">EDIT ${config.label.toUpperCase()}</span><h2>Edit ${config.label}</h2><p>Update this metadata entry used throughout the catalogue.</p>`
+  const form = document.createElement('div'); form.className='ara-metadata-form'
+  const nameField=createField(config.type==='size'?'Display Name':'Name',name)
+  form.appendChild(nameField.field)
+  let descriptionField=null,widthField=null,heightField=null,unitField=null
+  if(config.type!=='size'){descriptionField=createField('Description',description,'textarea');form.appendChild(descriptionField.field)}
+  else {widthField=createField('Width','');heightField=createField('Height','');unitField=createField('Unit','in','select');form.append(widthField.field,heightField.field,unitField.field)}
+  const actions=document.createElement('div');actions.className='ara-metadata-dialog-actions'
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.onclick=()=>closeDialog(overlay)
+  const save=document.createElement('button');save.type='button';save.className='primary';save.textContent='Save Changes'
+  save.onclick=async()=>{
+    save.disabled=true;save.textContent='Saving…'
+    try{
+      const body={type:config.type,id,name:nameField.input.value.trim()}
+      if(config.type==='size'){body.width=Number(widthField.input.value);body.height=Number(heightField.input.value);body.unit=unitField.input.value}else body.description=descriptionField.input.value.trim()
+      const response=await fetch(`${API}/metadata/update.php`,{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)})
+      const data=await response.json().catch(()=>({}))
+      if(!response.ok||!data.success)throw new Error(data.message||'Unable to update metadata')
+      closeDialog(overlay);toast(data.message||`${config.label} updated successfully.`);window.location.reload()
+    }catch(error){toast(error.message||'Unable to update metadata','error');save.disabled=false;save.textContent='Save Changes'}
+  }
+  actions.append(cancel,save);dialog.append(form,actions);overlay.appendChild(dialog);overlay.addEventListener('mousedown',e=>{if(e.target===overlay)closeDialog(overlay)});document.body.appendChild(overlay);nameField.input.focus()
+}
+
+function showDelete(item, config) {
+  const name = item.querySelector('.metadata-item-main h3')?.textContent?.trim() || config.label
+  const id = item.dataset.metadataId
+  const overlay=document.createElement('div');overlay.className='ara-metadata-overlay'
+  const dialog=document.createElement('section');dialog.className='ara-metadata-dialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true')
+  dialog.innerHTML=`<span class="ara-metadata-eyebrow">DELETE ${config.label.toUpperCase()}</span><h2>Delete ${config.label}?</h2><p>Are you sure you want to delete <strong>${name.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong>? This action cannot be undone.</p>`
+  const actions=document.createElement('div');actions.className='ara-metadata-dialog-actions'
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Keep';cancel.onclick=()=>closeDialog(overlay)
+  const remove=document.createElement('button');remove.type='button';remove.className='danger';remove.textContent='Delete';remove.onclick=async()=>{remove.disabled=true;remove.textContent='Deleting…';try{const response=await fetch(`${API}/metadata/delete.php`,{method:'DELETE',credentials:'include',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({type:config.type,id:Number(id)})});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw new Error(data.message||'Unable to delete metadata');closeDialog(overlay);toast(data.message||`${config.label} deleted successfully.`);window.location.reload()}catch(error){toast(error.message||'Unable to delete metadata','error');remove.disabled=false;remove.textContent='Delete'}}
+  actions.append(cancel,remove);dialog.appendChild(actions);overlay.appendChild(dialog);overlay.addEventListener('mousedown',e=>{if(e.target===overlay)closeDialog(overlay)});document.body.appendChild(overlay);cancel.focus()
+}
+
+function enhance() {
+  const config=getType(); if(!config)return
+  currentItems().forEach(item=>{
+    if(item.dataset.metadataEnhanced==='1')return
+    const main=item.querySelector('.metadata-item-main'); const actionSource=item.querySelector('.metadata-item > *:last-child');
+    if(!main||!actionSource)return
+    const name=main.querySelector('h3')?.textContent?.trim(); if(!name)return
+    let id=''
+    const collection=config.type==='category'?'categories':config.type==='frame'?'frames':'default_sizes'
+    // IDs are rendered by React only as keys, so recover the database id from the ordered list response is not possible here.
+    // Store IDs on rows via a lightweight authenticated list refresh.
+    item.dataset.metadataEnhanced='1'
+    item.dataset.metadataCollection=collection
+    const actions=document.createElement('div');actions.className='ara-metadata-actions'
+    const edit=document.createElement('button');edit.type='button';edit.className='ara-metadata-action';edit.textContent='Edit';edit.onclick=()=>resolveIdAndEdit(item,config)
+    const remove=document.createElement('button');remove.type='button';remove.className='ara-metadata-action ara-metadata-delete';remove.textContent='Delete';remove.onclick=()=>resolveIdAndDelete(item,config)
+    actions.append(edit,remove);item.appendChild(actions)
+  })
+}
+
+async function resolveIdAndEdit(item,config){
+  try{const response=await fetch(`${API}/${config.type==='category'?'categories':config.type==='frame'?'frames':'sizes'}/list.php`,{credentials:'include'});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Unable to load metadata');const key=config.type==='category'?'categories':config.type==='frame'?'frames':'sizes';const name=item.querySelector('.metadata-item-main h3')?.textContent?.trim();const record=(data[key]||[]).find(row=>String(row.name).trim()===name);if(!record)throw new Error('Metadata item could not be found');item.dataset.metadataId=record.id;if(config.type==='size'){const main=item.querySelector('.metadata-item-main');item.dataset.metadataWidth=record.width;item.dataset.metadataHeight=record.height;item.dataset.metadataUnit=record.unit}showEdit(item,config)}catch(error){toast(error.message||'Unable to edit metadata','error')}}
+async function resolveIdAndDelete(item,config){try{const response=await fetch(`${API}/${config.type==='category'?'categories':config.type==='frame'?'frames':'sizes'}/list.php`,{credentials:'include'});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Unable to load metadata');const key=config.type==='category'?'categories':config.type==='frame'?'frames':'sizes';const name=item.querySelector('.metadata-item-main h3')?.textContent?.trim();const record=(data[key]||[]).find(row=>String(row.name).trim()===name);if(!record)throw new Error('Metadata item could not be found');item.dataset.metadataId=record.id;showDelete(item,config)}catch(error){toast(error.message||'Unable to delete metadata','error')}}
+
+const observer=new MutationObserver(()=>{if(location.pathname!=='/metadata')return;enhance()})
+observer.observe(document.body,{childList:true,subtree:true})
+window.addEventListener('load',enhance)
