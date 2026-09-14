@@ -9,6 +9,7 @@ export default function PaintingDetails() {
   const { toast } = useToast()
   const [painting, setPainting] = useState(null), [images, setImages] = useState([]), [activeImage, setActiveImage] = useState(0), [loading, setLoading] = useState(true), [error, setError] = useState('')
   const [viewerOpen, setViewerOpen] = useState(false), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 }), [dragging, setDragging] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
   const dragStart = useRef(null)
   const getImageUrl = url => !url ? '' : url.startsWith('http') ? url : `${new URL(apiUrl('')).origin}${url}`
 
@@ -49,7 +50,8 @@ export default function PaintingDetails() {
       if (e.key === '-') zoomOut()
       if (e.key === '0') resetZoom()
     }
-    document.addEventListener('keydown', k); document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', k)
+    document.body.style.overflow = 'hidden'
     return () => { document.removeEventListener('keydown', k); document.body.style.overflow = '' }
   }, [viewerOpen, images.length, activeImage, zoom, pan])
 
@@ -59,7 +61,7 @@ export default function PaintingDetails() {
   }
 
   const closeViewer = () => {
-    setViewerOpen(false); setZoom(1); setPan({ x: 0, y: 0 }); setDragging(false); dragStart.current = null
+    setViewerOpen(false); setZoom(1); setPan({ x: 0, y: 0 }); setDragging(false); dragStart.current = null; setTouchStart(null)
   }
 
   const changeViewerImage = direction => {
@@ -100,10 +102,71 @@ export default function PaintingDetails() {
     })
   }
 
+  const handleTouchStart = event => {
+    if (event.touches.length !== 1) return
+    setTouchStart({ x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now() })
+  }
+
+  const handleTouchEnd = event => {
+    if (!touchStart || zoom > 1 || !images.length) return
+    const touch = event.changedTouches[0]
+    const dx = touch.clientX - touchStart.x
+    const dy = touch.clientY - touchStart.y
+    const elapsed = Date.now() - touchStart.time
+    if (elapsed < 500 && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) changeViewerImage(dx < 0 ? 'next' : 'previous')
+    setTouchStart(null)
+  }
+
   const displayPrice = Number(painting?.discount_price || painting?.price || 0), hasDiscount = painting?.discount_price && Number(painting.discount_price) < Number(painting.price)
   const formatPrice = v => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(v || 0))
   if (loading) return <div className="ara-details-state"><span className="ara-loader"></span><p>Preparing the artwork...</p></div>
   if (error || !painting) return <div className="ara-details-state"><strong>Artwork unavailable</strong><p>{error || 'This painting could not be found.'}</p><Link to="/paintings" className="ara-btn ara-btn-primary">Return to Collection</Link></div>
   const currentImage = images[activeImage]
-  return <><main className="ara-details"><div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div><section className="ara-details-layout"><div className="ara-gallery"><div className="ara-main-image">{currentImage?.image_url ? <div className="ara-main-image-click-target" onClick={openViewer} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer() } }}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></div> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}{painting.gold_details && <div className="ara-detail-gold-badge">✦ 22K GOLD</div>}{images.length > 1 && <><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={() => setActiveImage((activeImage + 1) % images.length)}>›</button></>}</div>{images.length > 1 && <div className="ara-gallery-thumbnails">{images.map((image, i) => <button type="button" key={image.id || image.image_url || i} className={i === activeImage ? 'ara-thumbnail active' : 'ara-thumbnail'} onClick={() => setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i + 1}`} /></button>)}</div>}</div><div className="ara-details-info"><div className="ara-detail-eyebrow"><span></span>{painting.category_name || 'HERITAGE ART'}</div><h1>{painting.name}</h1>{painting.artist_name && <p className="ara-detail-artist">Crafted by <strong>{painting.artist_name}</strong></p>}<div className="ara-detail-divider"></div><div className="ara-detail-price"><strong>{formatPrice(displayPrice)}</strong>{hasDiscount && <span>{formatPrice(painting.price)}</span>}</div><p className="ara-detail-description">{painting.description || 'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.'}</p><div className="ara-specifications">{(painting.width || painting.height) && <div className="ara-spec"><span>DIMENSIONS</span><strong>{painting.width} × {painting.height} in</strong></div>}{painting.medium && <div className="ara-spec"><span>MEDIUM</span><strong>{painting.medium}</strong></div>}{painting.frame && <div className="ara-spec"><span>FRAME</span><strong>{painting.frame}</strong></div>}{painting.gold_details && <div className="ara-spec"><span>GOLD DETAILS</span><strong>{painting.gold_details}</strong></div>}</div><div className="ara-purchase"><button type="button" className="ara-add-cart" onClick={addToCart}>Add to Cart<span>✦</span></button><p>Your order will first be reviewed by our artist before payment is requested.</p></div><div className="ara-detail-assurance"><div><span>✦</span><div><strong>Handcrafted</strong><small>Traditional craftsmanship</small></div></div><div><span>✦</span><div><strong>Heritage Quality</strong><small>Made for generations</small></div></div></div></div></section></main>{viewerOpen && images.length > 0 && <div className="ara-lightbox" role="dialog" aria-modal="true" onMouseDown={e => e.target === e.currentTarget && closeViewer()}><div className="ara-lightbox-top"><div><span>ARAmane Arts</span><strong>{painting.name}</strong></div><button type="button" className="ara-lightbox-close" onClick={closeViewer} aria-label="Close artwork viewer">×</button></div><div className="ara-lightbox-stage">{images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-prev" onClick={() => changeViewerImage('previous')} aria-label="Previous image">‹</button>}<div className="ara-lightbox-image-wrap" onWheel={handleWheel} onMouseMove={handleImageMouseMove} onMouseUp={stopDragging} onMouseLeave={stopDragging}><img src={getImageUrl(images[activeImage].image_url)} alt={painting.name} draggable={false} onMouseDown={handleImageMouseDown} onDoubleClick={resetZoom} style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in', transition: dragging ? 'none' : 'transform .18s ease' }} /></div>{images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-next" onClick={() => changeViewerImage('next')} aria-label="Next image">›</button>}</div><div className="ara-lightbox-controls"><button type="button" onClick={zoomOut} disabled={zoom <= 1} aria-label="Zoom out">−</button><button type="button" onClick={resetZoom} aria-label="Reset zoom">{Math.round(zoom * 100)}%</button><button type="button" onClick={zoomIn} disabled={zoom >= 3} aria-label="Zoom in">+</button></div></div>}</>
+
+  return <>
+    <main className="ara-details">
+      <div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div>
+      <section className="ara-details-layout">
+        <div className="ara-gallery">
+          <div className="ara-main-image">
+            {currentImage?.image_url ? <div className="ara-main-image-click-target" onClick={openViewer} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer() } }}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></div> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
+            {painting.gold_details && <div className="ara-detail-gold-badge">✦ 22K GOLD</div>}
+            {images.length > 1 && <><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={() => setActiveImage((activeImage + 1) % images.length)}>›</button></>}
+          </div>
+          {images.length > 1 && <div className="ara-gallery-thumbnails">{images.map((image, i) => <button type="button" key={image.id || image.image_url || i} className={i === activeImage ? 'ara-thumbnail active' : 'ara-thumbnail'} onClick={() => setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i + 1}`} /></button>)}</div>}
+        </div>
+        <div className="ara-details-info">
+          <div className="ara-detail-eyebrow"><span></span>{painting.category_name || 'HERITAGE ART'}</div>
+          <h1>{painting.name}</h1>
+          {painting.artist_name && <p className="ara-detail-artist">Crafted by <strong>{painting.artist_name}</strong></p>}
+          <div className="ara-detail-divider"></div>
+          <div className="ara-detail-price"><strong>{formatPrice(displayPrice)}</strong>{hasDiscount && <span>{formatPrice(painting.price)}</span>}</div>
+          <p className="ara-detail-description">{painting.description || 'A handcrafted work of Indian heritage art, created with traditional craftsmanship and devotion.'}</p>
+          <div className="ara-specifications">{(painting.width || painting.height) && <div className="ara-spec"><span>DIMENSIONS</span><strong>{painting.width} × {painting.height} in</strong></div>}{painting.medium && <div className="ara-spec"><span>MEDIUM</span><strong>{painting.medium}</strong></div>}{painting.frame && <div className="ara-spec"><span>FRAME</span><strong>{painting.frame}</strong></div>}{painting.gold_details && <div className="ara-spec"><span>GOLD DETAILS</span><strong>{painting.gold_details}</strong></div>}</div>
+          <div className="ara-purchase"><button type="button" className="ara-add-cart" onClick={addToCart}>Add to Cart<span>✦</span></button><p>Your order will first be reviewed by our artist before payment is requested.</p></div>
+          <div className="ara-detail-assurance"><div><span>✦</span><div><strong>Handcrafted</strong><small>Traditional craftsmanship</small></div></div><div><span>✦</span><div><strong>Heritage Quality</strong><small>Made for generations</small></div></div></div>
+        </div>
+      </section>
+    </main>
+
+    {viewerOpen && images.length > 0 && <div className="ara-lightbox" role="dialog" aria-modal="true" aria-label={`${painting.name} artwork viewer`} onMouseDown={e => e.target === e.currentTarget && closeViewer()}>
+      <div className="ara-lightbox-top">
+        <div><span>ARAmane Arts · Artwork Viewer</span><strong>{painting.name}</strong></div>
+        <button type="button" className="ara-lightbox-close" onClick={closeViewer} aria-label="Close artwork viewer">×</button>
+      </div>
+      <div className="ara-lightbox-stage" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        {images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-prev" onClick={() => changeViewerImage('previous')} aria-label="Previous artwork">‹</button>}
+        <div className="ara-lightbox-image-wrap" onWheel={handleWheel} onMouseMove={handleImageMouseMove} onMouseUp={stopDragging} onMouseLeave={stopDragging}>
+          <img src={getImageUrl(images[activeImage].image_url)} alt={painting.name} draggable={false} onMouseDown={handleImageMouseDown} onDoubleClick={resetZoom} style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`, cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in' }} />
+        </div>
+        {images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-next" onClick={() => changeViewerImage('next')} aria-label="Next artwork">›</button>}
+      </div>
+      <div className="ara-lightbox-controls">
+        <button type="button" onClick={zoomOut} disabled={zoom <= 1} aria-label="Zoom out">−</button>
+        <button type="button" onClick={resetZoom} aria-label="Reset zoom">{Math.round(zoom * 100)}%</button>
+        <button type="button" onClick={zoomIn} disabled={zoom >= 3} aria-label="Zoom in">+</button>
+      </div>
+      <div className="ara-lightbox-counter">{activeImage + 1} / {images.length} · {zoom === 1 ? 'Swipe or use arrows to browse' : 'Drag to inspect'} · Double-click to reset</div>
+    </div>}
+  </>
 }
