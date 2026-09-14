@@ -1,0 +1,148 @@
+/* Order page refinements — keeps the main page scrollable while the desktop sidebar stays fixed. */
+@media (min-width: 681px) {
+  .admin-sidebar {
+    position: sticky;
+    top: 76px;
+    height: calc(100vh - 76px);
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(91,18,23,.35) transparent;
+  }
+  .admin-sidebar::-webkit-scrollbar { width: 5px; }
+  .admin-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(91,18,23,.28); border-radius: 10px; }
+}
+
+/* Final quotation */
+.order-price-release-card {
+  margin-bottom: 22px;
+  padding: 26px 28px 28px;
+}
+.order-price-release-card .form-section-heading { margin-bottom: 22px; }
+.order-price-release-card .form-section-heading h2 { font-size: 27px; }
+.order-price-release-card .form-section-heading p { max-width: 720px; line-height: 1.55; }
+.order-price-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.order-price-grid label { display:flex; flex-direction:column; gap:7px; min-width:0; }
+.order-price-grid label > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+.order-price-grid label small { font-size: 9px; letter-spacing: .04em; font-weight: 500; }
+.order-price-grid input {
+  width:100%;
+  height:44px;
+  padding:0 12px;
+  border:1px solid #d8cbbd;
+  background:#fffdfa;
+  color:var(--brown);
+  font:inherit;
+  font-size:13px;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.order-price-grid input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.10); }
+.order-price-link-field { grid-column: 1 / -1; max-width: 520px; }
+.order-price-release-total {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:20px;
+  padding:15px 0;
+  border-top:1px solid var(--gold);
+  border-bottom:1px solid var(--border-soft);
+}
+.order-price-release-total span { color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.15em; }
+.order-price-release-total strong { color:var(--maroon);font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;line-height:1; }
+.order-price-release-button {
+  margin-top:17px;
+  padding:12px 19px;
+  border:1px solid var(--gold);
+  background:var(--maroon);
+  color:var(--ivory);
+  cursor:pointer;
+  font:600 11px Inter,sans-serif;
+  letter-spacing:.04em;
+  transition:background .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.order-price-release-button:hover:not(:disabled) { background:var(--maroon-light);transform:translateY(-1px);box-shadow:0 7px 18px rgba(91,18,23,.13); }
+.order-price-release-button:disabled { opacity:.55;cursor:not-allowed; }
+
+/* Order journey */
+.order-history-card { padding:26px 28px 30px !important; }
+.order-history-card .form-section-heading { margin-bottom:22px; }
+.order-history-card .form-section-heading h2 { font-size:27px; }
+.order-history-list { position:relative;margin-top:4px;padding:4px 0 0; }
+.order-history-list::before {
+  content:"";
+  position:absolute;
+  left:15px;
+  top:18px;
+  bottom:18px;
+  width:1px;
+  background:linear-gradient(to bottom,var(--gold),var(--border-soft),var(--gold));
+}
+.order-history-item {
+  position:relative;
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  column-gap:17px;
+  padding-bottom:19px;
+}
+.order-history-item:last-child { padding-bottom:0; }
+.order-history-item::before {
+  content:"";
+  position:relative;
+  z-index:2;
+  width:10px;
+  height:10px;
+  margin:7px auto 0;
+  border:2px solid var(--gold);
+  border-radius:50%;
+  background:var(--paper);
+  box-shadow:0 0 0 4px var(--paper);
+}
+.order-history-item > div {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:20px;
+  padding:0 0 10px;
+  border-bottom:1px solid var(--border-soft);
+}
+.order-history-item:last-child > div { border-bottom:0;padding-bottom:0; }
+.order-history-item > div strong {
+  color:var(--maroon);
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:20px;
+  font-weight:600;
+}
+.order-history-item > div span { color:var(--muted-light);font-size:10px;white-space:nowrap; }
+.order-history-item p {
+  grid-column:2;
+  margin:9px 0 0;
+  padding:10px 13px;
+  background:var(--cream);
+  border-left:2px solid var(--gold);
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+
+@media (max-width: 900px) {
+  .order-price-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+  .order-price-release-card,.order-history-card { padding:20px !important; }
+  .order-price-grid { grid-template-columns:1fr; }
+  .order-price-link-field { grid-column:auto;max-width:none; }
+  .order-price-release-total { align-items:flex-start;gap:15px;flex-direction:column; }
+  .order-history-item > div { align-items:flex-start;flex-direction:column;gap:4px; }
+}
