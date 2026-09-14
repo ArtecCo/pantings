@@ -1,0 +1,28 @@
+.painting-card-unavailable {
+  filter: grayscale(1);
+  opacity: .58;
+}
+
+.painting-card-unavailable:hover {
+  opacity: .68;
+}
+
+.painting-card-unavailable .painting-card-image img {
+  filter: grayscale(1);
+}
+
+.painting-card-unavailable .painting-card-content,
+.painting-card-unavailable .painting-card-image {
+  background: #dedbd5;
+}
+
+.painting-card-unavailable .painting-card-badge {
+  background: #77736d;
+  color: #fff;
+  border-color: #77736d;
+}
+
+.painting-card-unavailable .painting-edit-button {
+  border-color: #77736d;
+  color: #5f5b56;
+}
