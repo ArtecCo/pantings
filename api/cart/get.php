@@ -13,8 +13,15 @@ try {
     $optionStmt=$pdo->prepare('SELECT id,name,width,height,unit,price,is_standard,sort_order FROM painting_size_options WHERE painting_id=? ORDER BY sort_order ASC,id ASC');
     foreach($items as &$item){
         $item['cart_item_id']=(int)$item['cart_item_id'];$item['painting_id']=(int)$item['painting_id'];$item['size_option_id']=$item['size_option_id']!==null?(int)$item['size_option_id']:null;$item['quantity']=(int)$item['quantity'];$item['stock']=(int)$item['stock'];
-        $optionStmt->execute([(int)$item['painting_id']]);$item['size_options']=$optionStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach($item['size_options'] as &$option){$option['id']=(int)$option['id'];$option['is_standard']=(int)$option['is_standard'];} unset($option);
+        $optionStmt->execute([(int)$item['painting_id']]);
+        $rawOptions=$optionStmt->fetchAll(PDO::FETCH_ASSOC);
+        $uniqueOptions=[];
+        foreach($rawOptions as $option){
+            $key=strtolower(trim((string)$option['name'])).'|'.number_format((float)$option['width'],2,'.','').'|'.number_format((float)$option['height'],2,'.','').'|'.strtolower(trim((string)$option['unit'])).'|'.number_format((float)$option['price'],2,'.','');
+            if(isset($uniqueOptions[$key])) continue;
+            $option['id']=(int)$option['id'];$option['is_standard']=(int)$option['is_standard'];$uniqueOptions[$key]=$option;
+        }
+        $item['size_options']=array_values($uniqueOptions);
     }
     unset($item); jsonResponse(['success'=>true,'items'=>$items]);
 } catch(Throwable $e){error_log('Cart get error: '.$e->getMessage());jsonResponse(['success'=>false,'message'=>'Unable to load your cart'],500);}
