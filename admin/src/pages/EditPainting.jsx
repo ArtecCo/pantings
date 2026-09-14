@@ -108,7 +108,6 @@ export default function EditPainting() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to delete image')
       setImages(previous => previous.filter(item => Number(item.id) !== Number(image.id)))
-      if (Number(image.is_primary) === 1) setImages(previous => previous.map((item, index) => ({ ...item, is_primary: index === 0 ? 1 : 0 })))
       toast.success('Image deleted successfully')
     } catch (error) {
       console.error('Painting image delete error:', error)
@@ -156,7 +155,12 @@ export default function EditPainting() {
     } finally { setSaving(false) }
   }
 
-  const imageSrc = image => image.image_url?.startsWith('http') ? image.image_url : image.image_url
+  const imageSrc = image => {
+    if (!image?.image_url) return ''
+    try { return new URL(image.image_url, apiUrl('')).href } catch { return image.image_url }
+  }
+
+  const newImageSrc = file => URL.createObjectURL(file)
 
   if (loading) return <div className="painting-form-page"><div className="page-header"><div><span className="eyebrow">ART COLLECTION</span><h1>Edit Painting</h1><p>Loading artwork details...</p></div></div><div className="gold-rule" /><div className="heritage-card metadata-loading">Loading painting...</div></div>
 
@@ -190,13 +194,13 @@ export default function EditPainting() {
                 <div className="image-carousel-actions"><button type="button" className="gold-outline-button" onClick={() => setPrimaryImage(image)} disabled={imageBusy || Number(image.is_primary) === 1}>{Number(image.is_primary) === 1 ? 'Primary' : 'Make Primary'}</button><button type="button" className="cancel-button" onClick={() => deleteImage(image)} disabled={imageBusy}>Delete</button></div>
               </div>)}
               {newImages.map((file, index) => <div className="image-carousel-card" key={`new-${file.name}-${index}`}>
-                <img src={URL.createObjectURL(file)} alt={`New artwork image ${index + 1}`} />
+                <img src={newImageSrc(file)} alt={`New artwork image ${index + 1}`} />
                 <div className="image-carousel-info"><span>Pending upload</span><small>{file.name}</small></div>
                 <div className="image-carousel-actions"><button type="button" className="cancel-button" onClick={() => removePendingImage(index)} disabled={imageBusy}>Remove</button></div>
               </div>)}
             </div>}
             {!images.length && !newImages.length && <div className="metadata-loading">No images uploaded for this painting yet.</div>}
-            <p className="image-upload-note">Images are saved to the painting record. Deleting an existing image removes both its database record and uploaded file.</p>
+            <p className="image-upload-note">Existing image deletion removes both the database record and uploaded image file.</p>
           </div>
         </section>
         <div className="form-actions"><button type="button" className="cancel-button" onClick={() => navigate('/paintings')} disabled={saving || imageBusy}>Cancel</button><button type="submit" className="gold-outline-button" disabled={saving || imageBusy}>{saving || imageBusy ? 'Saving...' : 'Update Painting'}</button></div>
