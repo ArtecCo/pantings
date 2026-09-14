@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './animations.css'
 import './painting-size-options.css'
+import './unavailable-paintings.css'
 import './painting-size-enhancer.js'
 import App from './App.jsx'
 
