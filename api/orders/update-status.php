@@ -11,7 +11,7 @@ $notes = trim((string)($data['notes'] ?? ''));
 if ($orderId <= 0) adminJsonResponse(['success' => false, 'message' => 'Invalid order'], 400);
 if (strlen($notes) > 2000) adminJsonResponse(['success' => false, 'message' => 'Notes are too long'], 422);
 
-$validStatuses = ['PENDING_ACCEPTANCE','ACCEPTED','PAYMENT_DUE','PAID','PROCESSING','DISPATCHED','DELIVERED','REJECTED','CANCELLED'];
+$validStatuses = ['PENDING_ACCEPTANCE','ACCEPTED','PAYMENT_DUE','PAID','PROCESSING','DISPATCHED','DELIVERED','REJECTED'];
 if (!in_array($action, $validStatuses, true)) adminJsonResponse(['success' => false, 'message' => 'Invalid order status'], 400);
 
 try {
@@ -21,6 +21,10 @@ try {
     $order = $orderStmt->fetch();
     if (!$order) { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404); }
     $oldStatus = strtoupper((string)$order['status']);
+    if ($oldStatus === 'CANCELLED') {
+        $pdo->rollBack();
+        adminJsonResponse(['success' => false, 'message' => 'Customer-cancelled orders cannot be edited'], 409);
+    }
     if ($oldStatus === $action && $notes === '') { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order is already in this status'], 409); }
 
     $query = 'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP';
