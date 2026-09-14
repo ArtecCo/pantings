@@ -9,9 +9,8 @@ import PaintingList from './pages/PaintingList'
 import EditPainting from './pages/EditPainting'
 import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
+import { apiUrl } from './config/api'
 import './App.css'
-
-const API = 'http://localhost/paintings/api'
 
 const menuItems = [
   { label: 'Dashboard', icon: '⌂', path: '/' },
@@ -33,19 +32,14 @@ const managementItems = [
 
 function AdminLayout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false)
-
   const closeMenu = () => setMenuOpen(false)
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API}/admin/logout.php`, {
-        method: 'POST',
-        credentials: 'include',
-      })
+      await fetch(apiUrl('admin/logout.php'), { method: 'POST', credentials: 'include' })
     } catch (error) {
       console.error('Logout failed:', error)
     }
-
     window.location.replace('/login')
   }
 
@@ -53,52 +47,26 @@ function AdminLayout({ children }) {
     <div className="admin-app">
       <header className="admin-topbar">
         <div className="admin-brand">
-          <button className="mobile-menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-            <span /><span /><span />
-          </button>
+          <button className="mobile-menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="brand-monogram">A</div>
-          <div>
-            <div className="brand-name">ARAmane Arts</div>
-            <div className="brand-subtitle">HERITAGE PAINTINGS</div>
-          </div>
+          <div><div className="brand-name">ARAmane Arts</div><div className="brand-subtitle">HERITAGE PAINTINGS</div></div>
         </div>
-
         <div className="admin-topbar-right">
           <span className="admin-role">SUPER ADMIN</span>
-          <div className="admin-profile">
-            <div className="profile-avatar">A</div>
-            <div><strong>Administrator</strong><small>Administrator</small></div>
-          </div>
+          <div className="admin-profile"><div className="profile-avatar">A</div><div><strong>Administrator</strong><small>Administrator</small></div></div>
           <button className="logout-button" onClick={handleLogout}>Logout</button>
         </div>
       </header>
-
       <div className="admin-body">
         {menuOpen && <div className="sidebar-backdrop" onClick={closeMenu} />}
         <aside className={`admin-sidebar ${menuOpen ? 'mobile-open' : ''}`}>
           <button className="mobile-sidebar-close" onClick={closeMenu} aria-label="Close menu">×</button>
           <div className="sidebar-heading">ATELIER MANAGEMENT</div>
-          <nav>
-            {menuItems.map((item) => (
-              <NavLink key={item.path} to={item.path} end={item.path === '/'} onClick={closeMenu} className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
-                <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
+          <nav>{menuItems.map((item) => <NavLink key={item.path} to={item.path} end={item.path === '/'} onClick={closeMenu} className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}</nav>
           <div className="sidebar-divider" />
           <div className="sidebar-heading">ADMINISTRATION</div>
-          <nav>
-            {managementItems.map((item) => (
-              <NavLink key={item.path} to={item.path} onClick={closeMenu} className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
-                <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
-          <div className="sidebar-footer">
-            <div className="sidebar-ornament">✦</div>
-            <div>ARAmane Arts</div>
-            <small>Preserving Indian Heritage</small>
-          </div>
+          <nav>{managementItems.map((item) => <NavLink key={item.path} to={item.path} onClick={closeMenu} className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></NavLink>)}</nav>
+          <div className="sidebar-footer"><div className="sidebar-ornament">✦</div><div>ARAmane Arts</div><small>Preserving Indian Heritage</small></div>
         </aside>
         <main className="admin-content">{children}</main>
       </div>
@@ -109,10 +77,7 @@ function AdminLayout({ children }) {
 function Dashboard() {
   return (
     <AdminLayout>
-      <div className="page-header">
-        <div><span className="eyebrow">ATELIER OVERVIEW</span><h1>Dashboard</h1><p>Welcome back. Here is today's overview of ARAmane Arts.</p></div>
-        <button className="gold-outline-button">+ Add Painting</button>
-      </div>
+      <div className="page-header"><div><span className="eyebrow">ATELIER OVERVIEW</span><h1>Dashboard</h1><p>Welcome back. Here is today's overview of ARAmane Arts.</p></div><button className="gold-outline-button">+ Add Painting</button></div>
       <div className="gold-rule" />
       <section className="dashboard-stats">
         <div className="heritage-card stat-card"><span className="stat-label">PENDING ORDERS</span><strong>0</strong><span className="stat-note">Awaiting artist acceptance</span></div>
@@ -124,11 +89,7 @@ function Dashboard() {
         <div className="heritage-card large-card"><div className="card-heading"><div><span className="eyebrow">ORDERS</span><h2>Recent Orders</h2></div><button className="text-button">View all →</button></div><div className="empty-state"><div className="empty-symbol">◇</div><h3>No orders yet</h3><p>Customer orders will appear here once they are placed.</p></div></div>
         <div className="heritage-card activity-card"><div className="card-heading"><div><span className="eyebrow">SYSTEM</span><h2>Recent Activity</h2></div></div><div className="activity-item"><div className="activity-dot" /><div><strong>Admin portal initialized</strong><span>System ready</span></div></div><div className="activity-item"><div className="activity-dot" /><div><strong>Authentication enabled</strong><span>Email + password + OTP</span></div></div></div>
       </section>
-      <section className="craft-strip">
-        <div className="craft-item"><span>01</span><div><strong>TRADITION</strong><small>Rooted in Indian artistry</small></div></div>
-        <div className="craft-item"><span>02</span><div><strong>CRAFTSMANSHIP</strong><small>Handcrafted with devotion</small></div></div>
-        <div className="craft-item"><span>03</span><div><strong>HERITAGE</strong><small>Art that carries a story</small></div></div>
-      </section>
+      <section className="craft-strip"><div className="craft-item"><span>01</span><div><strong>TRADITION</strong><small>Rooted in Indian artistry</small></div></div><div className="craft-item"><span>02</span><div><strong>CRAFTSMANSHIP</strong><small>Handcrafted with devotion</small></div></div><div className="craft-item"><span>03</span><div><strong>HERITAGE</strong><small>Art that carries a story</small></div></div></section>
     </AdminLayout>
   )
 }
@@ -143,8 +104,7 @@ function ProtectedRoute({ children }) {
 
   useEffect(() => {
     let mounted = true
-
-    fetch(`${API}/auth/admin-session.php`, { method: 'GET', credentials: 'include' })
+    fetch(apiUrl('auth/admin-session.php'), { method: 'GET', credentials: 'include' })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}))
         if (!mounted) return
@@ -157,7 +117,6 @@ function ProtectedRoute({ children }) {
         setAuthenticated(false)
         setChecking(false)
       })
-
     return () => { mounted = false }
   }, [])
 
