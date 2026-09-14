@@ -1,0 +1,32 @@
+/* Painting details layout: keep the artwork visible beside the long-form introduction. */
+.ara-details{width:min(1280px,calc(100% - 60px));margin:auto;padding:28px 0 110px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);column-gap:72px;align-items:start}
+.ara-details>.ara-breadcrumb{grid-column:1 / -1;grid-row:1;margin:0 0 26px}
+.ara-details>.ara-detail-intro{grid-column:2;grid-row:2;width:auto;margin:0;padding:0 0 34px;text-align:left;align-self:start}
+.ara-details>.ara-detail-intro .ara-detail-intro-kicker{justify-content:flex-start}
+.ara-details>.ara-detail-intro .ara-detail-intro-description{max-width:none}
+.ara-details>.ara-detail-body{display:contents}
+.ara-details>.ara-gallery{grid-column:1;grid-row:2 / 4;width:100%;align-self:start}
+.ara-details>.ara-details-info{grid-column:2;grid-row:3;align-self:start}
+
+/* Use the existing Collection link as a quiet, contextual back button. */
+.ara-details>.ara-breadcrumb{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px}
+.ara-details>.ara-breadcrumb a:first-of-type,.ara-details>.ara-breadcrumb span:first-of-type,.ara-details>.ara-breadcrumb strong{display:none}
+.ara-details>.ara-breadcrumb a:nth-of-type(2){display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;letter-spacing:.04em}
+.ara-details>.ara-breadcrumb a:nth-of-type(2)::before{content:'←';color:var(--gold);font-size:14px;transition:transform .2s ease}
+.ara-details>.ara-breadcrumb a:nth-of-type(2):hover{color:var(--maroon)}
+.ara-details>.ara-breadcrumb a:nth-of-type(2):hover::before{transform:translateX(-3px)}
+
+@media(max-width:900px){
+  .ara-details{width:min(100% - 36px,760px);grid-template-columns:1fr;column-gap:0;padding:22px 0 80px}
+  .ara-details>.ara-breadcrumb{grid-column:1;grid-row:1;margin-bottom:24px}
+  .ara-details>.ara-gallery{grid-column:1;grid-row:2;width:100%;margin:0 0 38px}
+  .ara-details>.ara-detail-intro{grid-column:1;grid-row:3;width:100%;padding:0 0 34px;text-align:left}
+  .ara-details>.ara-detail-intro .ara-detail-intro-kicker{justify-content:flex-start}
+  .ara-details>.ara-details-info{grid-column:1;grid-row:4}
+}
+
+@media(max-width:600px){
+  .ara-details{width:calc(100% - 30px);padding-top:16px}
+  .ara-details>.ara-gallery{margin-bottom:30px}
+  .ara-details>.ara-detail-intro{padding-bottom:28px}
+}
