@@ -6,22 +6,16 @@ import './fixes.css'
 import './collection-redesign.css'
 import './painting-details-redesign.css'
 import './cart-redesign.css'
+import './cart-count.js'
 import './animations.css'
 import App from './App.jsx'
 import { ToastProvider } from './components/ToastProvider.jsx'
 
-if ('scrollRestoration' in window.history) {
-  window.history.scrollRestoration = 'manual'
-}
-
+if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'
 const resetScrollPosition = () => window.scrollTo(0, 0)
 resetScrollPosition()
 window.addEventListener('load', resetScrollPosition, { once: true })
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
-  </StrictMode>,
+  <StrictMode><ToastProvider><App /></ToastProvider></StrictMode>,
 )
