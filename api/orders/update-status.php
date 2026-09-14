@@ -9,23 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $adminId = requireAdmin();
 $data = adminRequestJson();
 $orderId = (int)($data['order_id'] ?? 0);
-$action = trim((string)($data['action'] ?? ''));
+$action = strtoupper(trim((string)($data['action'] ?? '')));
 $notes = trim((string)($data['notes'] ?? ''));
 
 if ($orderId <= 0) adminJsonResponse(['success' => false, 'message' => 'Invalid order'], 400);
 if (strlen($notes) > 2000) adminJsonResponse(['success' => false, 'message' => 'Notes are too long'], 422);
 
 $validStatuses = [
-    'Order created',
-    'Artist to get in touch',
-    'Accepted',
-    'Payment Due',
-    'Paid',
-    'Processing',
-    'Dispatched',
-    'Delivered',
-    'REJECTED',
-    'CANCELLED',
+    'PENDING_ACCEPTANCE', 'ACCEPTED', 'PAYMENT_DUE', 'PAID',
+    'PROCESSING', 'DISPATCHED', 'DELIVERED', 'REJECTED', 'CANCELLED'
 ];
 
 if (!in_array($action, $validStatuses, true)) {
@@ -43,7 +35,7 @@ try {
         adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404);
     }
 
-    $oldStatus = (string)$order['status'];
+    $oldStatus = strtoupper((string)$order['status']);
     if ($oldStatus === $action && $notes === '') {
         $pdo->rollBack();
         adminJsonResponse(['success' => false, 'message' => 'Order is already in this status'], 409);
@@ -55,10 +47,10 @@ try {
         $query .= ', artist_notes = ?';
         $params[] = $notes;
     }
-    if ($action === 'Accepted' && $oldStatus !== 'Accepted') $query .= ', accepted_at = CURRENT_TIMESTAMP';
-    if ($action === 'Paid' && $oldStatus !== 'Paid') $query .= ', paid_at = CURRENT_TIMESTAMP';
-    if ($action === 'Dispatched' && $oldStatus !== 'Dispatched') $query .= ', dispatched_at = CURRENT_TIMESTAMP';
-    if ($action === 'Delivered' && $oldStatus !== 'Delivered') $query .= ', delivered_at = CURRENT_TIMESTAMP';
+    if ($action === 'ACCEPTED' && $oldStatus !== 'ACCEPTED') $query .= ', accepted_at = CURRENT_TIMESTAMP';
+    if ($action === 'PAID' && $oldStatus !== 'PAID') $query .= ', paid_at = CURRENT_TIMESTAMP';
+    if ($action === 'DISPATCHED' && $oldStatus !== 'DISPATCHED') $query .= ', dispatched_at = CURRENT_TIMESTAMP';
+    if ($action === 'DELIVERED' && $oldStatus !== 'DELIVERED') $query .= ', delivered_at = CURRENT_TIMESTAMP';
     $query .= ' WHERE id = ?';
     $params[] = $orderId;
 
