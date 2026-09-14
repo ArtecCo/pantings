@@ -42,6 +42,32 @@ try {
     $stmt->execute([$userId]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $itemStmt = $pdo->prepare("
+        SELECT
+            oi.id,
+            oi.painting_id,
+            oi.painting_name,
+            oi.quantity,
+            oi.unit_price,
+            oi.total_price,
+            (
+                SELECT pi.image_url
+                FROM painting_images pi
+                WHERE pi.painting_id = oi.painting_id
+                ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC
+                LIMIT 1
+            ) AS image_url
+        FROM order_items oi
+        WHERE oi.order_id = ?
+        ORDER BY oi.id ASC
+    ");
+
+    foreach ($orders as &$order) {
+        $itemStmt->execute([$order['id']]);
+        $order['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    unset($order);
+
     jsonResponse(['success' => true, 'orders' => $orders]);
 } catch (Throwable $e) {
     error_log('Error fetching user orders: ' . $e->getMessage());
