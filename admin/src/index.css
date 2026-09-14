@@ -7,6 +7,10 @@ body,
   font-family: 'DM Sans', sans-serif;
 }
 
+*{
+  user-select: none;
+}
+
 html {
   background: #faf6ee;
 }

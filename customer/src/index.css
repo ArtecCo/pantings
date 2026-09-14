@@ -12,7 +12,7 @@
   --muted: #6e5b53;
   --border: rgba(91, 18, 23, 0.18);
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; user-select: none; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--ivory); color: var(--brown); font-family: 'DM Sans', sans-serif; }
 a { color: inherit; text-decoration: none; }

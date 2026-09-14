@@ -78,8 +78,8 @@ export default function Paintings() {
     <main className="ara-collection">
       <section className="ara-collection-hero">
         <div className="ara-collection-hero-copy">
-          <div className="ara-collection-kicker"><span></span> THE ARAmane COLLECTION</div>
-          <h1>Art made to be cherished.</h1>
+          <div className="ara-collection-kicker"><span></span>Browse</div>
+          <h1>The ARAmane Collection</h1>
           <p>Original Thanjavur paintings, handcrafted with devotion, layered with 22K gold leaf and created to become part of your home and heritage.</p>
         </div>
       </section>
