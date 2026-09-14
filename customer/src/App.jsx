@@ -5,7 +5,6 @@ import PaintingDetails from './pages/PaintingDetails'
 import Login from './pages/Login'
 import Account from './pages/Account'
 import Cart from './pages/Cart'
-import TrackOrders from './pages/TrackOrders'
 import Layout from './components/Layout'
 import { ToastProvider } from './components/ToastProvider'
 
@@ -21,7 +20,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/account" element={<Account />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/track-orders" element={<TrackOrders />} />
           </Routes>
         </Layout>
       </ToastProvider>
