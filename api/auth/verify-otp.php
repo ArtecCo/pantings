@@ -21,6 +21,12 @@ if (!preg_match('/^\d{6}$/', $otp)) {
 }
 
 try {
+    $setting = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key='2fa_enabled' LIMIT 1");
+    $setting->execute();
+    if ((string)$setting->fetchColumn() !== '1') {
+        adminJsonResponse(['success' => false, 'message' => 'Two-factor verification is currently disabled'], 409);
+    }
+
     $stmt = $pdo->prepare(
         'SELECT id, otp_hash, expires_at, attempts
          FROM admin_otp_codes
@@ -38,7 +44,7 @@ try {
     }
 
     if (!hash_equals((string)$record['otp_hash'], hash('sha256', $otp))) {
-        $stmt = $pdo->prepare('UPDATE admin_otp_codes SET attempts = attempts + 1 WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE admin_otp_codes SET attempts = attempts + 1 WHERE id = ? AND used_at IS NULL');
         $stmt->execute([(int)$record['id']]);
         adminJsonResponse(['success' => false, 'message' => 'Incorrect OTP'], 401);
     }
@@ -64,7 +70,7 @@ try {
     $_SESSION['admin_email'] = $admin['email'];
     $_SESSION['admin_authenticated_at'] = time();
     $_SESSION['admin_2fa_verified'] = true;
-    unset($_SESSION['pending_admin_id'], $_SESSION['pending_admin_email'], $_SESSION['admin_2fa_pending']);
+    unset($_SESSION['pending_admin_id'], $_SESSION['pending_admin_email'], $_SESSION['admin_2fa_pending'], $_SESSION['admin_otp_requested_at']);
 
     $stmt = $pdo->prepare('UPDATE admin_users SET last_login_at = NOW() WHERE id = ?');
     $stmt->execute([$adminId]);
