@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import TrackOrders from './TrackOrders';
-
-const API = 'http://localhost/paintings/api';
+import { apiUrl } from '../config/api';
 
 export default function Account() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API}/auth/user-session.php`, {
+        fetch(apiUrl('auth/user-session.php'), {
             method: 'GET',
             credentials: 'include',
         })
@@ -29,7 +28,7 @@ export default function Account() {
 
     const handleLogout = async () => {
         try {
-            await fetch(`${API}/auth/user-logout.php`, {
+            await fetch(apiUrl('auth/user-logout.php'), {
                 method: 'POST',
                 credentials: 'include',
             });
