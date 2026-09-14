@@ -19,16 +19,12 @@ export default function Layout({ children }) {
                     </nav>
 
                     <div className="ara-header-actions">
-                        <Link to="/track-orders" className="ara-track">
-                            Track Orders
-                        </Link>
-
                         <Link to="/cart" className="ara-cart">
                             <span>Cart</span>
                             <span className="ara-cart-count">0</span>
                         </Link>
 
-                        <Link to="/login" className="ara-account">
+                        <Link to="/account" className="ara-account">
                             Account
                         </Link>
                     </div>
@@ -53,7 +49,6 @@ export default function Layout({ children }) {
                         <h3>Explore</h3>
                         <Link to="/paintings">Collection</Link>
                         <Link to="/about">Our Craft</Link>
-                        <Link to="/track-orders">Track Orders</Link>
                     </div>
                     <div className="ara-footer-column">
                         <h3>Assistance</h3>
