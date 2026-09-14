@@ -18,6 +18,25 @@ const updateCartCount = async () => {
   }
 }
 
+const isCartMutation = request => {
+  try {
+    const url = typeof request === 'string' ? request : request?.url
+    const pathname = new URL(url, window.location.href).pathname
+    return /\/cart\/(add-item|remove-item|update-item)\.php$/.test(pathname)
+  } catch {
+    return false
+  }
+}
+
+const nativeFetch = window.fetch.bind(window)
+window.fetch = async (...args) => {
+  const response = await nativeFetch(...args)
+  if (isCartMutation(args[0]) && response.ok) {
+    window.setTimeout(updateCartCount, 0)
+  }
+  return response
+}
+
 window.addEventListener('ara-cart-updated', updateCartCount)
 window.addEventListener('load', updateCartCount)
 window.setTimeout(updateCartCount, 0)
