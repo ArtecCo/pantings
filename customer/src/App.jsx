@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Account from './pages/Account'
 import Cart from './pages/Cart'
 import TrackOrders from './pages/TrackOrders'
+import OrderDetails from './pages/OrderDetails'
 import Layout from './components/Layout'
 import { ToastProvider } from './components/ToastProvider'
 
@@ -22,6 +23,7 @@ function App() {
             <Route path="/account" element={<Account />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/track-orders" element={<TrackOrders />} />
+            <Route path="/track-orders/:id" element={<OrderDetails />} />
           </Routes>
         </Layout>
       </ToastProvider>
