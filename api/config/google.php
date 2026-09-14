@@ -1,4 +1,3 @@
 <?php
-// Set GOOGLE_CLIENT_ID in the PHP environment on the server.
-// Do not put a Google client secret in the frontend or repository.
-$googleClientId = trim((string)(getenv('GOOGLE_CLIENT_ID') ?: ''));
+// Google Web Client IDs are public identifiers. Never store a Google client secret here.
+$googleClientId = trim((string)(getenv('GOOGLE_CLIENT_ID') ?: '329379769166-igtg18ou4c67e0va4qe8hrs4evfs0m46.apps.googleusercontent.com'));
