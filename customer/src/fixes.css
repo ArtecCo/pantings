@@ -1,0 +1,35 @@
+/* Global visual and refresh stability fixes */
+html {
+  scroll-behavior: auto;
+  overflow-anchor: none;
+}
+
+body {
+  background: #faf6ee;
+  overflow-anchor: none;
+}
+
+.ara-header {
+  background: #faf6ee !important;
+}
+
+.ara-mobile-menu-panel {
+  background: #faf6ee !important;
+}
+
+/* Keep collection artwork inside the card frame without the global absolute-position regression. */
+.ara-painting-image {
+  position: relative;
+}
+
+.ara-painting-image > img {
+  position: static;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center center;
+}
