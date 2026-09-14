@@ -1,31 +1,51 @@
-.ara-details{width:min(1280px,calc(100% - 60px));margin:auto;padding:24px 0 90px}
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap');
+
+.ara-details{width:min(1280px,calc(100% - 60px));margin:auto;padding:24px 0 110px}
 
 @media(min-width:901px){
   .ara-details{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);column-gap:64px;align-items:start}
-  .ara-details>.ara-breadcrumb{grid-column:1 / -1;grid-row:1;margin:0 0 20px}
-  .ara-details>.ara-product-top{grid-column:1 / -1;grid-row:2;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);column-gap:64px;align-items:start}
-  .ara-details .ara-gallery{grid-column:1;grid-row:1;align-self:start;width:100%}
-  .ara-details .ara-product-info{grid-column:2;grid-row:1;align-self:start;padding-top:4px}
-  .ara-details .ara-detail-eyebrow{margin:0 0 8px;justify-content:flex-start}
-  .ara-details .ara-product-info h1{margin:0 0 7px;text-align:left;font-size:clamp(34px,3.5vw,50px);line-height:1}
-  .ara-details .ara-detail-artist{margin:0 0 13px;text-align:left}
-  .ara-details .ara-detail-divider{margin:0 0 14px}
-  .ara-details .ara-detail-price{margin:0 0 14px}
-  .ara-details .ara-specifications{margin:0 0 16px}
+  .ara-details>.ara-breadcrumb{grid-column:1 / -1;margin:0 0 28px}
+  .ara-details>.ara-product-top{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);column-gap:64px;align-items:start}
+
+  .ara-details .ara-gallery{grid-column:1;align-self:start;width:100%}
+
+  .ara-details .ara-product-info{grid-column:2;align-self:start;display:flex;flex-direction:column;padding-top:4px}
+  .ara-details .ara-detail-eyebrow{display:flex;align-items:center;gap:12px;justify-content:flex-start;color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;margin:0 0 12px}
+  .ara-details .ara-detail-eyebrow span{width:28px;height:1px;background:var(--gold)}
+  .ara-details .ara-product-info>h1{margin:0 0 14px;color:var(--maroon);font-family:'Cormorant Garamond',serif;font-size:clamp(42px,4vw,58px);line-height:.98;font-weight:500;letter-spacing:0}
+  .ara-details .ara-detail-artist{margin:0 0 30px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.6}
+  .ara-details .ara-detail-artist strong{color:var(--brown);font-weight:600}
+  .ara-details .ara-detail-divider{width:100%;height:1px;margin:0 0 22px;background:var(--border)}
+  .ara-details .ara-detail-price{margin:0 0 26px;display:flex;align-items:baseline;gap:12px}
+  .ara-details .ara-detail-price strong{color:var(--brown);font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-.01em}
+  .ara-details .ara-detail-price span{color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;text-decoration:line-through}
+  .ara-details .ara-specifications{margin:0 0 28px}
   .ara-details .ara-purchase{margin:0}
 
-  .ara-details>.ara-artwork-description{grid-column:1 / -1;grid-row:3;margin-top:28px;padding-top:26px;border-top:1px solid var(--border)}
-  .ara-details .ara-artwork-description .ara-detail-intro-description{width:100%;max-width:none;margin:0;text-align:left}
+  .ara-details>.ara-artwork-description{grid-column:1 / -1;margin-top:48px;padding-top:30px;border-top:1px solid var(--border)}
+  .ara-details .ara-artwork-description .ara-detail-intro-description{width:100%;max-width:none;margin:0;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.9;text-align:left}
+  .ara-details .ara-artwork-description .ara-detail-intro-description p{margin:0 0 15px}
+  .ara-details .ara-artwork-description .ara-detail-intro-description p:last-child{margin-bottom:0}
 }
 
 @media(max-width:900px){
-  .ara-details{width:min(100% - 36px,760px);padding:22px 0 70px}
-  .ara-product-top{display:flex;flex-direction:column;gap:28px}
-  .ara-product-info{width:100%}
-  .ara-artwork-description{margin-top:30px;padding-top:24px;border-top:1px solid var(--border)}
+  .ara-details{width:min(100% - 36px,760px);padding:22px 0 80px}
+  .ara-details>.ara-product-top{display:block}
+  .ara-details .ara-product-info{margin-top:34px}
+  .ara-details .ara-detail-eyebrow{margin-bottom:12px}
+  .ara-details .ara-product-info>h1{margin:0 0 14px;color:var(--maroon);font-family:'Cormorant Garamond',serif;font-size:42px;line-height:1;font-weight:500}
+  .ara-details .ara-detail-artist{margin:0 0 24px}
+  .ara-details .ara-detail-price{margin:0 0 22px}
+  .ara-details .ara-detail-price strong{color:var(--brown);font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:600}
+  .ara-details>.ara-artwork-description{margin-top:40px;padding-top:26px;border-top:1px solid var(--border)}
 }
 
 @media(max-width:600px){
   .ara-details{width:calc(100% - 30px);padding-top:16px}
-  .ara-product-top{gap:22px}
+  .ara-details .ara-main-image{width:100%!important;max-width:100%!important;overflow:hidden}
+  .ara-details .ara-main-image-click-target{width:100%!important;max-width:100%!important}
+  .ara-details .ara-main-image-click-target img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}
+  .ara-details .ara-product-info{margin-top:28px}
+  .ara-details .ara-product-info>h1{font-size:36px}
+  .ara-details .ara-detail-artist{margin-bottom:22px}
 }
