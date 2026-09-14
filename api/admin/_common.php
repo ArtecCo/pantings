@@ -7,6 +7,9 @@ $sameSite = trim((string)(getenv('SESSION_COOKIE_SAMESITE') ?: 'Lax'));
 if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
     $sameSite = 'Lax';
 }
+if ($sameSite === 'None' && !$isHttps) {
+    $sameSite = 'Lax';
+}
 
 session_name('painting_marketplace_admin_session');
 session_set_cookie_params([
@@ -56,7 +59,9 @@ function adminRequestJson(): array {
 }
 
 function requireAdmin(): int {
-    if (!isset($_SESSION['admin_user_id']) || ($_SESSION['admin_user_type'] ?? '') !== 'admin') {
+    if (!isset($_SESSION['admin_user_id'])
+        || ($_SESSION['admin_user_type'] ?? '') !== 'admin'
+        || ($_SESSION['admin_2fa_verified'] ?? false) !== true) {
         adminJsonResponse(['success' => false, 'message' => 'Admin authentication required'], 401);
     }
     return (int)$_SESSION['admin_user_id'];
