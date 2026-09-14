@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { apiUrl } from '../config/api';
 import { useToast } from '../components/ToastProvider';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '329379769166-igtg18ou4c67e0va4qe8hrs4evfs0m46.apps.googleusercontent.com';
 
 export default function Login() {
     const { toast } = useToast();
@@ -84,7 +84,7 @@ export default function Login() {
                     <label><span>Password</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required /></label>
                     <button className="ara-login-submit" type="submit" disabled={loading}>{loading ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : (mode === 'login' ? 'Sign in' : 'Create account')}</button>
                 </form>
-                {mode === 'login' && <><div className="ara-login-divider"><span /><b>OR</b><span /></div><div className="ara-google-button" ref={googleButtonRef}>{!GOOGLE_CLIENT_ID && <span className="ara-login-message">Google sign-in needs your Google OAuth client ID.</span>}</div></>}
+                {mode === 'login' && <><div className="ara-login-divider"><span /><b>OR</b><span /></div><div className="ara-google-button" ref={googleButtonRef} />}</>}
                 <div className="ara-login-switch">{mode === 'login' ? "Don't have an account?" : 'Already have an account?'}<button type="button" onClick={()=>switchMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? ' Create one' : ' Sign in'}</button></div>
                 <div className="ara-login-footer"><span>ARAmane Arts</span><i>•</i><span>Heritage paintings</span></div>
             </section>
