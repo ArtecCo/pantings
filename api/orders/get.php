@@ -11,7 +11,10 @@ try {
     $orderStmt->execute([$orderId]);
     $order = $orderStmt->fetch();
     if (!$order) adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404);
-    $itemsStmt = $pdo->prepare('SELECT id, order_id, painting_id, painting_name, artist_name, quantity, unit_price, total_price, created_at FROM order_items WHERE order_id = ? ORDER BY id ASC');
+
+    // order_items does not store artist_name; the customer order API uses the
+    // same schema and falls back to the site artist label in the UI.
+    $itemsStmt = $pdo->prepare('SELECT id, order_id, painting_id, painting_name, quantity, unit_price, total_price, created_at FROM order_items WHERE order_id = ? ORDER BY id ASC');
     $itemsStmt->execute([$orderId]);
     $order['items'] = $itemsStmt->fetchAll();
     adminJsonResponse(['success' => true, 'order' => $order]);
