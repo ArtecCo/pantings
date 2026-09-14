@@ -4,16 +4,28 @@ const API = 'http://localhost/paintings/api'
 const state = { options: [], route: '' }
 const normalize = option => ({ name: String(option.name || '').trim(), width: option.width, height: option.height, unit: option.unit || 'in', price: option.price, is_standard: Boolean(option.is_standard) })
 
+function readFormValues() {
+  const form = document.querySelector('.painting-form')
+  if (!form) return null
+  const value = name => form.querySelector(`[name="${name}"]`)?.value ?? ''
+  return { price:value('price'), width:value('width'), height:value('height') }
+}
+
 function syncLegacyFields() {
-  const standard = state.options.find(option => option.is_standard) || state.options[0]
+  const standard = state.options.find(option => option.is_standard) || state.options.find(option => option.name && Number(option.width)>0 && Number(option.height)>0 && option.price !== '')
   if (!standard) return
-  for (const [name, value] of [['price', standard.price], ['width', standard.width], ['height', standard.height]]) {
+  const values = readFormValues()
+  if (!values) return
+  const setValue = (name, value) => {
     const input = document.querySelector(`.painting-form [name="${name}"]`)
-    if (!input) continue
+    if (!input) return
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
     setter?.call(input, value == null ? '' : value)
     input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true }))
   }
+  if (standard.price !== '' && standard.price != null) setValue('price', standard.price)
+  if (standard.width !== '' && standard.width != null) setValue('width', standard.width)
+  if (standard.height !== '' && standard.height != null) setValue('height', standard.height)
 }
 
 function render() {
@@ -47,7 +59,7 @@ async function loadDefaults(){try{const response=await fetch(`${API}/sizes/list.
 async function loadExisting(id){if(!id){state.options=[];return}try{const response=await fetch(`${API}/paintings/get.php?id=${encodeURIComponent(id)}`,{credentials:'include'});const data=await response.json();state.options=data.success&&Array.isArray(data.painting?.size_options)?data.painting.size_options.map(normalize):[]}catch{state.options=[]}}
 
 const originalFetch=window.fetch.bind(window)
-window.fetch=async(input,init={})=>{const url=typeof input==='string'?input:input?.url||'';if(/\/paintings\/(create|update)\.php(?:\?|$)/.test(url)&&init.body){try{const body=JSON.parse(init.body);const valid=state.options.filter(option=>option.name&&Number(option.width)>0&&Number(option.height)>0&&Number(option.price)>=0);if(valid.length){const standardIndex=Math.max(0,valid.findIndex(option=>option.is_standard));body.size_options=valid.map((option,index)=>({...option,is_standard:index===standardIndex}));const standard=body.size_options[standardIndex];body.price=standard.price;body.width=standard.width;body.height=standard.height;init={...init,body:JSON.stringify(body)}}}catch{}}return originalFetch(input,init)}
+window.fetch=async(input,init={})=>{const url=typeof input==='string'?input:input?.url||'';if(/\/paintings\/(create|update)\.php(?:\?|$)/.test(url)&&init.body){try{const body=JSON.parse(init.body);const valid=state.options.filter(option=>option.name&&Number(option.width)>0&&Number(option.height)>0&&option.price!=='');if(valid.length){const standardIndex=Math.max(0,valid.findIndex(option=>option.is_standard));body.size_options=valid.map((option,index)=>({...option,is_standard:index===standardIndex}));const standard=body.size_options[standardIndex];body.price=standard.price;body.width=standard.width;body.height=standard.height;init={...init,body:JSON.stringify(body)}}}catch{}}return originalFetch(input,init)}
 
 let loadingRoute=''
 async function refresh(){const form=document.querySelector('.painting-form');const route=location.pathname;if(route===loadingRoute&&form)return;loadingRoute=route;const match=route.match(/\/paintings\/(\d+)\/edit/);state.options=[];if(match)await loadExisting(match[1]);render()}
