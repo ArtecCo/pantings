@@ -11,7 +11,112 @@ import OrderDetails from './pages/OrderDetails'
 import Layout from './components/Layout'
 import { ToastProvider } from './components/ToastProvider'
 
+const API = 'http://localhost/paintings/api'
+const SITE_NAME = 'ARAmane Arts'
+const DEFAULT_DESCRIPTION = 'Original Thanjavur paintings handcrafted with devotion and heritage.'
 const COLLECTION_SCROLL_KEY = 'ara-collection-scroll'
+
+function setMeta(name, content) {
+  let element = document.head.querySelector(`meta[name="${name}"]`)
+  if (!element) {
+    element = document.createElement('meta')
+    element.setAttribute('name', name)
+    document.head.appendChild(element)
+  }
+  element.setAttribute('content', content)
+}
+
+function setProperty(property, content) {
+  let element = document.head.querySelector(`meta[property="${property}"]`)
+  if (!element) {
+    element = document.createElement('meta')
+    element.setAttribute('property', property)
+    document.head.appendChild(element)
+  }
+  element.setAttribute('content', content)
+}
+
+function setCanonical(url) {
+  let element = document.head.querySelector('link[rel="canonical"]')
+  if (!element) {
+    element = document.createElement('link')
+    element.setAttribute('rel', 'canonical')
+    document.head.appendChild(element)
+  }
+  element.setAttribute('href', url)
+}
+
+function getImageUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${window.location.origin}${url}`
+}
+
+function MetadataManager() {
+  const location = useLocation()
+
+  useEffect(() => {
+    let cancelled = false
+    const origin = window.location.origin
+    const canonicalUrl = `${origin}${location.pathname}${location.search}`
+
+    const applyDefaults = () => {
+      if (cancelled) return
+      document.title = location.pathname === '/' ? SITE_NAME : `${SITE_NAME} — ${location.pathname.startsWith('/paintings') ? 'Collection' : 'Account'}`
+      setMeta('description', DEFAULT_DESCRIPTION)
+      setProperty('og:site_name', SITE_NAME)
+      setProperty('og:type', 'website')
+      setProperty('og:title', document.title)
+      setProperty('og:description', DEFAULT_DESCRIPTION)
+      setProperty('og:url', canonicalUrl)
+      setMeta('twitter:card', 'summary_large_image')
+      setMeta('twitter:title', document.title)
+      setMeta('twitter:description', DEFAULT_DESCRIPTION)
+      setCanonical(canonicalUrl)
+    }
+
+    applyDefaults()
+
+    const match = location.pathname.match(/^\/paintings\/([^/]+)$/)
+    if (!match) return () => { cancelled = true }
+
+    const loadPaintingMetadata = async () => {
+      try {
+        const response = await fetch(`${API}/paintings/get.php?id=${encodeURIComponent(match[1])}`)
+        const data = await response.json().catch(() => ({}))
+        const painting = data.painting || data.data
+        if (cancelled || !response.ok || !data.success || !painting) return
+
+        const title = painting.name ? `${painting.name} | ${SITE_NAME}` : SITE_NAME
+        const description = painting.description || `Discover ${painting.name || 'this original Thanjavur painting'} from ${SITE_NAME}.`
+        const image = getImageUrl((painting.images?.[0]?.image_url) || painting.image_url)
+
+        document.title = title
+        setMeta('description', description)
+        setProperty('og:type', 'product')
+        setProperty('og:title', title)
+        setProperty('og:description', description)
+        setProperty('og:url', canonicalUrl)
+        if (image) {
+          setProperty('og:image', image)
+          setProperty('og:image:alt', painting.name || SITE_NAME)
+          setMeta('twitter:image', image)
+        }
+        setMeta('twitter:card', 'summary_large_image')
+        setMeta('twitter:title', title)
+        setMeta('twitter:description', description)
+        setCanonical(canonicalUrl)
+      } catch {
+        // Keep the branded defaults when metadata lookup fails.
+      }
+    }
+
+    loadPaintingMetadata()
+    return () => { cancelled = true }
+  }, [location.pathname, location.search])
+
+  return null
+}
 
 function ScrollManager() {
   const location = useLocation()
@@ -48,6 +153,7 @@ function ScrollManager() {
 function App() {
   return (
     <BrowserRouter>
+      <MetadataManager />
       <ScrollManager />
       <ToastProvider>
         <Layout>
