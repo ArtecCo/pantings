@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './animations.css'
 import './painting-size-options.css'
+import './painting-size-enhancer.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
