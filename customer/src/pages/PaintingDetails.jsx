@@ -3,17 +3,47 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiUrl } from '../config/api'
 import { useToast } from '../components/ToastProvider'
 
+const viewerStyles = `
+.ara-art-viewer{position:fixed;inset:0;z-index:10000;background:#160c08;color:#fdfbf7;display:flex;flex-direction:column;overflow:hidden}
+.ara-art-viewer *{box-sizing:border-box}
+.ara-art-viewer-head{height:72px;flex:0 0 72px;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid rgba(212,175,55,.35);background:#21110c}
+.ara-art-viewer-title{min-width:0;display:flex;flex-direction:column;gap:2px}.ara-art-viewer-title small{color:#d4af37;font:600 9px 'DM Sans',sans-serif;letter-spacing:.2em;text-transform:uppercase}.ara-art-viewer-title strong{font:600 22px 'Cormorant Garamond',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ara-art-viewer-close{width:44px;height:44px;flex:0 0 44px;border:1px solid #d4af37;border-radius:50%;background:transparent;color:#fdfbf7;font-size:28px;line-height:1;cursor:pointer}.ara-art-viewer-close:hover{background:#d4af37;color:#2c1810}
+.ara-art-viewer-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px 76px;overflow:hidden;background:radial-gradient(circle at center,rgba(212,175,55,.08),transparent 45%)}
+.ara-art-viewer-canvas{position:relative;max-width:100%;max-height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none}
+.ara-art-viewer-image{display:block;width:auto;height:auto;max-width:calc(100vw - 170px);max-height:calc(100vh - 190px);object-fit:contain;border:2px solid #d4af37;box-shadow:0 18px 55px rgba(0,0,0,.5);transform-origin:center center;will-change:transform;user-select:none}
+.ara-art-viewer-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:48px;height:48px;border:1px solid #d4af37;border-radius:50%;background:rgba(22,12,8,.88);color:#fdfbf7;font:38px/38px 'Cormorant Garamond',serif;cursor:pointer}.ara-art-viewer-arrow:hover{background:#d4af37;color:#2c1810}.ara-art-viewer-prev{left:18px}.ara-art-viewer-next{right:18px}
+.ara-art-viewer-bar{height:62px;flex:0 0 62px;display:flex;align-items:center;justify-content:center;gap:8px;border-top:1px solid rgba(212,175,55,.25);background:#21110c}.ara-art-viewer-bar button{height:38px;min-width:42px;padding:0 13px;border:1px solid rgba(212,175,55,.75);background:#2c1810;color:#fdfbf7;cursor:pointer;font:500 13px 'DM Sans',sans-serif}.ara-art-viewer-bar button:hover:not(:disabled){background:#d4af37;color:#2c1810}.ara-art-viewer-bar button:disabled{opacity:.35;cursor:default}.ara-art-viewer-help{height:30px;flex:0 0 30px;text-align:center;color:rgba(253,251,247,.55);font:9px/30px 'DM Sans',sans-serif;letter-spacing:.1em;background:#21110c}
+@media(max-width:600px){.ara-art-viewer-head{height:60px;flex-basis:60px;padding:9px 12px}.ara-art-viewer-title small{font-size:8px}.ara-art-viewer-title strong{font-size:19px;max-width:72vw}.ara-art-viewer-close{width:38px;height:38px;flex-basis:38px;font-size:25px}.ara-art-viewer-stage{padding:10px 12px}.ara-art-viewer-canvas{width:100%;height:100%}.ara-art-viewer-image{max-width:calc(100vw - 24px);max-height:calc(100vh - 132px)}.ara-art-viewer-arrow{width:38px;height:38px;font-size:29px;line-height:32px}.ara-art-viewer-prev{left:6px}.ara-art-viewer-next{right:6px}.ara-art-viewer-bar{height:54px;flex-basis:54px}.ara-art-viewer-bar button{height:34px;min-width:38px;padding:0 10px}.ara-art-viewer-help{display:none}}
+@media(min-width:901px){.ara-menu-toggle{display:none!important}}
+@media(max-width:600px){.ara-main-image{width:100%!important;max-width:100%!important;overflow:hidden}.ara-main-image-click-target{width:100%!important;max-width:100%!important}.ara-main-image-click-target img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}}
+`
+
 export default function PaintingDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [painting, setPainting] = useState(null), [images, setImages] = useState([]), [activeImage, setActiveImage] = useState(0), [loading, setLoading] = useState(true), [error, setError] = useState('')
   const [viewerOpen, setViewerOpen] = useState(false), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 }), [dragging, setDragging] = useState(false)
-  const [touchStart, setTouchStart] = useState(null)
   const dragStart = useRef(null)
   const getImageUrl = url => !url ? '' : url.startsWith('http') ? url : `${new URL(apiUrl('')).origin}${url}`
 
   useEffect(() => { loadPainting() }, [id])
+  useEffect(() => {
+    if (!viewerOpen) return
+    const key = e => {
+      if (e.key === 'Escape') closeViewer()
+      if (images.length > 1 && e.key === 'ArrowLeft') changeViewerImage('previous')
+      if (images.length > 1 && e.key === 'ArrowRight') changeViewerImage('next')
+      if (e.key === '+' || e.key === '=') zoomIn()
+      if (e.key === '-') zoomOut()
+      if (e.key === '0') resetZoom()
+    }
+    document.addEventListener('keydown', key)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', key); document.body.style.overflow = previousOverflow }
+  }, [viewerOpen, images.length, activeImage, zoom, pan])
 
   const loadPainting = async () => {
     try {
@@ -35,87 +65,23 @@ export default function PaintingDetails() {
       const d = await r.json().catch(() => ({}))
       if (r.status === 401) { toast.error('Please sign in to add items to your cart.'); navigate('/login'); return }
       if (!r.ok || !d.success) throw new Error(d.message || 'Unable to add this painting to your cart.')
-      toast.success('Painting added to your cart.')
-      setTimeout(() => navigate('/cart'), 500)
+      toast.success('Painting added to your cart.'); setTimeout(() => navigate('/cart'), 500)
     } catch (e) { toast.error(e.message || 'Unable to add this painting to your cart.') }
   }
 
-  useEffect(() => {
-    if (!viewerOpen) return
-    const k = e => {
-      if (e.key === 'Escape') closeViewer()
-      if (images.length > 1 && e.key === 'ArrowLeft') changeViewerImage('previous')
-      if (images.length > 1 && e.key === 'ArrowRight') changeViewerImage('next')
-      if (e.key === '+' || e.key === '=') zoomIn()
-      if (e.key === '-') zoomOut()
-      if (e.key === '0') resetZoom()
-    }
-    document.addEventListener('keydown', k)
-    document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', k); document.body.style.overflow = '' }
-  }, [viewerOpen, images.length, activeImage, zoom, pan])
-
-  const openViewer = () => {
-    if (!images.length || !images[activeImage]?.image_url) return
-    setZoom(1); setPan({ x: 0, y: 0 }); setViewerOpen(true)
-  }
-
-  const closeViewer = () => {
-    setViewerOpen(false); setZoom(1); setPan({ x: 0, y: 0 }); setDragging(false); dragStart.current = null; setTouchStart(null)
-  }
-
-  const changeViewerImage = direction => {
-    if (images.length < 2) return
-    setActiveImage(current => direction === 'next' ? (current + 1) % images.length : (current - 1 + images.length) % images.length)
-    setZoom(1); setPan({ x: 0, y: 0 })
-  }
-
-  const zoomIn = () => setZoom(current => Math.min(3, Number((current + 0.25).toFixed(2))))
-  const zoomOut = () => setZoom(current => {
-    const next = Math.max(1, Number((current - 0.25).toFixed(2)))
-    if (next === 1) setPan({ x: 0, y: 0 })
-    return next
-  })
+  const openViewer = () => { if (images[activeImage]?.image_url) { setZoom(1); setPan({ x: 0, y: 0 }); setViewerOpen(true) } }
+  const closeViewer = () => { setViewerOpen(false); setZoom(1); setPan({ x: 0, y: 0 }); setDragging(false); dragStart.current = null }
+  const changeViewerImage = direction => { if (images.length < 2) return; setActiveImage(current => direction === 'next' ? (current + 1) % images.length : (current - 1 + images.length) % images.length); setZoom(1); setPan({ x: 0, y: 0 }) }
+  const zoomIn = () => setZoom(z => Math.min(4, Number((z + .25).toFixed(2))))
+  const zoomOut = () => setZoom(z => { const next = Math.max(1, Number((z - .25).toFixed(2))); if (next === 1) setPan({ x: 0, y: 0 }); return next })
   const resetZoom = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
-
-  const handleImageMouseDown = event => {
-    if (zoom <= 1) return
-    event.preventDefault()
-    setDragging(true)
-    dragStart.current = { mouseX: event.clientX, mouseY: event.clientY, panX: pan.x, panY: pan.y }
-  }
-
-  const handleImageMouseMove = event => {
-    if (!dragging || !dragStart.current) return
-    setPan({ x: dragStart.current.panX + (event.clientX - dragStart.current.mouseX), y: dragStart.current.panY + (event.clientY - dragStart.current.mouseY) })
-  }
-
-  const stopDragging = () => { setDragging(false); dragStart.current = null }
-
-  const handleWheel = event => {
-    event.preventDefault()
-    setZoom(current => {
-      const next = current + (event.deltaY < 0 ? 0.15 : -0.15)
-      const clamped = Math.min(3, Math.max(1, Number(next.toFixed(2))))
-      if (clamped === 1) setPan({ x: 0, y: 0 })
-      return clamped
-    })
-  }
-
-  const handleTouchStart = event => {
-    if (event.touches.length !== 1) return
-    setTouchStart({ x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now() })
-  }
-
-  const handleTouchEnd = event => {
-    if (!touchStart || zoom > 1 || !images.length) return
-    const touch = event.changedTouches[0]
-    const dx = touch.clientX - touchStart.x
-    const dy = touch.clientY - touchStart.y
-    const elapsed = Date.now() - touchStart.time
-    if (elapsed < 500 && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) changeViewerImage(dx < 0 ? 'next' : 'previous')
-    setTouchStart(null)
-  }
+  const startDrag = e => { if (zoom <= 1) return; e.preventDefault(); setDragging(true); dragStart.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y } }
+  const moveDrag = e => { if (!dragging || !dragStart.current) return; setPan({ x: dragStart.current.px + e.clientX - dragStart.current.x, y: dragStart.current.py + e.clientY - dragStart.current.y }) }
+  const stopDrag = () => { setDragging(false); dragStart.current = null }
+  const wheelZoom = e => { e.preventDefault(); setZoom(z => { const next = Math.min(4, Math.max(1, Number((z + (e.deltaY < 0 ? .2 : -.2)).toFixed(2)))); if (next === 1) setPan({ x: 0, y: 0 }); return next }) }
+  const handlePointerDown = e => { if (e.pointerType === 'mouse') startDrag(e); else if (zoom > 1) startDrag(e) }
+  const handlePointerMove = e => moveDrag(e)
+  const handlePointerUp = () => stopDrag()
 
   const displayPrice = Number(painting?.discount_price || painting?.price || 0), hasDiscount = painting?.discount_price && Number(painting.discount_price) < Number(painting.price)
   const formatPrice = v => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(v || 0))
@@ -124,14 +90,15 @@ export default function PaintingDetails() {
   const currentImage = images[activeImage]
 
   return <>
+    <style>{viewerStyles}</style>
     <main className="ara-details">
       <div className="ara-breadcrumb"><Link to="/">Home</Link><span>·</span><Link to="/paintings">Collection</Link><span>·</span><strong>{painting.name}</strong></div>
       <section className="ara-details-layout">
         <div className="ara-gallery">
           <div className="ara-main-image">
-            {currentImage?.image_url ? <div className="ara-main-image-click-target" onClick={openViewer} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer() } }}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></div> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
+            {currentImage?.image_url ? <button type="button" className="ara-main-image-click-target" onClick={openViewer} aria-label={`Open ${painting.name} in artwork viewer`}><img src={getImageUrl(currentImage.image_url)} alt={painting.name} /></button> : <div className="ara-gallery-placeholder"><span>ARAmane Arts</span><strong>Heritage</strong></div>}
             {painting.gold_details && <div className="ara-detail-gold-badge">✦ 22K GOLD</div>}
-            {images.length > 1 && <><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={() => setActiveImage((activeImage + 1) % images.length)}>›</button></>}
+            {images.length > 1 && <><button type="button" className="ara-gallery-arrow ara-gallery-prev" onClick={() => changeViewerImage('previous')}>‹</button><button type="button" className="ara-gallery-arrow ara-gallery-next" onClick={() => changeViewerImage('next')}>›</button></>}
           </div>
           {images.length > 1 && <div className="ara-gallery-thumbnails">{images.map((image, i) => <button type="button" key={image.id || image.image_url || i} className={i === activeImage ? 'ara-thumbnail active' : 'ara-thumbnail'} onClick={() => setActiveImage(i)}><img src={getImageUrl(image.image_url)} alt={`${painting.name} view ${i + 1}`} /></button>)}</div>}
         </div>
@@ -149,24 +116,17 @@ export default function PaintingDetails() {
       </section>
     </main>
 
-    {viewerOpen && images.length > 0 && <div className="ara-lightbox" role="dialog" aria-modal="true" aria-label={`${painting.name} artwork viewer`} onMouseDown={e => e.target === e.currentTarget && closeViewer()}>
-      <div className="ara-lightbox-top">
-        <div><span>ARAmane Arts · Artwork Viewer</span><strong>{painting.name}</strong></div>
-        <button type="button" className="ara-lightbox-close" onClick={closeViewer} aria-label="Close artwork viewer">×</button>
-      </div>
-      <div className="ara-lightbox-stage" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-        {images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-prev" onClick={() => changeViewerImage('previous')} aria-label="Previous artwork">‹</button>}
-        <div className="ara-lightbox-image-wrap" onWheel={handleWheel} onMouseMove={handleImageMouseMove} onMouseUp={stopDragging} onMouseLeave={stopDragging}>
-          <img src={getImageUrl(images[activeImage].image_url)} alt={painting.name} draggable={false} onMouseDown={handleImageMouseDown} onDoubleClick={resetZoom} style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`, cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in' }} />
+    {viewerOpen && images.length > 0 && <div className="ara-art-viewer" role="dialog" aria-modal="true" aria-label={`${painting.name} artwork viewer`}>
+      <div className="ara-art-viewer-head"><div className="ara-art-viewer-title"><small>ARAmane Arts · Artwork Viewer</small><strong>{painting.name}</strong></div><button type="button" className="ara-art-viewer-close" onClick={closeViewer} aria-label="Close artwork viewer">×</button></div>
+      <div className="ara-art-viewer-stage" onMouseMove={handlePointerMove} onMouseUp={handlePointerUp} onMouseLeave={handlePointerUp} onWheel={wheelZoom}>
+        {images.length > 1 && <button type="button" className="ara-art-viewer-arrow ara-art-viewer-prev" onClick={() => changeViewerImage('previous')} aria-label="Previous image">‹</button>}
+        <div className="ara-art-viewer-canvas" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp}>
+          <img className="ara-art-viewer-image" src={getImageUrl(images[activeImage].image_url)} alt={painting.name} draggable={false} onDoubleClick={resetZoom} style={{ transform: `translate3d(${pan.x}px,${pan.y}px,0) scale(${zoom})`, cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in' }} />
         </div>
-        {images.length > 1 && <button type="button" className="ara-lightbox-arrow ara-lightbox-next" onClick={() => changeViewerImage('next')} aria-label="Next artwork">›</button>}
+        {images.length > 1 && <button type="button" className="ara-art-viewer-arrow ara-art-viewer-next" onClick={() => changeViewerImage('next')} aria-label="Next image">›</button>}
       </div>
-      <div className="ara-lightbox-controls">
-        <button type="button" onClick={zoomOut} disabled={zoom <= 1} aria-label="Zoom out">−</button>
-        <button type="button" onClick={resetZoom} aria-label="Reset zoom">{Math.round(zoom * 100)}%</button>
-        <button type="button" onClick={zoomIn} disabled={zoom >= 3} aria-label="Zoom in">+</button>
-      </div>
-      <div className="ara-lightbox-counter">{activeImage + 1} / {images.length} · {zoom === 1 ? 'Swipe or use arrows to browse' : 'Drag to inspect'} · Double-click to reset</div>
+      <div className="ara-art-viewer-bar"><button type="button" onClick={zoomOut} disabled={zoom <= 1}>−</button><button type="button" onClick={resetZoom}>{Math.round(zoom * 100)}%</button><button type="button" onClick={zoomIn} disabled={zoom >= 4}>+</button></div>
+      <div className="ara-art-viewer-help">{activeImage + 1} / {images.length} · {zoom > 1 ? 'DRAG TO INSPECT' : 'CLICK + OR USE MOUSE WHEEL TO ZOOM'} · ESC TO CLOSE</div>
     </div>}
   </>
 }
