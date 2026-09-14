@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiUrl } from '../config/api'
 
+const STATUS_LABELS = {
+  PENDING_ACCEPTANCE: 'Pending Acceptance',
+  ACCEPTED: 'Accepted',
+  PAYMENT_DUE: 'Payment Due',
+  PAID: 'Paid',
+  PROCESSING: 'Processing',
+  DISPATCHED: 'Dispatched',
+  DELIVERED: 'Delivered',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
+}
+
 const getImageUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http')) return url
@@ -15,16 +27,19 @@ export default function TrackOrders() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadOrders()
+    loadOrders(true)
+    const interval = setInterval(() => loadOrders(false), 15000)
+    return () => clearInterval(interval)
   }, [])
 
-  const loadOrders = async () => {
+  const loadOrders = async (showLoading = false) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       setError('')
       const response = await fetch(apiUrl('orders/my-orders.php'), {
         method: 'GET',
         credentials: 'include',
+        cache: 'no-store',
       })
       const data = await response.json().catch(() => ({}))
 
@@ -39,9 +54,9 @@ export default function TrackOrders() {
       setAuthenticated(true)
       setOrders(data.orders || [])
     } catch (err) {
-      setError(err.message || 'Unable to load your orders.')
+      if (showLoading) setError(err.message || 'Unable to load your orders.')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
@@ -69,7 +84,7 @@ export default function TrackOrders() {
       <div className="ara-collection-state ara-error-state">
         <strong>Unable to load your orders</strong>
         <p>{error}</p>
-        <button type="button" onClick={loadOrders}>Try Again</button>
+        <button type="button" onClick={() => loadOrders(true)}>Try Again</button>
       </div>
     )
   }
@@ -99,6 +114,7 @@ export default function TrackOrders() {
             const preview = items.find(item => item.image_url)?.image_url || ''
             const firstItem = items[0]
             const itemCount = items.reduce((total, item) => total + Number(item.quantity || 0), 0)
+            const statusLabel = STATUS_LABELS[order.status] || order.status || 'Unknown'
 
             return (
               <article className="ara-order-banner" key={order.id}>
@@ -120,7 +136,7 @@ export default function TrackOrders() {
                       <h3>#{order.order_number}</h3>
                     </div>
                     <span className={`ara-order-status ara-status-${getStatusKey(order.status)}`}>
-                      {order.status}
+                      {statusLabel}
                     </span>
                   </div>
 
