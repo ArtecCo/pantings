@@ -8,11 +8,12 @@
 .ara-details>.ara-gallery{grid-column:1;grid-row:2 / 4;width:100%;align-self:start}
 .ara-details>.ara-details-info{grid-column:2;grid-row:3;align-self:start}
 
-/* Use the existing Collection link as a quiet, contextual back button. */
+/* Quiet contextual back control. */
 .ara-details>.ara-breadcrumb{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px}
 .ara-details>.ara-breadcrumb a:first-of-type,.ara-details>.ara-breadcrumb span:first-of-type,.ara-details>.ara-breadcrumb strong{display:none}
-.ara-details>.ara-breadcrumb a:nth-of-type(2){display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;letter-spacing:.04em}
+.ara-details>.ara-breadcrumb a:nth-of-type(2){display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:0;letter-spacing:.04em;padding:5px 0}
 .ara-details>.ara-breadcrumb a:nth-of-type(2)::before{content:'←';color:var(--gold);font-size:14px;transition:transform .2s ease}
+.ara-details>.ara-breadcrumb a:nth-of-type(2)::after{content:'Back to Collection';font-size:11px}
 .ara-details>.ara-breadcrumb a:nth-of-type(2):hover{color:var(--maroon)}
 .ara-details>.ara-breadcrumb a:nth-of-type(2):hover::before{transform:translateX(-3px)}
 
