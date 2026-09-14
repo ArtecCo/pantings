@@ -20,8 +20,8 @@
   .ara-details .ara-specifications{margin:0 0 28px}
   .ara-details .ara-purchase{margin:0}
   .ara-details>.ara-artwork-description{grid-column:1 / -1;margin-top:48px;padding-top:30px;border-top:1px solid var(--border)}
-  .ara-details .ara-artwork-description .ara-description-heading{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase}
-  .ara-details .ara-artwork-description .ara-description-heading span{width:28px;height:1px;background:var(--gold)}
+  .ara-details>.ara-artwork-description::before{content:'DESCRIPTION';display:flex;align-items:center;gap:12px;width:max-content;margin:0 0 18px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase}
+  .ara-details>.ara-artwork-description::after{content:'';position:absolute}
   .ara-details .ara-artwork-description .ara-detail-intro-description{width:100%;max-width:none;margin:0;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.9;text-align:left}
   .ara-details .ara-artwork-description .ara-detail-intro-description p{margin:0 0 15px}
   .ara-details .ara-artwork-description .ara-detail-intro-description p:last-child{margin-bottom:0}
@@ -37,7 +37,7 @@
   .ara-details .ara-detail-price{margin:0 0 22px}
   .ara-details .ara-detail-price strong{color:var(--brown);font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:600}
   .ara-details>.ara-artwork-description{margin-top:40px;padding-top:26px;border-top:1px solid var(--border)}
-  .ara-details .ara-artwork-description .ara-description-heading{margin-bottom:16px}
+  .ara-details>.ara-artwork-description::before{margin-bottom:16px;font-size:9px}
 }
 
 @media(max-width:600px){
