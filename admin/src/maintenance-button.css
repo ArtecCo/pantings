@@ -1,0 +1,20 @@
+.maintenance-button {
+  padding: 10px 17px;
+  border: 1px solid var(--gold);
+  background: var(--maroon);
+  color: var(--ivory);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.maintenance-button:hover:not(:disabled) {
+  background: var(--maroon-light);
+  box-shadow: 0 5px 18px rgba(91, 18, 23, 0.12);
+}
+
+.maintenance-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
