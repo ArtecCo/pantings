@@ -34,9 +34,17 @@ try {
     $history = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, 'PAYMENT_DUE', ?, 'ADMIN', ?)");
     $history->execute([$orderId, $currentStatus, $adminId, $notes !== '' ? $notes : 'Final price released']);
     $pdo->commit();
+
     $order['customer_email'] = (string)($order['customer_email'] ?? '');
-    sendOrderStatusNotification($pdo, $order, 'PAYMENT_DUE', $notes !== '' ? $notes : 'Your final price is now available.');
-    adminJsonResponse(['success' => true, 'message' => 'Final price released successfully', 'order_id' => $orderId, 'order_number' => $order['order_number'], 'new_status' => 'PAYMENT_DUE', 'base_amount' => $baseAmount, 'customization_amount' => $customizationAmount, 'delivery_amount' => $deliveryAmount, 'discount_amount' => $discountAmount, 'total_amount' => $finalAmount, 'payment_link' => $paymentLink]);
+    $customerEmail = trim($order['customer_email']);
+    $customerName = trim((string)($order['shipping_name'] ?? 'Customer'));
+    $mailSent = false;
+    if (filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+        $mail = finalPriceCustomerEmail($order['order_number'], $baseAmount, $customizationAmount, $deliveryAmount, $discountAmount, $finalAmount, $customerName, $paymentLink, $notes);
+        $mailSent = sendHtmlMail(ORDERS_FROM_EMAIL, ORDERS_FROM_NAME, $customerEmail, $customerName, $mail['subject'], $mail['html']);
+    }
+
+    adminJsonResponse(['success' => true, 'message' => 'Final price released successfully', 'order_id' => $orderId, 'order_number' => $order['order_number'], 'new_status' => 'PAYMENT_DUE', 'base_amount' => $baseAmount, 'customization_amount' => $customizationAmount, 'delivery_amount' => $deliveryAmount, 'discount_amount' => $discountAmount, 'total_amount' => $finalAmount, 'payment_link' => $paymentLink, 'notification_sent' => $mailSent]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     error_log('Order price release error: ' . $e->getMessage());
