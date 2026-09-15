@@ -1,9 +1,9 @@
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
 const localHost = hostname === 'localhost' || hostname === '127.0.0.1'
-const defaultApiBase = localHost ? 'http://localhost/paintings/api' : 'https://api.arts.araha.co.in'
-const configuredApiBase = String(import.meta.env.VITE_API_BASE_URL || defaultApiBase).trim()
+const localApiBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost/paintings/api').trim()
 
-export const API_BASE_URL = configuredApiBase.replace(/\/$/, '')
+// Production must never inherit a localhost build-time override.
+export const API_BASE_URL = (localHost ? localApiBase : 'https://api.arts.araha.co.in').replace(/\/$/, '')
 
 export function apiUrl(path) {
   const normalizedPath = String(path || '').replace(/^\//, '')
