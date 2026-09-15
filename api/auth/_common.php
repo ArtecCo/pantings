@@ -21,9 +21,15 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 $configuredOrigins = trim((string)(getenv('ALLOWED_ORIGINS') ?: ''));
-$allowedOrigins = $configuredOrigins !== ''
-    ? array_values(array_filter(array_map('trim', explode(',', $configuredOrigins))))
-    : ['http://localhost:5173'];
+$allowedOrigins = array_values(array_unique(array_filter(array_merge(
+    $configuredOrigins !== '' ? array_map('trim', explode(',', $configuredOrigins)) : [],
+    [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://arts.araha.co.in',
+        'https://artsadmin.araha.co.in',
+    ]
+))));
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
