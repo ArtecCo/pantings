@@ -85,13 +85,12 @@ function MaintenanceGate() {
       try {
         const response = await fetch(apiUrl('system/maintenance.php'), { method: 'GET', headers: { Accept: 'application/json' }, cache: 'no-store' })
         const data = await response.json().catch(() => ({}))
-        if (active) setMaintenance(response.ok && data.success === true && data.maintenance_mode === true)
-      } catch {
-        if (active) setMaintenance(false)
-      }
+        if (!active) return
+        if (response.ok && data.success === true) setMaintenance(data.maintenance_mode === true)
+      } catch { /* keep the last known state; a transient network error must not reopen a maintenance page */ }
     }
     check()
-    const timer = window.setInterval(check, 15000)
+    const timer = window.setInterval(check, 2000)
     return () => { active = false; window.clearInterval(timer) }
   }, [retryTick])
   if (maintenance === null) return <div className="ara-maintenance-loading" aria-label="Loading"><span>ARAmane Arts</span></div>
