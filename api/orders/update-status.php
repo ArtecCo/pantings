@@ -16,14 +16,13 @@ if (!in_array($action, $validStatuses, true)) adminJsonResponse(['success' => fa
 
 try {
     $pdo->beginTransaction();
-    $orderStmt = $pdo->prepare('SELECT id, order_number, status, shipping_name, customer_email FROM orders WHERE id = ? FOR UPDATE');
+    $orderStmt = $pdo->prepare('SELECT o.id, o.order_number, o.status, o.shipping_name, u.email AS customer_email FROM orders o LEFT JOIN users u ON u.id=o.user_id WHERE o.id = ? FOR UPDATE');
     $orderStmt->execute([$orderId]);
     $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
     if (!$order) { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404); }
     $oldStatus = strtoupper((string)$order['status']);
     if ($oldStatus === 'CANCELLED') { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Customer-cancelled orders cannot be edited'], 409); }
     if ($oldStatus === $action && $notes === '') { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order is already in this status'], 409); }
-
     $query = 'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP';
     $params = [$action];
     if ($notes !== '') { $query .= ', artist_notes = ?'; $params[] = $notes; }
@@ -31,14 +30,11 @@ try {
     if ($action === 'PAID' && $oldStatus !== 'PAID') $query .= ', paid_at = CURRENT_TIMESTAMP';
     if ($action === 'DISPATCHED' && $oldStatus !== 'DISPATCHED') $query .= ', dispatched_at = CURRENT_TIMESTAMP';
     if ($action === 'DELIVERED' && $oldStatus !== 'DELIVERED') $query .= ', delivered_at = CURRENT_TIMESTAMP';
-    $query .= ' WHERE id = ?';
-    $params[] = $orderId;
+    $query .= ' WHERE id = ?'; $params[] = $orderId;
     $pdo->prepare($query)->execute($params);
-
     $historyStmt = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, ?, ?, 'ADMIN', ?)");
     $historyStmt->execute([$orderId, $oldStatus, $action, $adminId, $notes !== '' ? $notes : null]);
     $pdo->commit();
-
     sendOrderStatusNotification($pdo, $order, $action, $notes);
     adminJsonResponse(['success' => true, 'message' => 'Order status updated successfully', 'order_id' => $orderId, 'order_number' => $order['order_number'], 'old_status' => $oldStatus, 'new_status' => $action]);
 } catch (Throwable $e) {
