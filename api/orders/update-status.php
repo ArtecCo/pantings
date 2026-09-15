@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../admin/_common.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../mail/index.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 $adminId = requireAdmin();
@@ -10,21 +11,17 @@ $action = strtoupper(trim((string)($data['action'] ?? '')));
 $notes = trim((string)($data['notes'] ?? ''));
 if ($orderId <= 0) adminJsonResponse(['success' => false, 'message' => 'Invalid order'], 400);
 if (strlen($notes) > 2000) adminJsonResponse(['success' => false, 'message' => 'Notes are too long'], 422);
-
 $validStatuses = ['PENDING_ACCEPTANCE','ACCEPTED','PAYMENT_DUE','PAID','PROCESSING','DISPATCHED','DELIVERED','REJECTED'];
 if (!in_array($action, $validStatuses, true)) adminJsonResponse(['success' => false, 'message' => 'Invalid order status'], 400);
 
 try {
     $pdo->beginTransaction();
-    $orderStmt = $pdo->prepare('SELECT id, order_number, status FROM orders WHERE id = ? FOR UPDATE');
+    $orderStmt = $pdo->prepare('SELECT id, order_number, status, shipping_name, customer_email FROM orders WHERE id = ? FOR UPDATE');
     $orderStmt->execute([$orderId]);
-    $order = $orderStmt->fetch();
+    $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
     if (!$order) { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404); }
     $oldStatus = strtoupper((string)$order['status']);
-    if ($oldStatus === 'CANCELLED') {
-        $pdo->rollBack();
-        adminJsonResponse(['success' => false, 'message' => 'Customer-cancelled orders cannot be edited'], 409);
-    }
+    if ($oldStatus === 'CANCELLED') { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Customer-cancelled orders cannot be edited'], 409); }
     if ($oldStatus === $action && $notes === '') { $pdo->rollBack(); adminJsonResponse(['success' => false, 'message' => 'Order is already in this status'], 409); }
 
     $query = 'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP';
@@ -41,6 +38,8 @@ try {
     $historyStmt = $pdo->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, notes) VALUES (?, ?, ?, ?, 'ADMIN', ?)");
     $historyStmt->execute([$orderId, $oldStatus, $action, $adminId, $notes !== '' ? $notes : null]);
     $pdo->commit();
+
+    sendOrderStatusNotification($pdo, $order, $action, $notes);
     adminJsonResponse(['success' => true, 'message' => 'Order status updated successfully', 'order_id' => $orderId, 'order_number' => $order['order_number'], 'old_status' => $oldStatus, 'new_status' => $action]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
