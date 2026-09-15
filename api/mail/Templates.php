@@ -22,7 +22,7 @@ function orderCreatedCustomerEmail(string $orderNumber, float $totalAmount, stri
 
 function orderStatusCustomerEmail(string $orderNumber, string $status, string $customerName, string $notes = ''): array {
     $label=ucwords(strtolower(str_replace('_',' ',$status))); $body='<p style="font-size:14px;line-height:1.7;">Dear '.htmlspecialchars($customerName,ENT_QUOTES,'UTF-8').',</p><p style="font-size:14px;line-height:1.7;">There is an update to your ARAmane Arts order.</p><div style="margin:24px 0;padding:18px;background:#f4ebe1;border-left:3px solid #d4af37;"><div style="color:#8a7770;font-size:10px;letter-spacing:1px;">ORDER STATUS</div><div style="margin-top:6px;color:#5b1217;font-family:Georgia,serif;font-size:22px;">'.htmlspecialchars($label,ENT_QUOTES,'UTF-8').'</div><div style="margin-top:8px;color:#6e5b53;font-size:12px;">'.htmlspecialchars($orderNumber,ENT_QUOTES,'UTF-8').'</div></div>';
-    if($notes!=='')$body.='<p style="font-size:13px;line-height:1.7;"><strong>Artist note:</strong><br>'.nl2br(htmlspecialchars($notes,ENT_QUOTES,'UTF-8')).'</p>';
+    if($notes!=='')$body.='<p style="font-size:14px;line-height:1.7;"><strong>Artist note:</strong><br>'.nl2br(htmlspecialchars($notes,ENT_QUOTES,'UTF-8')).'</p>';
     $body.='<p style="font-size:13px;line-height:1.7;color:#6e5b53;">You can sign in to your ARAmane Arts account to view the order journey and latest details.</p>';
     return ['subject'=>'Order update · '.$orderNumber,'html'=>mailLayout('ORDER UPDATE',$label,$body)];
 }
@@ -36,7 +36,7 @@ function finalPriceCustomerEmail(string $orderNumber, float $baseAmount, float $
         . '<div>Delivery: <strong>₹'.number_format($deliveryAmount,2,'.',',').'</strong></div>'
         . '<div>Discount: <strong>−₹'.number_format($discountAmount,2,'.',',').'</strong></div>'
         . '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #d8c8b8;color:#5b1217;font-family:Georgia,serif;font-size:21px;">Total: ₹'.number_format($finalAmount,2,'.',',').'</div></div>';
-    if($notes!=='')$body.='<p style="font-size:13px;line-height:1.7;"><strong>Artist note:</strong><br>'.nl2br(htmlspecialchars($notes,ENT_QUOTES,'UTF-8')).'</p>';
+    if($notes!=='')$body.='<p style="font-size:14px;line-height:1.7;"><strong>Artist note:</strong><br>'.nl2br(htmlspecialchars($notes,ENT_QUOTES,'UTF-8')).'</p>';
     if($paymentLink!=='')$body.='<div style="margin:28px 0;text-align:center;"><a href="'.htmlspecialchars($paymentLink,ENT_QUOTES,'UTF-8').'" style="display:inline-block;background:#5b1217;color:#fdfbf7;text-decoration:none;padding:13px 22px;border:1px solid #d4af37;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Proceed to Payment</a></div>';
     $body.='<p style="font-size:12px;line-height:1.7;color:#6e5b53;">Please sign in to your ARAmane Arts account to review the quotation and order details.</p>';
     return ['subject'=>'Final quotation · '.$orderNumber,'html'=>mailLayout('PAYMENT · FINAL QUOTATION','Your final price is ready',$body)];
