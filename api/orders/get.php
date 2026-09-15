@@ -7,12 +7,12 @@ requireAdmin();
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) adminJsonResponse(['success' => false, 'message' => 'Invalid order ID'], 400);
 try {
-    $orderStmt = $pdo->prepare('SELECT o.id, o.order_number, o.user_id, o.status, o.subtotal, o.base_amount, o.customization_amount, o.shipping_amount, o.delivery_amount, o.discount_amount, o.total_amount, o.payment_link, o.price_released_at, o.price_released_by, o.customer_notes, o.artist_notes, o.shipping_name, o.shipping_phone, u.email AS customer_email, o.shipping_address_line_1, o.shipping_address_line_2, o.shipping_city, o.shipping_state, o.shipping_postal_code, o.shipping_country, o.tracking_courier, o.tracking_id, o.tracking_url, o.accepted_at, o.paid_at, o.dispatched_at, o.delivered_at, o.created_at, o.updated_at FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = ? LIMIT 1');
+    $orderStmt = $pdo->prepare('SELECT o.id, o.order_number, o.user_id, o.status, o.subtotal, o.base_amount, o.customization_amount, o.shipping_amount, o.delivery_amount, o.discount_amount, o.total_amount, o.payment_link, o.price_released_at, o.price_released_by, o.customer_notes, o.artist_notes, o.shipping_name, o.shipping_phone, u.email AS customer_email, o.shipping_address, o.shipping_address_line_1, o.shipping_address_line_2, o.shipping_city, o.shipping_state, o.shipping_postal_code, o.shipping_country, o.tracking_courier, o.tracking_id, o.tracking_url, o.accepted_at, o.paid_at, o.dispatched_at, o.delivered_at, o.created_at, o.updated_at FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = ? LIMIT 1');
     $orderStmt->execute([$orderId]);
     $order = $orderStmt->fetch();
     if (!$order) adminJsonResponse(['success' => false, 'message' => 'Order not found'], 404);
 
-    $itemsStmt = $pdo->prepare('SELECT id, order_id, painting_id, painting_name, quantity, unit_price, total_price, created_at FROM order_items WHERE order_id = ? ORDER BY id ASC');
+    $itemsStmt = $pdo->prepare('SELECT oi.id, oi.order_id, oi.painting_id, oi.painting_name, oi.quantity, oi.unit_price, oi.total_price, (SELECT pi.image_url FROM painting_images pi WHERE pi.painting_id = oi.painting_id ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC LIMIT 1) AS image_url, oi.created_at FROM order_items oi WHERE oi.order_id = ? ORDER BY oi.id ASC');
     $itemsStmt->execute([$orderId]);
     $order['items'] = $itemsStmt->fetchAll();
     adminJsonResponse(['success' => true, 'order' => $order]);
