@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 
-const API = 'http://localhost/paintings/api'
-
 const tabs = ['Categories', 'Frames', 'Default Sizes']
 
 export default function Metadata() {

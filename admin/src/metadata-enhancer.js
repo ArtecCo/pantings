@@ -1,5 +1,3 @@
-const API = 'http://localhost/paintings/api'
-
 const TYPE_CONFIG = {
   Categories: { type: 'category', label: 'Category', list: 'categories' },
   Frames: { type: 'frame', label: 'Frame', list: 'frames' },

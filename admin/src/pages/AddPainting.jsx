@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../components/Toast'
 
-const API = 'http://localhost/paintings/api'
-
-
-
 function openNativeSelect(event) {
   if (event.key !== 'Enter') return
 

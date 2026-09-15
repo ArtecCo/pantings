@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../components/Toast'
 
-const API = 'http://localhost/paintings/api'
-
 export default function PaintingList() {
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -67,7 +65,7 @@ export default function PaintingList() {
             <article className={`painting-card ${Number(painting.is_active) === 0 ? 'painting-card-unavailable' : ''}`} key={painting.id}>
               <div className="painting-card-image">
                 {painting.images?.length > 0 ? <>
-                  <img src={`http://localhost${painting.images[imageIndexes[painting.id] || 0].image_url}`} alt={painting.name} />
+                  <img src={`http://api.arts.araha.co.in${painting.images[imageIndexes[painting.id] || 0].image_url}`} alt={painting.name} />
                   {painting.images.length > 1 && <>
                     <button type="button" className="painting-image-nav painting-image-prev" onClick={() => { const currentIndex = imageIndexes[painting.id] || 0; const nextIndex = currentIndex === 0 ? painting.images.length - 1 : currentIndex - 1; setImageIndexes(current => ({ ...current, [painting.id]: nextIndex })) }} aria-label="Previous image">‹</button>
                     <button type="button" className="painting-image-nav painting-image-next" onClick={() => { const currentIndex = imageIndexes[painting.id] || 0; const nextIndex = currentIndex === painting.images.length - 1 ? 0 : currentIndex + 1; setImageIndexes(current => ({ ...current, [painting.id]: nextIndex })) }} aria-label="Next image">›</button>

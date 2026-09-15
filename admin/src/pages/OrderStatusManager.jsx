@@ -4,7 +4,7 @@ import UniversalDropdown from '../components/UniversalDropdown'
 import UniversalPrompt from '../components/UniversalPrompt'
 
 const STATUSES=[['PENDING_ACCEPTANCE','Pending Acceptance'],['ACCEPTED','Accepted'],['PAYMENT_DUE','Payment Due'],['PAID','Paid'],['PROCESSING','Processing'],['DISPATCHED','Dispatched'],['DELIVERED','Delivered'],['REJECTED','Rejected']]
-const API='http://localhost/paintings/api'; const money=value=>Number(value||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const money=value=>Number(value||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
 
 export default function OrderStatusManager({order,onUpdated}){
  const {toast}=useToast();const [status,setStatus]=useState(order?.status||'PENDING_ACCEPTANCE');const [notes,setNotes]=useState('');const [saving,setSaving]=useState(false);const [pricing,setPricing]=useState({base_amount:order?.base_amount??order?.subtotal??'',customization_amount:order?.customization_amount??'0',delivery_amount:order?.delivery_amount??order?.shipping_amount??'0',discount_amount:order?.discount_amount??'0',payment_link:order?.payment_link??''});const [releasing,setReleasing]=useState(false);const [prompt,setPrompt]=useState(null)

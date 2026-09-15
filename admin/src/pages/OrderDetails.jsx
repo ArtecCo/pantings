@@ -4,7 +4,6 @@ import { useToast } from '../components/Toast'
 import OrderStatusManager from './OrderStatusManager'
 import UniversalPrompt from '../components/UniversalPrompt'
 
-const API='http://localhost/paintings/api'
 const statusLabels={PENDING_ACCEPTANCE:'Pending Acceptance',ACCEPTED:'Accepted',PAYMENT_DUE:'Payment Due',PAID:'Paid',PROCESSING:'Processing',DISPATCHED:'Dispatched',DELIVERED:'Delivered',REJECTED:'Rejected',CANCELLED:'Cancelled'}
 const statusClasses={PENDING_ACCEPTANCE:'pending',ACCEPTED:'accepted',PAYMENT_DUE:'payment-due',PAID:'paid',PROCESSING:'processing',DISPATCHED:'dispatched',DELIVERED:'delivered',REJECTED:'rejected',CANCELLED:'cancelled'}
 const formatDate=value=>value?new Date(String(value).replace(' ','T')).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'

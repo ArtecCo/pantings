@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '../components/ToastProvider'
 
-const API = 'http://localhost/paintings/api'
 
 export default function Paintings() {
   const { toast } = useToast()
