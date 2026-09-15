@@ -6,5 +6,5 @@ header('Content-Type: application/json');
 
 echo json_encode([
     'success' => true,
-    'message' => 'Painting Marketplace API is running',
+    'message' => 'Araha Arts API is up and running',
 ]);
