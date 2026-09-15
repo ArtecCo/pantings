@@ -1,11 +1,48 @@
 <?php
 declare(strict_types=1);
 
-$host = trim((string)(getenv('DB_HOST') ?: '127.0.0.1'));
-$db = trim((string)(getenv('DB_NAME') ?: 'painting_marketplace'));
-$user = (string)(getenv('DB_USER') ?: 'root');
-$pass = (string)(getenv('DB_PASSWORD') ?: '');
-$charset = trim((string)(getenv('DB_CHARSET') ?: 'utf8mb4'));
+/**
+ * Production deployments can provide api/config/production.php on the server.
+ * That file is intentionally not committed to Git and should return:
+ *
+ * return [
+ *     'db' => [
+ *         'host' => 'localhost',
+ *         'name' => 'painting_marketplace',
+ *         'user' => 'your_database_user',
+ *         'password' => 'your_database_password',
+ *         'charset' => 'utf8mb4',
+ *     ],
+ * ];
+ *
+ * Local development can continue to use environment variables.
+ */
+$productionConfigFile = __DIR__ . '/production.php';
+$productionConfig = [];
+
+if (is_file($productionConfigFile)) {
+    $loadedConfig = require $productionConfigFile;
+    if (!is_array($loadedConfig)) {
+        error_log('Production database config must return an array.');
+        http_response_code(500);
+        die('Invalid database configuration.');
+    }
+    $productionConfig = $loadedConfig;
+}
+
+$dbConfig = is_array($productionConfig['db'] ?? null) ? $productionConfig['db'] : [];
+
+$host = trim((string)($dbConfig['host'] ?? getenv('DB_HOST') ?: '127.0.0.1'));
+$db = trim((string)($dbConfig['name'] ?? getenv('DB_NAME') ?: 'painting_marketplace'));
+$user = (string)($dbConfig['user'] ?? getenv('DB_USER') ?: 'root');
+$pass = (string)($dbConfig['password'] ?? getenv('DB_PASSWORD') ?: '');
+$charset = trim((string)($dbConfig['charset'] ?? getenv('DB_CHARSET') ?: 'utf8mb4'));
+
+if ($host === '' || $db === '' || $user === '') {
+    error_log('Database configuration is incomplete.');
+    http_response_code(500);
+    die('Database configuration is incomplete.');
+}
 
 $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
 
