@@ -1,20 +1,22 @@
 # ARAmane Arts mailer setup
 
-The API uses PHPMailer over SMTP. The default production configuration assumes the mail service is on the same server and listens on localhost port 25.
+The API uses PHPMailer over SMTP. The production configuration is designed for a local mail transfer agent on the same server, so **no SMTP username or password is required** when the local MTA accepts mail from `127.0.0.1`.
 
-## Server setup
+## PHPMailer
 
-From the `api` directory on the server:
+Composer is **not required**. The API loader looks first for these official PHPMailer source files:
 
-```bash
-composer install --no-dev --optimize-autoloader
+```text
+api/lib/PHPMailer/src/Exception.php
+api/lib/PHPMailer/src/PHPMailer.php
+api/lib/PHPMailer/src/SMTP.php
 ```
 
-Do not commit the `vendor` directory. The committed `composer.json` supplies PHPMailer.
+Download the PHPMailer release source from the official PHPMailer project and copy those three files into the paths above. The repository does not contain a Composer `vendor` directory and does not require the `composer` command.
 
-## Environment
+## SMTP
 
-Set the API process/environment values from `.env.example` (or your hosting control panel):
+For a mail service running locally on the same server, use:
 
 ```text
 MAIL_HOST=127.0.0.1
@@ -24,16 +26,18 @@ MAIL_PASSWORD=
 MAIL_ENCRYPTION=
 ```
 
-If the local mail server requires authentication or TLS/SSL, set the corresponding username, password and encryption values.
+An empty username means PHPMailer uses `SMTPAuth=false`; therefore no password is read or required. TLS is also disabled for the local unauthenticated connection.
 
-Production origins:
+If the hosting provider does **not** expose a local unauthenticated MTA, then the provider's SMTP hostname/port/authentication settings must be used instead. Being on the same physical server does not by itself guarantee that port 25 accepts unauthenticated submissions.
+
+## Production origins
 
 ```text
 ALLOWED_ORIGINS=https://arts.araha.co.in,https://artsadmin.araha.co.in
 ALLOWED_ADMIN_ORIGINS=https://artsadmin.araha.co.in
 ```
 
-The frontend builds use `https://api.arts.araha.co.in` automatically when they are not running on localhost. `VITE_API_BASE_URL` can still override this for staging or local setups.
+The frontend builds automatically use `https://api.arts.araha.co.in` when opened from a non-localhost host. `VITE_API_BASE_URL` can still override this for staging or local development.
 
 ## Database
 
@@ -44,13 +48,13 @@ Run migrations in order, including:
 
 Migration `009_mail_groups.sql` creates `mail_groups` and `mail_group_recipients` and seeds the `ORDER_UPDATES` and `SYSTEM_UPDATES` groups.
 
-Recipients are edited from **Admin → Settings** and are stored in the database. Saving a group updates it in place and displays a toast; the page does not reload.
+Recipients are edited from **Admin → Settings** and saved without a page refresh.
 
 ## Mail flow
 
 - New order: `orders@arts.araha.co.in` → customer confirmation.
 - New order: `systems@arts.araha.co.in` → `ORDER_UPDATES` recipients.
 - Order status changes: `orders@arts.araha.co.in` → customer.
-- Administrator OTP when `2fa_enabled = 1`: `systems@arts.araha.co.in` → the administrator's email.
+- Administrator OTP when `2fa_enabled = 1`: `systems@arts.araha.co.in` → administrator email.
 
 Mail delivery failures are logged server-side and do not roll back a successfully created/updated order.
