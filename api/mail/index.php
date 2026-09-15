@@ -4,9 +4,10 @@ require_once __DIR__ . '/Mailer.php';
 require_once __DIR__ . '/Templates.php';
 
 const ORDERS_FROM_EMAIL = 'orders@arts.araha.co.in';
-const ORDERS_FROM_NAME = 'ARAmane Arts Orders';
+const ORDERS_FROM_NAME = 'Orders - Araha Arts';
 const SYSTEMS_FROM_EMAIL = 'systems@arts.araha.co.in';
-const SYSTEMS_FROM_NAME = 'ARAmane Arts Systems';
+const SYSTEMS_FROM_NAME = 'Systems - Araha Arts
+';
 
 function mailGroupRecipients(PDO $pdo, string $groupKey): array {
     $stmt=$pdo->prepare('SELECT r.recipient_name AS name,r.recipient_email AS email FROM mail_groups g INNER JOIN mail_group_recipients r ON r.mail_group_id=g.id WHERE g.group_key=? AND g.is_active=1 AND r.is_active=1 ORDER BY r.id ASC');

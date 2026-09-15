@@ -19,7 +19,7 @@ try {
         $base=trim((string)(getenv('CUSTOMER_PASSWORD_RESET_URL')?:'https://arts.araha.co.in/reset-password'));
         $url=rtrim($base,'/').'?token='.urlencode($token);
         $mail=passwordResetEmail($account['first_name']??'Customer',$url,'customer');
-        if(!sendHtmlMail('systems@arts.araha.co.in','ARAmane Arts Systems',$email,$account['first_name']??'Customer',$mail['subject'],$mail['html'])) throw new RuntimeException('Unable to send reset email');
+        if(!sendHtmlMail('systems@arts.araha.co.in','Systems - Araha Arts',$email,$account['first_name']??'Customer',$mail['subject'],$mail['html'])) throw new RuntimeException('Unable to send reset email');
     }
     jsonResponse(['success'=>true,'message'=>'If an account exists for that email, a password reset link has been sent.']);
 } catch(Throwable $e){ error_log('Customer password reset request: '.$e->getMessage()); jsonResponse(['success'=>false,'message'=>'Unable to process the password reset request right now.'],500); }

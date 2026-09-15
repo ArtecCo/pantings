@@ -14,7 +14,7 @@ try{
   $pdo->prepare('INSERT INTO password_reset_tokens (account_type,account_id,email,token_hash,expires_at) VALUES (?,?,?,?,?)')->execute(['admin',(int)$account['id'],$email,hash('sha256',$token),date('Y-m-d H:i:s',time()+3600)]);
   $base=trim((string)(getenv('ADMIN_PASSWORD_RESET_URL')?:'https://artsadmin.araha.co.in/reset-password')); $url=rtrim($base,'/').'?token='.urlencode($token);
   $mail=passwordResetEmail($account['first_name']??'Administrator',$url,'admin');
-  if(!sendHtmlMail('systems@arts.araha.co.in','ARAmane Arts Systems',$email,$account['first_name']??'Administrator',$mail['subject'],$mail['html'])) throw new RuntimeException('Unable to send reset email');
+  if(!sendHtmlMail('systems@arts.araha.co.in','Systems - Araha Arts',$email,$account['first_name']??'Administrator',$mail['subject'],$mail['html'])) throw new RuntimeException('Unable to send reset email');
  }
  adminJsonResponse(['success'=>true,'message'=>'If an administrator account exists for that email, a password reset link has been sent.']);
 }catch(Throwable $e){error_log('Admin password reset request: '.$e->getMessage());adminJsonResponse(['success'=>false,'message'=>'Unable to process the password reset request right now.'],500);}
