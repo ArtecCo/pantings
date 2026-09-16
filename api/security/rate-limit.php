@@ -48,7 +48,7 @@ $isAuthEndpoint = preg_match(
     $normalizedPath
 ) === 1;
 
-$limit = $isAuthEndpoint ? 10 : 120;
+$limit = $isAuthEndpoint ? 6 : 90;
 $window = $isAuthEndpoint ? 600 : 60;
 $bucket = $isAuthEndpoint ? 'auth' : 'api';
 

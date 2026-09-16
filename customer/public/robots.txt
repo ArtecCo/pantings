@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /reset-password
+Disallow: /account
+Disallow: /cart
+Disallow: /track-orders
+
+Sitemap: https://arts.araha.co.in/sitemap.xml
