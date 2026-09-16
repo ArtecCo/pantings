@@ -44,6 +44,10 @@ if ($host === '' || $db === '' || $user === '') {
     die('Database configuration is incomplete.');
 }
 
+// Apply the API rate limiter before opening a database connection. It excludes
+// the public painting list and bypasses authenticated, verified administrators.
+require_once __DIR__ . '/../security/rate-limit.php';
+
 $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
 
 $options = [
