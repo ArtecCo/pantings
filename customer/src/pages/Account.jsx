@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import TrackOrders from './TrackOrders';
 import { apiUrl } from '../config/api';
 import { useToast } from '../components/ToastProvider';
+import './Account.css';
 
 export default function Account() {
     const { toast } = useToast();
@@ -52,17 +53,17 @@ export default function Account() {
     if (!user) return null;
 
     return (
-        <div style={{ maxWidth: '1000px', margin: '4rem auto', padding: '0 2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
-                <div>
-                    <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', color: 'var(--maroon)', margin: 0 }}>My Account</h1>
-                    <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Welcome back, {user.first_name || user.email}</p>
+        <div className="ara-account-page">
+            <div className="ara-account-header">
+                <div className="ara-account-heading">
+                    <h1>My Account</h1>
+                    <p>Welcome back, {user.first_name || user.email}</p>
                 </div>
-                <button onClick={handleLogout} className="ara-btn ara-btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                <button onClick={handleLogout} className="ara-btn ara-btn-secondary ara-account-signout">
                     Sign Out
                 </button>
             </div>
-            <div style={{ marginTop: '2rem' }}><TrackOrders /></div>
+            <div className="ara-account-orders"><TrackOrders /></div>
         </div>
     );
 }
