@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiUrl } from '../config/api'
 import { useToast } from '../components/Toast'
+import './FAQs.css'
 
 const empty = { question: '', answer: '', sort_order: 0, is_active: true }
 
@@ -50,24 +51,24 @@ export default function FAQs() {
     } catch (e) { toast.error(e.message || 'Unable to delete FAQ') }
   }
 
-  return <div className="metadata-page">
+  return <div className="metadata-page faq-admin-page">
     <div className="page-header"><div><span className="eyebrow">CUSTOMER SUPPORT</span><h1>FAQs</h1><p>Manage the questions and answers shown to customers.</p></div></div>
     <div className="gold-rule" />
-    <section className="heritage-card" style={{ padding: 24, marginBottom: 24 }}>
+    <section className="heritage-card faq-editor-card">
       <div className="metadata-form-header"><div><span className="eyebrow">{editing ? 'EDIT FAQ' : 'NEW FAQ'}</span><h2>{editing ? 'Edit question' : 'Add a question'}</h2></div></div>
-      <form onSubmit={save}>
-        <div className="metadata-form-grid">
-          <label>Question<input value={form.question} maxLength={500} onChange={e => setForm({ ...form, question: e.target.value })} /></label>
-          <label>Display order<input type="number" min="0" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}>Answer<textarea rows="6" value={form.answer} onChange={e => setForm({ ...form, answer: e.target.value })} /></label>
-          <label><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Active</label>
+      <form onSubmit={save} className="faq-form">
+        <div className="faq-form-grid">
+          <label className="faq-field faq-question-field">Question<input value={form.question} maxLength={500} placeholder="e.g. How long does delivery take?" onChange={e => setForm({ ...form, question: e.target.value })} /></label>
+          <label className="faq-field faq-order-field">Display order<input type="number" min="0" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: e.target.value })} /></label>
+          <label className="faq-field faq-answer-field">Answer<textarea rows="7" placeholder="Write the answer customers should see..." value={form.answer} onChange={e => setForm({ ...form, answer: e.target.value })} /></label>
+          <label className="faq-active-field"><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /><span>Visible to customers</span></label>
         </div>
-        <div className="metadata-form-actions"><button className="gold-outline-button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save Changes' : 'Add FAQ'}</button>{editing && <button type="button" className="cancel-button" onClick={() => { setEditing(null); setForm(empty) }}>Cancel</button>}</div>
+        <div className="metadata-form-actions faq-form-actions"><button className="gold-outline-button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save Changes' : 'Add FAQ'}</button>{editing && <button type="button" className="cancel-button" onClick={() => { setEditing(null); setForm(empty) }}>Cancel</button>}</div>
       </form>
     </section>
-    <section className="heritage-card metadata-list">
+    <section className="heritage-card metadata-list faq-library-card">
       <div className="metadata-form-header"><div><span className="eyebrow">FAQ LIBRARY</span><h2>Customer questions</h2></div></div>
-      {loading ? <div className="metadata-loading">Loading FAQs...</div> : faqs.length === 0 ? <div className="metadata-loading">No FAQs have been added yet.</div> : faqs.map(faq => <div key={faq.id} style={{ borderBottom: '1px solid rgba(91,18,23,.12)', padding: '18px 0' }}><strong>{faq.question}</strong><p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{faq.answer}</p><div style={{ display: 'flex', gap: 10 }}><button type="button" className="cancel-button" onClick={() => { setEditing(faq.id); setForm({ question: faq.question, answer: faq.answer, sort_order: faq.sort_order, is_active: !!Number(faq.is_active) }) }}>Edit</button><button type="button" className="cancel-button" onClick={() => remove(faq.id)}>Delete</button><span>{Number(faq.is_active) ? 'Active' : 'Hidden'}</span></div></div>)}
+      {loading ? <div className="metadata-loading">Loading FAQs...</div> : faqs.length === 0 ? <div className="metadata-loading">No FAQs have been added yet.</div> : faqs.map(faq => <div className="faq-library-item" key={faq.id}><div className="faq-library-main"><strong>{faq.question}</strong><p>{faq.answer}</p></div><div className="faq-library-actions"><span className={`faq-status ${Number(faq.is_active) ? 'active' : 'hidden'}`}>{Number(faq.is_active) ? 'Active' : 'Hidden'}</span><span className="faq-order">Order {faq.sort_order}</span><button type="button" className="cancel-button" onClick={() => { setEditing(faq.id); setForm({ question: faq.question, answer: faq.answer, sort_order: faq.sort_order, is_active: !!Number(faq.is_active) }) }}>Edit</button><button type="button" className="cancel-button" onClick={() => remove(faq.id)}>Delete</button></div></div>)}
     </section>
   </div>
 }
