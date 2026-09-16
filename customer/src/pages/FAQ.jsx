@@ -22,10 +22,17 @@ export default function FAQ() {
       {loading && <p className="faq-state">Loading FAQs...</p>}
       {!loading && error && <p className="faq-state">{error}</p>}
       {!loading && !error && faqs.length === 0 && <p className="faq-state">No FAQs are available at the moment.</p>}
-      {!loading && !error && faqs.map(faq => <section className={`faq-item${open === faq.id ? ' open' : ''}`} key={faq.id}>
-        <button type="button" className="faq-question" aria-expanded={open === faq.id} onClick={() => setOpen(open === faq.id ? null : faq.id)}><span>{faq.question}</span><span className="faq-icon">{open === faq.id ? '−' : '+'}</span></button>
-        {open === faq.id && <div className="faq-answer">{faq.answer}</div>}
-      </section>)}
+      {!loading && !error && faqs.map(faq => {
+        const isOpen = open === faq.id
+        return <section className={`faq-item${isOpen ? ' open' : ''}`} key={faq.id}>
+          <button type="button" className="faq-question" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : faq.id)}>
+            <span>{faq.question}</span><span className="faq-icon" aria-hidden="true">{isOpen ? '−' : '+'}</span>
+          </button>
+          <div className="faq-answer-wrap" aria-hidden={!isOpen}>
+            <div className="faq-answer">{faq.answer}</div>
+          </div>
+        </section>
+      })}
     </div>
   </main>
 }
