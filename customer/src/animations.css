@@ -4,6 +4,10 @@
   transform-origin: 50% 0;
 }
 
+.ara-page-stage:has(.ara-art-viewer) {
+  transform: none !important;
+}
+
 /* Keep the footer from appearing as a dark flash while the page content enters. */
 .ara-footer {
   animation: araFooterReveal 0.35s ease 0.55s both;

@@ -1058,7 +1058,14 @@ button, input {
   gap: 12px;
   margin-top: 16px;
   overflow-x: auto;
-  padding-bottom: 4px
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ara-gallery-thumbnails::-webkit-scrollbar {
+  display: none;
 }
 
 .ara-thumbnail {
@@ -1884,7 +1891,7 @@ button, input {
 
   .ara-gallery-thumbnails {
     max-width: 100%;
-    overflow-x: auto
+    overflow-x: hidden;
   }
 }
 
