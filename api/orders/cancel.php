@@ -11,7 +11,7 @@ if ($orderId <= 0) jsonResponse(['success' => false, 'message' => 'Invalid order
 
 try {
     $pdo->beginTransaction();
-    $stmt = $pdo->prepare('SELECT id, order_number, status, shipping_name, u.email AS customer_email FROM orders LEFT JOIN users u ON u.id=orders.user_id WHERE orders.id = ? AND orders.user_id = ? FOR UPDATE');
+    $stmt = $pdo->prepare('SELECT orders.id, orders.order_number, orders.status, orders.shipping_name, u.email AS customer_email FROM orders LEFT JOIN users u ON u.id=orders.user_id WHERE orders.id = ? AND orders.user_id = ? FOR UPDATE');
     $stmt->execute([$orderId, $userId]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$order) { $pdo->rollBack(); jsonResponse(['success' => false, 'message' => 'Order not found'], 404); }
