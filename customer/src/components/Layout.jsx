@@ -26,157 +26,27 @@ export default function Layout({ children }) {
                 .ara-mobile-menu-eyebrow{margin-bottom:14px;color:#d4af37;font-size:9px;letter-spacing:.24em;text-transform:uppercase}
                 .ara-mobile-menu-panel a{display:flex;align-items:center;justify-content:space-between;padding:17px 4px;border-bottom:1px solid rgba(91,18,23,.12);color:#5b1217;font-family:'Cormorant Garamond',serif;font-size:27px}
                 .ara-mobile-menu-panel a span{color:#d4af37;font-family:'DM Sans',sans-serif;font-size:18px}
-
-                /* Keep the page itself inside the viewport without changing its content margins. */
                 .ara-client{width:100%;max-width:100%;overflow-x:hidden}
                 .ara-page-stage{width:100%;max-width:100%;min-width:0}
                 .ara-client main{max-width:100%;min-width:0}
                 .ara-client img,.ara-client video{max-width:100%}
-
-                @media (max-width:1100px){
-                    .ara-header-inner{gap:20px}
-                    .ara-hero-inner{width:min(calc(100% - 40px),1180px);gap:45px}
-                    .ara-details-layout{gap:45px}
-                    .ara-collection{width:min(calc(100% - 40px),1280px)}
-                    .ara-details{width:min(calc(100% - 40px),1240px)}
-                }
-
-                @media (max-width:900px){
-                    .ara-nav{display:none!important}
-                    .ara-menu-toggle{display:flex!important}
-                    .ara-account{display:none!important}
-                    .ara-header-actions{min-width:auto;gap:9px}
-                    .ara-hero-inner{grid-template-columns:1fr!important;width:calc(100% - 40px);gap:45px}
-                    .ara-hero-copy{min-width:0}
-                    .ara-hero h1{font-size:clamp(52px,9vw,78px)}
-                    .ara-hero-art{width:100%;min-width:0}
-                    .ara-art-frame{max-width:min(500px,100%)}
-                    .ara-craft-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
-                    .ara-footer-inner{grid-template-columns:2fr 1fr 1fr;gap:35px}
-                    .ara-details-layout{grid-template-columns:1fr!important;gap:40px}
-                    .ara-gallery{width:100%;min-width:0}
-                    .ara-main-image{max-width:100%;margin-inline:auto}
-                    .ara-main-image img{max-width:100%;height:auto}
-                    .ara-details-info{width:100%;min-width:0}
-                    .ara-gallery-thumbnails{max-width:100%;overflow-x:auto}
-                    .ara-painting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-                    .ara-collection-controls{flex-wrap:wrap}
-                }
-
-                /* Artwork viewer: the viewer owns the viewport; the stage owns the remaining space. */
-                .ara-art-viewer{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}
-                .ara-art-viewer-head{flex:0 0 72px!important;height:72px!important;min-height:72px!important}
-                .ara-art-viewer-stage{flex:1 1 auto!important;min-height:0!important;width:100%!important;max-width:none!important;padding:24px 90px!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important}
-                .ara-art-viewer-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
-                .ara-art-viewer-image{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;flex:0 1 auto!important;transform-origin:center center!important}
-                .ara-art-viewer-bar{flex:0 0 62px!important;height:62px!important;min-height:62px!important}
-                .ara-art-viewer-help{flex:0 0 30px!important;height:30px!important;min-height:30px!important}
-
-                @media (max-width:600px){
-                    .ara-announcement{padding-inline:12px;font-size:8px;letter-spacing:.10em;text-align:center}
-                    .ara-header-inner{width:calc(100% - 24px);min-height:68px;gap:10px}
-                    .ara-brand{min-width:0;max-width:calc(100% - 105px)}
-                    .ara-brand-name{font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-                    .ara-cart{padding:8px 10px;font-size:11px}
-                    .ara-cart-count{width:18px;height:18px;font-size:9px}
-                    .ara-mobile-menu{inset:68px 0 0}
-                    .ara-mobile-menu-panel{width:min(340px,90vw);padding:26px 22px}
-                    .ara-mobile-menu-panel a{font-size:24px}
-                    .ara-hero{min-height:0;padding:42px 0 55px}
-                    .ara-hero-inner{width:calc(100% - 30px);gap:38px}
-                    .ara-hero h1{font-size:clamp(45px,14vw,62px);line-height:.92;overflow-wrap:anywhere}
-                    .ara-hero-copy>p{font-size:14px}
-                    .ara-hero-actions{flex-direction:column;width:100%}
-                    .ara-btn{width:100%;max-width:100%}
-                    .ara-art-frame{width:100%;max-width:430px;padding:12px}
-                    .ara-stamp{right:6px;bottom:24px;width:72px;height:72px}
-                    .ara-stamp strong{font-size:20px}
-                    .ara-craft-strip{grid-template-columns:1fr}
-                    .ara-craft-item,.ara-craft-item:nth-child(2){border-right:0;border-bottom:1px solid rgba(91,18,23,.18)}
-                    .ara-craft-item:last-child{border-bottom:0}
-                    .ara-craft-item{padding:20px;min-height:105px}
-                    .ara-introduction{width:calc(100% - 30px);padding:70px 0 80px}
-                    .ara-section-heading h2{font-size:42px}
-                    .ara-footer{padding:50px 0 20px}
-                    .ara-footer-inner{width:calc(100% - 30px);grid-template-columns:1fr 1fr;gap:32px}
-                    .ara-footer-brand{grid-column:1/-1}
-                    .ara-footer-bottom{width:calc(100% - 30px);flex-direction:column;gap:8px}
-                    .ara-collection{width:calc(100% - 30px);padding:48px 0 65px}
-                    .ara-collection-heading h1{font-size:clamp(42px,13vw,52px);overflow-wrap:anywhere}
-                    .ara-collection-controls{display:flex;flex-direction:column;align-items:stretch;gap:14px}
-                    .ara-search-box{width:100%;max-width:100%}
-                    .ara-category-filters{width:100%;max-width:100%;overflow-x:auto}
-                    .ara-painting-grid{grid-template-columns:1fr;gap:22px}
-                    .ara-painting-image{width:100%;max-width:100%;margin:7px 7px 0;overflow:hidden}
-                    .ara-painting-image img{width:100%;max-width:100%;height:auto;object-fit:cover}
-                    .ara-painting-info{min-width:0}
-                    .ara-painting-meta,.ara-painting-bottom{min-width:0}
-                    .ara-details{width:calc(100% - 30px);padding:24px 0 70px}
-                    .ara-breadcrumb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:22px}
-                    .ara-details-layout{gap:32px}
-                    .ara-main-image{width:100%!important;max-width:100%!important;padding:7px;overflow:hidden}
-                    .ara-main-image-click-target{width:100%!important;max-width:100%!important}
-                    .ara-main-image-click-target img,.ara-main-image>img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}
-                    .ara-gallery-arrow{width:36px;height:36px}
-                    .ara-gallery-prev{left:12px}
-                    .ara-gallery-next{right:12px}
-                    .ara-detail-gold-badge{top:12px;left:12px;font-size:8px;padding:7px 9px}
-                    .ara-details-info h1{font-size:clamp(40px,12vw,52px);overflow-wrap:anywhere}
-                    .ara-detail-description{font-size:13px}
-                    .ara-specifications{grid-template-columns:1fr}
-                    .ara-detail-assurance{grid-template-columns:1fr}
-
-                    /* Mobile viewer: generous safe margins and controls always visible. */
-                    .ara-art-viewer{height:100dvh!important}
-                    .ara-art-viewer-head{flex-basis:60px!important;height:60px!important;min-height:60px!important;padding:9px 14px!important}
-                    .ara-art-viewer-title{max-width:calc(100% - 52px)!important;min-width:0!important}
-                    .ara-art-viewer-title small{font-size:7px!important;letter-spacing:.14em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-                    .ara-art-viewer-title strong{font-size:18px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-                    .ara-art-viewer-close{width:38px!important;height:38px!important;flex:0 0 38px!important;font-size:24px!important}
-                    .ara-art-viewer-stage{padding:18px 52px!important}
-                    .ara-art-viewer-canvas{width:100%!important;height:100%!important}
-                    .ara-art-viewer-image{max-width:100%!important;max-height:100%!important}
-                    .ara-art-viewer-arrow{width:38px!important;height:38px!important;font-size:28px!important;line-height:32px!important}
-                    .ara-art-viewer-prev{left:8px!important}
-                    .ara-art-viewer-next{right:8px!important}
-                    .ara-art-viewer-bar{flex-basis:58px!important;height:58px!important;min-height:58px!important;padding:9px 12px!important;gap:6px!important}
-                    .ara-art-viewer-bar button{height:36px!important;min-width:38px!important;padding:0 9px!important;font-size:12px!important}
-                    .ara-art-viewer-help{display:none!important}
-                }
-
-                @media (max-width:380px){
-                    .ara-brand-name{font-size:21px}
-                    .ara-cart span:first-child{display:none}
-                    .ara-cart{padding:7px 8px}
-                    .ara-hero-inner,.ara-collection,.ara-details{width:calc(100% - 24px)}
-                    .ara-art-viewer-stage{padding:14px 44px!important}
-                    .ara-art-viewer-prev{left:6px!important}
-                    .ara-art-viewer-next{right:6px!important}
-                }
-
+                @media (max-width:1100px){.ara-header-inner{gap:20px}.ara-hero-inner{width:min(calc(100% - 40px),1180px);gap:45px}.ara-details-layout{gap:45px}.ara-collection{width:min(calc(100% - 40px),1280px)}.ara-details{width:min(calc(100% - 40px),1240px)}}
+                @media (max-width:900px){.ara-nav{display:none!important}.ara-menu-toggle{display:flex!important}.ara-account{display:none!important}.ara-header-actions{min-width:auto;gap:9px}.ara-hero-inner{grid-template-columns:1fr!important;width:calc(100% - 40px);gap:45px}.ara-hero-copy{min-width:0}.ara-hero h1{font-size:clamp(52px,9vw,78px)}.ara-hero-art{width:100%;min-width:0}.ara-art-frame{max-width:min(500px,100%)}.ara-craft-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.ara-footer-inner{grid-template-columns:2fr 1fr 1fr;gap:35px}.ara-details-layout{grid-template-columns:1fr!important;gap:40px}.ara-gallery{width:100%;min-width:0}.ara-main-image{max-width:100%;margin-inline:auto}.ara-main-image img{max-width:100%;height:auto}.ara-details-info{width:100%;min-width:0}.ara-gallery-thumbnails{max-width:100%;overflow-x:auto}.ara-painting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ara-collection-controls{flex-wrap:wrap}}
+                .ara-art-viewer{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}.ara-art-viewer-head{flex:0 0 72px!important;height:72px!important;min-height:72px!important}.ara-art-viewer-stage{flex:1 1 auto!important;min-height:0!important;width:100%!important;max-width:none!important;padding:24px 90px!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important}.ara-art-viewer-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}.ara-art-viewer-image{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;flex:0 1 auto!important;transform-origin:center center!important}.ara-art-viewer-bar{flex:0 0 62px!important;height:62px!important;min-height:62px!important}.ara-art-viewer-help{flex:0 0 30px!important;height:30px!important;min-height:30px!important}
+                @media (max-width:600px){.ara-announcement{padding-inline:12px;font-size:8px;letter-spacing:.10em;text-align:center}.ara-header-inner{width:calc(100% - 24px);min-height:68px;gap:10px}.ara-brand{min-width:0;max-width:calc(100% - 105px)}.ara-brand-name{font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ara-cart{padding:8px 10px;font-size:11px}.ara-cart-count{width:18px;height:18px;font-size:9px}.ara-mobile-menu{inset:68px 0 0}.ara-mobile-menu-panel{width:min(340px,90vw);padding:26px 22px}.ara-mobile-menu-panel a{font-size:24px}.ara-hero{min-height:0;padding:42px 0 55px}.ara-hero-inner{width:calc(100% - 30px);gap:38px}.ara-hero h1{font-size:clamp(45px,14vw,62px);line-height:.92;overflow-wrap:anywhere}.ara-hero-copy>p{font-size:14px}.ara-hero-actions{flex-direction:column;width:100%}.ara-btn{width:100%;max-width:100%}.ara-art-frame{width:100%;max-width:430px;padding:12px}.ara-stamp{right:6px;bottom:24px;width:72px;height:72px}.ara-stamp strong{font-size:20px}.ara-craft-strip{grid-template-columns:1fr}.ara-craft-item,.ara-craft-item:nth-child(2){border-right:0;border-bottom:1px solid rgba(91,18,23,.18)}.ara-craft-item:last-child{border-bottom:0}.ara-craft-item{padding:20px;min-height:105px}.ara-introduction{width:calc(100% - 30px);padding:70px 0 80px}.ara-section-heading h2{font-size:42px}.ara-footer{padding:50px 0 20px}.ara-footer-inner{width:calc(100% - 30px);grid-template-columns:1fr 1fr;gap:32px}.ara-footer-brand{grid-column:1/-1}.ara-footer-bottom{width:calc(100% - 30px);flex-direction:column;gap:8px}.ara-collection{width:calc(100% - 30px);padding:48px 0 65px}.ara-collection-heading h1{font-size:clamp(42px,13vw,52px);overflow-wrap:anywhere}.ara-collection-controls{display:flex;flex-direction:column;align-items:stretch;gap:14px}.ara-search-box{width:100%;max-width:100%}.ara-category-filters{width:100%;max-width:100%;overflow-x:auto}.ara-painting-grid{grid-template-columns:1fr;gap:22px}.ara-painting-image{width:100%;max-width:100%;margin:7px 7px 0;overflow:hidden}.ara-painting-image img{width:100%;max-width:100%;height:auto;object-fit:cover}.ara-painting-info{min-width:0}.ara-painting-meta,.ara-painting-bottom{min-width:0}.ara-details{width:calc(100% - 30px);padding:24px 0 70px}.ara-breadcrumb{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:22px}.ara-details-layout{gap:32px}.ara-main-image{width:100%!important;max-width:100%!important;padding:7px;overflow:hidden}.ara-main-image-click-target{width:100%!important;max-width:100%!important}.ara-main-image-click-target img,.ara-main-image>img{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain}.ara-gallery-arrow{width:36px;height:36px}.ara-gallery-prev{left:12px}.ara-gallery-next{right:12px}.ara-detail-gold-badge{top:12px;left:12px;font-size:8px;padding:7px 9px}.ara-details-info h1{font-size:clamp(40px,12vw,52px);overflow-wrap:anywhere}.ara-detail-description{font-size:13px}.ara-specifications{grid-template-columns:1fr}.ara-detail-assurance{grid-template-columns:1fr}.ara-art-viewer{height:100dvh!important}.ara-art-viewer-head{flex-basis:60px!important;height:60px!important;min-height:60px!important;padding:9px 14px!important}.ara-art-viewer-title{max-width:calc(100% - 52px)!important;min-width:0!important}.ara-art-viewer-title small{font-size:7px!important;letter-spacing:.14em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ara-art-viewer-title strong{font-size:18px!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.ara-art-viewer-close{width:38px!important;height:38px!important;flex:0 0 38px!important;font-size:24px!important}.ara-art-viewer-stage{padding:18px 52px!important}.ara-art-viewer-canvas{width:100%!important;height:100%!important}.ara-art-viewer-image{max-width:100%!important;max-height:100%!important}.ara-art-viewer-arrow{width:38px!important;height:38px!important;font-size:28px!important;line-height:32px!important}.ara-art-viewer-prev{left:8px!important}.ara-art-viewer-next{right:8px!important}.ara-art-viewer-bar{flex-basis:58px!important;height:58px!important;min-height:58px!important;padding:9px 12px!important;gap:6px!important}.ara-art-viewer-bar button{height:36px!important;min-width:38px!important;padding:0 9px!important;font-size:12px!important}.ara-art-viewer-help{display:none!important}}
+                @media (max-width:380px){.ara-brand-name{font-size:21px}.ara-cart span:first-child{display:none}.ara-cart{padding:7px 8px}.ara-hero-inner,.ara-collection,.ara-details{width:calc(100% - 24px)}.ara-art-viewer-stage{padding:14px 44px!important}.ara-art-viewer-prev{left:6px!important}.ara-art-viewer-next{right:6px!important}}
                 @media (min-width:901px){.ara-menu-toggle{display:none!important}.ara-mobile-menu{display:none!important}}
             `}</style>
             <header className="ara-header">
                 <div className="ara-header-inner">
-                    <Link to="/" className="ara-brand" aria-label="ARAmane Arts home">
-                        <span className="ara-brand-small">THE HOUSE OF</span>
-                        <span className="ara-brand-name">ARAmane Arts</span>
-                    </Link>
-                    <nav className="ara-nav" aria-label="Main navigation">
-                        <Link to="/">Home</Link>
-                        <Link to="/paintings">Collection</Link>
-                        <Link to="/about">Our Craft</Link>
-                    </nav>
-                    <div className="ara-header-actions">
-                        <Link to="/cart" className="ara-cart"><span>Cart</span><span className="ara-cart-count">0</span></Link>
-                        <Link to="/account" className="ara-account">Account</Link>
-                        <button type="button" className={`ara-menu-toggle${menuOpen ? ' active' : ''}`} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(v => !v)}><span /><span /><span /></button>
-                    </div>
+                    <Link to="/" className="ara-brand" aria-label="ARAmane Arts home"><span className="ara-brand-small">THE HOUSE OF</span><span className="ara-brand-name">ARAmane Arts</span></Link>
+                    <nav className="ara-nav" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/paintings">Collection</Link><Link to="/about">Our Craft</Link></nav>
+                    <div className="ara-header-actions"><Link to="/cart" className="ara-cart"><span>Cart</span><span className="ara-cart-count">0</span></Link><Link to="/account" className="ara-account">Account</Link><button type="button" className={`ara-menu-toggle${menuOpen ? ' active' : ''}`} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(v => !v)}><span /><span /><span /></button></div>
                 </div>
             </header>
             {menuOpen && <div className="ara-mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation"><button type="button" className="ara-mobile-menu-backdrop" aria-label="Close menu" onClick={() => setMenuOpen(false)} /><nav className="ara-mobile-menu-panel" aria-label="Mobile navigation links"><div className="ara-mobile-menu-eyebrow">Explore ARAmane Arts</div><Link to="/">Home <span>→</span></Link><Link to="/paintings">Collection <span>→</span></Link><Link to="/about">Our Craft <span>→</span></Link><Link to="/cart">Cart <span>→</span></Link><Link to="/account">Account <span>→</span></Link></nav></div>}
             <main><div className="ara-page-stage" key={location.pathname}>{children}</div></main>
-            <footer className="ara-footer"><div className="ara-footer-inner"><div className="ara-footer-brand"><span>THE HOUSE OF</span><strong>ARAmane Arts</strong><p>Preserving India's sacred artistic traditions, one handcrafted painting at a time.</p></div><div className="ara-footer-column"><h3>Explore</h3><Link to="/paintings">Collection</Link><Link to="/about">Our Craft</Link></div><div className="ara-footer-column"><h3>Assistance</h3><Link to="/contact">Contact Us</Link><Link to="/shipping">Shipping</Link><Link to="/faq">FAQs</Link></div></div><div className="ara-footer-bottom"><span>© {new Date().getFullYear()} ARAmane Arts</span><span>Crafted with reverence for Indian heritage</span></div></footer>
+            <footer className="ara-footer"><div className="ara-footer-inner"><div className="ara-footer-brand"><span>THE HOUSE OF</span><strong>ARAmane Arts</strong><p>Preserving India's sacred artistic traditions, one handcrafted painting at a time.</p></div><div className="ara-footer-column"><h3>Explore</h3><Link to="/paintings">Collection</Link><Link to="/about">Our Craft</Link></div><div className="ara-footer-column"><h3>Assistance</h3><Link to="/contact">Contact Us</Link><Link to="/faq">FAQs</Link></div></div><div className="ara-footer-bottom"><span>© {new Date().getFullYear()} ARAmane Arts</span><span>Crafted with reverence for Indian heritage</span><span><Link to="/privacy-policy">Privacy Policy</Link> · <Link to="/terms-and-conditions">Terms &amp; Conditions</Link></span></div></footer>
         </div>
     );
 }
