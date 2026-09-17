@@ -1,0 +1,2750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Untitled document</title>
+  <style>
+*{
+user-select: none;
+}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 1em;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    blockquote {
+      border-left: 4px solid #ddd;
+      margin: 1em 0;
+      padding-left: 1em;
+      color: #666;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5em;
+      text-align: left;
+    }
+    th {
+      background: #f4f4f4;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    a {
+      color: #0066cc;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 2em 0;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="ArtecCo-pantings---Full-Repository-Architecture--Functioning---Request-Processing-Flow">ArtecCo/pantings — Full Repository Architecture, Functioning &amp; Request Processing Flow</h1>
+<blockquote>
+<p><strong>Repository:</strong> <code>https://github.com/ArtecCo/pantings</code><br />
+<strong>Branch reviewed:</strong> <code>main</code><br />
+<strong>Review type:</strong> Source-level architecture and flow review<br />
+<strong>Important:</strong> This document is reconstructed from the repository source. I did not run the application or execute live API requests during this review.</p>
+</blockquote>
+<hr />
+<h1 id="1--Executive-Summary">1. Executive Summary</h1>
+<p><code>ArtecCo/pantings</code> is a web-based painting marketplace/application composed of three major parts:</p>
+<ol>
+<li>
+<p><strong>Customer frontend</strong></p>
+<ul>
+<li>React</li>
+<li>Vite</li>
+<li>React Router</li>
+<li>Runs the public painting marketplace, authentication, cart, order submission, order tracking and account pages.</li>
+</ul>
+</li>
+<li>
+<p><strong>Admin frontend</strong></p>
+<ul>
+<li>Separate React/Vite application</li>
+<li>Provides dashboard, painting management, order management, metadata, FAQs, administrator management and maintenance mode.</li>
+</ul>
+</li>
+<li>
+<p><strong>PHP backend API</strong></p>
+<ul>
+<li>Direct PHP endpoint architecture</li>
+<li>MySQL database through PDO</li>
+<li>Cookie/session-based authentication</li>
+<li>Separate customer and administrator sessions</li>
+<li>Email notifications through PHPMailer</li>
+<li>Application-level IP rate limiting</li>
+<li>SQL migrations for evolving the database schema</li>
+</ul>
+</li>
+</ol>
+<p>At a high level:</p>
+<pre><code class="language-text">                         ┌───────────────────────────┐
+                         │       Customer Browser    │
+                         │   React / Vite SPA        │
+                         └─────────────┬─────────────┘
+                                       │
+                                       │ HTTPS + session cookie
+                                       ▼
+                         ┌───────────────────────────┐
+                         │   api.arts.araha.co.in    │
+                         │       PHP API             │
+                         └─────────────┬─────────────┘
+                                       │
+                 ┌─────────────────────┼──────────────────────┐
+                 │                     │                      │
+                 ▼                     ▼                      ▼
+          Authentication        Business Logic          Email System
+          / Sessions            / SQL / Orders          PHPMailer
+                 │                     │
+                 └─────────────────────┤
+                                       ▼
+                              ┌──────────────────┐
+                              │   MySQL Database │
+                              └──────────────────┘
+
+
+                         ┌───────────────────────────┐
+                         │        Admin Browser      │
+                         │   React / Vite SPA        │
+                         └─────────────┬─────────────┘
+                                       │
+                                       │ HTTPS + admin session
+                                       ▼
+                         ┌───────────────────────────┐
+                         │     Same PHP API          │
+                         │ admin/* + domain APIs     │
+                         └───────────────────────────┘
+</code></pre>
+<p>The repository root is split into <code>admin</code>, <code>api</code>, and <code>customer</code>, with several root-level manual test HTML files.</p>
+<hr />
+<h1 id="2--Repository-Structure">2. Repository Structure</h1>
+<p>The repository is essentially a monorepo containing two frontend applications and one backend.</p>
+<pre><code class="language-text">pantings/
+│
+├── admin/
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public/
+│   │   ├── .htaccess
+│   │   ├── aa-icon.svg
+│   │   ├── aa-og-img.svg
+│   │   └── aa-ogimage.png
+│   │
+│   └── src/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── AdminBrandFixes.css
+│       ├── animations.css
+│       ├── index.css
+│       ├── maintenance-button.css
+│       ├── metadata-enhancer.js
+│       │
+│       ├── assets/
+│       │
+│       ├── components/
+│       │   ├── PaintingSizeOptions.jsx
+│       │   ├── Toast.jsx
+│       │   ├── UniversalDropdown.jsx
+│       │   ├── UniversalDropdown.css
+│       │   ├── UniversalPrompt.jsx
+│       │   └── UniversalPrompt.css
+│       │
+│       ├── config/
+│       │   └── api.js
+│       │
+│       └── pages/
+│           ├── AddPainting.jsx
+│           ├── AdminLogin.jsx
+│           ├── AdminRegister.jsx
+│           ├── Administrators.jsx
+│           ├── EditPainting.jsx
+│           ├── FAQs.jsx
+│           ├── FAQs.css
+│           ├── Metadata.jsx
+│           ├── OrderDetails.jsx
+│           ├── OrderDetails.css
+│           ├── OrderHeritageFixes.css
+│           ├── OrderStatusManager.jsx
+│           ├── OrderStatusManager.css
+│           ├── Orders.jsx
+│           ├── Orders.css
+│           ├── PaintingList.jsx
+│           ├── ResetPassword.jsx
+│           ├── Settings.jsx
+│           └── ...
+│
+├── api/
+│   ├── .env.example
+│   ├── MAIL_SETUP.md
+│   ├── index.php
+│   │
+│   ├── admin/
+│   │   ├── _common.php
+│   │   ├── create-invitation.php
+│   │   ├── dashboard.php
+│   │   ├── logout.php
+│   │   ├── me.php
+│   │   ├── register.php
+│   │   ├── request-otp.php
+│   │   ├── request-password-reset.php
+│   │   └── verify-otp.php
+│   │
+│   ├── auth/
+│   │   ├── _common.php
+│   │   ├── admin-session.php
+│   │   ├── login.php
+│   │   ├── logout.php
+│   │   ├── me.php
+│   │   ├── register.php
+│   │   ├── require-admin.php
+│   │   ├── reset-password.php
+│   │   ├── session.php
+│   │   ├── user-login.php
+│   │   ├── user-logout.php
+│   │   ├── user-register.php
+│   │   ├── user-session.php
+│   │   └── verify-otp.php
+│   │
+│   ├── cart/
+│   │   ├── add-item.php
+│   │   ├── get.php
+│   │   ├── remove-item.php
+│   │   └── update-item.php
+│   │
+│   ├── categories/
+│   │   ├── create.php
+│   │   └── list.php
+│   │
+│   ├── config/
+│   │   ├── database.php
+│   │   └── google.php
+│   │
+│   ├── faqs/
+│   │   ├── admin.php
+│   │   └── list.php
+│   │
+│   ├── frames/
+│   │   ├── create.php
+│   │   └── list.php
+│   │
+│   ├── lib/
+│   │   └── PHPMailer/
+│   │
+│   ├── mail/
+│   │   ├── Mailer.php
+│   │   ├── Templates.php
+│   │   ├── groups.php
+│   │   └── index.php
+│   │
+│   ├── metadata/
+│   │   ├── delete.php
+│   │   └── update.php
+│   │
+│   ├── migrations/
+│   │   ├── 001_google_accounts.sql
+│   │   ├── 002_order_pricing.sql
+│   │   ├── 003_order_discount.sql
+│   │   ├── 004_painting_size_options.sql
+│   │   ├── 005_cart_item_size_option.sql
+│   │   ├── 006_order_contact_and_size.sql
+│   │   ├── 007_dedupe_painting_size_options.sql
+│   │   ├── 008_maintenance_mode.sql
+│   │   ├── 009_mail_groups.sql
+│   │   └── 010_password_resets.sql
+│   │
+│   ├── orders/
+│   │   ├── cancel.php
+│   │   ├── create.php
+│   │   ├── events.php
+│   │   ├── get.php
+│   │   ├── history.php
+│   │   ├── list.php
+│   │   ├── my-orders.php
+│   │   ├── release-price.php
+│   │   └── update-status.php
+│   │
+│   ├── paintings/
+│   │   ├── create.php
+│   │   ├── customer-get.php
+│   │   ├── delete-image.php
+│   │   ├── get.php
+│   │   ├── images-list.php
+│   │   ├── list.php
+│   │   ├── set-primary-image.php
+│   │   ├── update.php
+│   │   └── upload-images.php
+│   │
+│   ├── security/
+│   │   └── rate-limit.php
+│   │
+│   ├── sizes/
+│   │   ├── create.php
+│   │   └── list.php
+│   │
+│   └── system/
+│       ├── maintenance-status.php
+│       ├── maintenance-toggle.php
+│       └── maintenance.php
+│
+├── customer/
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public/
+│   │   ├── .htaccess
+│   │   ├── aa-icon.svg
+│   │   ├── aa-og-img.svg
+│   │   ├── aa-ogimage.png
+│   │   ├── art-viewer-touch.js
+│   │   ├── index.php
+│   │   ├── rate-limit-toast.js
+│   │   ├── robots.txt
+│   │   └── sitemap.xml
+│   │
+│   └── src/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── animations.css
+│       ├── cart-count.js
+│       ├── cart-redesign.css
+│       ├── collection-redesign.css
+│       ├── fixes.css
+│       ├── index.css
+│       ├── main.jsx
+│       ├── painting-details-redesign.css
+│       ├── responsive.css
+│       │
+│       ├── assets/
+│       │
+│       ├── components/
+│       │   ├── Layout.jsx
+│       │   ├── Toast.jsx
+│       │   ├── ToastProvider.jsx
+│       │   ├── UniversalDropdown.jsx
+│       │   ├── UniversalDropdown.css
+│       │   ├── UniversalPrompt.jsx
+│       │   └── UniversalPrompt.css
+│       │
+│       ├── config/
+│       │   └── api.js
+│       │
+│       └── pages/
+│           ├── Account.jsx
+│           ├── Account.css
+│           ├── Cart.jsx
+│           ├── FAQ.jsx
+│           ├── FAQ.css
+│           ├── Home.jsx
+│           ├── Login.jsx
+│           ├── Login.css
+│           ├── OrderDetails.jsx
+│           ├── OrderDetails.css
+│           ├── PaintingDetails.jsx
+│           ├── Paintings.jsx
+│           ├── PrivacyPolicy.jsx
+│           ├── ResetPassword.jsx
+│           ├── TermsAndConditions.jsx
+│           ├── TrackOrders.jsx
+│           └── TrackOrders.css
+│
+├── readme.md
+├── test-admin.html
+├── test-admin-register.html
+└── test-register.html
+</code></pre>
+<p>The actual repository tree confirms the two React application trees plus the domain-oriented PHP API.</p>
+<hr />
+<h1 id="3--Technology-Stack">3. Technology Stack</h1>
+<h2 id="Customer">Customer</h2>
+<p>The customer application is a Vite React SPA.</p>
+<p>Current package dependencies include:</p>
+<pre><code class="language-text">React
+React DOM
+React Router DOM
+Axios
+Vite
+ESLint
+</code></pre>
+<p>The package currently declares React <code>19.2.8</code>, React DOM <code>19.2.8</code>, React Router DOM <code>7.18.3</code>, and Vite <code>8.3.0</code>.</p>
+<p>The application code inspected for the main commerce flows primarily uses the browser's native <code>fetch()</code> API.</p>
+<h2 id="Admin">Admin</h2>
+<p>The admin application is a separate React/Vite project under <code>admin/</code>.</p>
+<p>The two frontend applications are deliberately separated rather than being one React application with an admin namespace. The admin has its own route tree and its own session model.</p>
+<h2 id="Backend">Backend</h2>
+<p>The backend is:</p>
+<pre><code class="language-text">PHP
+MySQL
+PDO
+PHP sessions
+PHPMailer
+JSON HTTP responses
+</code></pre>
+<p>The database connection is created with PDO using a MySQL DSN and prepared statements with emulated prepares disabled.</p>
+<h2 id="External-services---browser-integrations">External services / browser integrations</h2>
+<p>The customer login integrates Google Identity Services for Google Sign-In. The browser obtains a Google credential and posts it to the backend <code>auth/user-login.php</code> endpoint.</p>
+<hr />
+<h1 id="4--Architectural-Style">4. Architectural Style</h1>
+<p>This is <strong>not</strong> an MVC framework such as Laravel, Symfony, CodeIgniter, etc.</p>
+<p>The backend uses a lightweight endpoint-per-file architecture.</p>
+<p>For example:</p>
+<pre><code class="language-text">GET  /api/paintings/list.php
+GET  /api/paintings/get.php?id=123
+
+POST /api/cart/add-item.php
+POST /api/cart/update-item.php
+POST /api/cart/remove-item.php
+
+POST /api/orders/create.php
+POST /api/orders/cancel.php
+
+POST /api/orders/update-status.php
+
+POST /api/paintings/create.php
+POST /api/paintings/update.php
+POST /api/paintings/upload-images.php
+</code></pre>
+<p>Each PHP file is effectively a route/controller.</p>
+<p>There is no large centralized router deciding which application service to invoke.</p>
+<p>The pattern is closer to:</p>
+<pre><code class="language-text">HTTP request
+    ↓
+specific PHP endpoint
+    ↓
+shared common/auth/config includes
+    ↓
+validation
+    ↓
+SQL
+    ↓
+side effects
+    ↓
+JSON response
+</code></pre>
+<p>This makes the system relatively easy to trace feature-by-feature because the endpoint name usually corresponds directly to the UI operation.</p>
+<hr />
+<h1 id="5--Customer-Frontend-Architecture">5. Customer Frontend Architecture</h1>
+<h2 id="Entry-point">Entry point</h2>
+<p>The customer application begins in:</p>
+<pre><code class="language-text">customer/src/main.jsx
+</code></pre>
+<p>and the main application routing and global behavior are in:</p>
+<pre><code class="language-text">customer/src/App.jsx
+</code></pre>
+<p>The app defines the main customer routes and wraps them in global layout/toast functionality.</p>
+<hr />
+<h1 id="6--Customer-Routes">6. Customer Routes</h1>
+<p>The current customer route map is:</p>
+<pre><code class="language-text">/
+    Home
+
+/paintings
+    Paintings collection
+
+/paintings/:id
+    Individual painting
+
+/faq
+    FAQ
+
+/login
+    Login / registration / password reset UI
+
+/reset-password
+    Password reset page
+
+/account
+    Customer account
+
+/cart
+    Cart + checkout/order request
+
+/track-orders
+    Customer order list/tracking
+
+/track-orders/:id
+    Individual order details
+
+/privacy-policy
+    Privacy policy
+
+/terms-and-conditions
+    Terms and conditions
+</code></pre>
+<p>These routes are explicitly defined in <code>customer/src/App.jsx</code>.</p>
+<hr />
+<h1 id="7--Global-Customer-Application-Behavior">7. Global Customer Application Behavior</h1>
+<p><code>App.jsx</code> does more than route pages.</p>
+<p>It contains three important global systems.</p>
+<h2 id="7-1-Metadata-manager">7.1 Metadata manager</h2>
+<p>The application dynamically manages:</p>
+<pre><code class="language-text">document.title
+meta description
+Open Graph metadata
+Twitter card metadata
+canonical URL
+</code></pre>
+<p>For a painting detail route, it additionally fetches:</p>
+<pre><code class="language-text">paintings/get.php?id=&lt;painting-id&gt;
+</code></pre>
+<p>and derives the painting's name/description for page metadata.</p>
+<p>This means a painting detail page can trigger an API request specifically for SEO metadata in addition to the painting page's own data loading.</p>
+<hr />
+<h1 id="8--Customer-Scroll-Management">8. Customer Scroll Management</h1>
+<p>The collection page uses session storage to preserve scroll position when the user navigates away and returns.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">/paintings
+    ↓
+user scrolls
+    ↓
+navigate to painting
+    ↓
+scroll position stored in sessionStorage
+    ↓
+Back navigation
+    ↓
+/paintings restored to previous position
+</code></pre>
+<p>This is implemented by <code>ScrollManager</code> in <code>App.jsx</code>.</p>
+<hr />
+<h1 id="9--Maintenance-Mode">9. Maintenance Mode</h1>
+<p>The public customer application continuously checks:</p>
+<pre><code class="language-text">system/maintenance.php
+</code></pre>
+<p>The code polls the endpoint approximately every two seconds.</p>
+<p>If the backend reports:</p>
+<pre><code class="language-text">maintenance_mode = true
+</code></pre>
+<p>the customer application replaces the normal UI with a full-screen maintenance interface.</p>
+<p>There is also a manual:</p>
+<pre><code class="language-text">Check again
+</code></pre>
+<p>button in the maintenance state.</p>
+<p>The backend also has explicit maintenance endpoints:</p>
+<pre><code class="language-text">api/system/maintenance.php
+api/system/maintenance-status.php
+api/system/maintenance-toggle.php
+</code></pre>
+<hr />
+<h1 id="10--Customer-API-Configuration">10. Customer API Configuration</h1>
+<p>The customer frontend uses:</p>
+<pre><code class="language-text">customer/src/config/api.js
+</code></pre>
+<p>Its behavior is:</p>
+<pre><code class="language-text">localhost / 127.0.0.1
+    ↓
+VITE_API_BASE_URL
+    ↓
+default:
+http://localhost/paintings/api
+
+production host
+    ↓
+https://api.arts.araha.co.in
+</code></pre>
+<p>The API helper then converts:</p>
+<pre><code class="language-text">paintings/list.php
+</code></pre>
+<p>into:</p>
+<pre><code class="language-text">https://api.arts.araha.co.in/paintings/list.php
+</code></pre>
+<p>in production.</p>
+<p>This is important because the production website and API are separate origins.</p>
+<hr />
+<h1 id="11--Customer-Authentication-Architecture">11. Customer Authentication Architecture</h1>
+<p>The customer authentication backend uses a PHP session.</p>
+<p>The common authentication file is:</p>
+<pre><code class="language-text">api/auth/_common.php
+</code></pre>
+<p>It:</p>
+<ul>
+<li>starts a PHP session</li>
+<li>defines the session cookie</li>
+<li>uses <code>HttpOnly</code></li>
+<li>supports <code>Secure</code></li>
+<li>supports configurable <code>SameSite</code></li>
+<li>configures CORS</li>
+<li>allows credentials</li>
+<li>parses JSON requests</li>
+<li>provides common JSON response functionality</li>
+<li>provides <code>requireCustomer()</code></li>
+</ul>
+<p>The customer session is named:</p>
+<pre><code class="language-text">painting_marketplace_session
+</code></pre>
+<p>and authenticated users are identified through:</p>
+<pre><code class="language-text">$_SESSION['user_id']
+$_SESSION['user_type'] === 'customer'
+</code></pre>
+<p>This is <strong>cookie/session authentication</strong>, not a JWT/bearer-token architecture.</p>
+<hr />
+<h1 id="12--Customer-Login-Flow">12. Customer Login Flow</h1>
+<p>The frontend login page supports:</p>
+<pre><code class="language-text">Email + password
+Google Sign-In
+Registration
+Forgot password
+</code></pre>
+<p>Email login sends:</p>
+<pre><code class="language-http">POST /auth/user-login.php
+</code></pre>
+<p>with approximately:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;email&quot;,
+  &quot;email&quot;: &quot;customer@example.com&quot;,
+  &quot;password&quot;: &quot;...&quot;
+}
+</code></pre>
+<p>Google login sends:</p>
+<pre><code class="language-http">POST /auth/user-login.php
+</code></pre>
+<p>with:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;google&quot;,
+  &quot;token&quot;: &quot;&lt;google credential&gt;&quot;
+}
+</code></pre>
+<p>The browser uses:</p>
+<pre><code class="language-text">credentials: include
+</code></pre>
+<p>so the session cookie set by the API can be used on subsequent API requests.</p>
+<hr />
+<h1 id="13--Login-Processing-Flow">13. Login Processing Flow</h1>
+<pre><code class="language-text">Customer enters credentials
+        ↓
+Login.jsx
+        ↓
+POST /auth/user-login.php
+        ↓
+PHP session/auth common layer
+        ↓
+authentication + database work
+        ↓
+session established
+        ↓
+JSON success response
+        ↓
+customer browser redirects to /account
+</code></pre>
+<p>The frontend does not store an authorization token in localStorage as its main authentication mechanism.</p>
+<p>The backend session is the source of authentication state.</p>
+<hr />
+<h1 id="14--Customer-Painting-Collection-Flow">14. Customer Painting Collection Flow</h1>
+<p>The collection is primarily backed by:</p>
+<pre><code class="language-text">GET /paintings/list.php
+</code></pre>
+<p>The repository contains separate painting API endpoints for:</p>
+<pre><code class="language-text">list
+get one painting
+customer-specific get
+create
+update
+upload images
+list images
+set primary image
+delete image
+</code></pre>
+<p>A simplified flow:</p>
+<pre><code class="language-text">Customer visits /paintings
+        ↓
+Paintings.jsx
+        ↓
+GET /paintings/list.php
+        ↓
+PHP API
+        ↓
+MySQL
+        ↓
+JSON list of paintings
+        ↓
+React renders collection
+</code></pre>
+<hr />
+<h1 id="15--Painting-Detail-Flow">15. Painting Detail Flow</h1>
+<p>When a user visits:</p>
+<pre><code class="language-text">/paintings/:id
+</code></pre>
+<p>the <code>PaintingDetails.jsx</code> page calls:</p>
+<pre><code class="language-text">GET /paintings/get.php?id=&lt;id&gt;
+</code></pre>
+<p>The returned painting object contains information such as:</p>
+<pre><code class="language-text">name
+description
+artist
+category
+price
+discount price
+dimensions
+medium
+frame
+gold details
+images
+size options
+</code></pre>
+<p>The component then renders:</p>
+<pre><code class="language-text">painting title
+artist
+price
+dimensions
+gallery
+thumbnail gallery
+image viewer
+zoom
+pan
+</code></pre>
+<p>The detail page's source explicitly loads <code>paintings/get.php</code> and builds its gallery from <code>painting.images</code> or <code>image_url</code>.</p>
+<hr />
+<h1 id="16--Painting-Viewer">16. Painting Viewer</h1>
+<p>The painting detail page also includes a full-screen artwork viewer.</p>
+<p>It supports:</p>
+<pre><code class="language-text">Open viewer
+Close viewer
+Previous image
+Next image
+Zoom in
+Zoom out
+Reset zoom
+Mouse/pointer dragging while zoomed
+Keyboard navigation
+Escape to close
+Mouse wheel zoom
+</code></pre>
+<p>The image is transformed rather than replaced by another page.</p>
+<p>The body scroll is disabled while the viewer is open.</p>
+<hr />
+<h1 id="17--Add-to-Cart-Flow">17. Add-to-Cart Flow</h1>
+<p>From a painting detail page:</p>
+<pre><code class="language-text">User clicks Add to Cart
+        ↓
+PaintingDetails.jsx
+        ↓
+POST /cart/add-item.php
+        ↓
+JSON:
+{
+  painting_id: &lt;id&gt;,
+  quantity: 1
+}
+        ↓
+credentials: include
+        ↓
+backend checks session
+        ↓
+cart item inserted/updated
+        ↓
+success JSON
+        ↓
+toast
+        ↓
+navigate to /cart
+</code></pre>
+<p>If the API returns HTTP <code>401</code>, the user is redirected to:</p>
+<pre><code class="language-text">/login
+</code></pre>
+<p>The actual call is visible in <code>PaintingDetails.jsx</code>.</p>
+<hr />
+<h1 id="18--Cart-Architecture">18. Cart Architecture</h1>
+<p>The cart backend is divided into:</p>
+<pre><code class="language-text">cart/add-item.php
+cart/get.php
+cart/update-item.php
+cart/remove-item.php
+</code></pre>
+<p>The customer cart page orchestrates these endpoints.</p>
+<p>The cart supports painting-specific size options.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">Painting
+   │
+   ├── Standard size
+   ├── Small
+   ├── Medium
+   └── Large
+</code></pre>
+<p>The selected size option determines the cart item's price.</p>
+<hr />
+<h1 id="19--Cart-Load-Flow">19. Cart Load Flow</h1>
+<p>When <code>/cart</code> loads:</p>
+<pre><code class="language-text">Cart.jsx
+    ↓
+GET /cart/get.php
+    ↓
+credentials: include
+    ↓
+customer session validation
+    ↓
+cart lookup
+    ↓
+painting lookup
+    ↓
+size options loaded
+    ↓
+JSON response
+    ↓
+React renders cart
+</code></pre>
+<p>If the response is <code>401</code>:</p>
+<pre><code class="language-text">navigate('/login')
+</code></pre>
+<p>The cart page implements this behavior directly.</p>
+<hr />
+<h1 id="20--Cart-Size-Selection-Flow">20. Cart Size Selection Flow</h1>
+<p>For each item:</p>
+<pre><code class="language-text">cart item
+   ↓
+available painting size options
+   ↓
+UniversalDropdown
+   ↓
+user chooses size
+   ↓
+POST /cart/update-item.php
+</code></pre>
+<p>The request includes:</p>
+<pre><code class="language-json">{
+  &quot;cart_item_id&quot;: 123,
+  &quot;quantity&quot;: 1,
+  &quot;size_option_id&quot;: 456
+}
+</code></pre>
+<p>The cart reloads after the update.</p>
+<hr />
+<h1 id="21--Cart-Removal-Flow">21. Cart Removal Flow</h1>
+<pre><code class="language-text">User clicks Remove
+        ↓
+confirmation prompt
+        ↓
+confirm
+        ↓
+POST /cart/remove-item.php
+        ↓
+cart item deleted
+        ↓
+cart reloaded
+        ↓
+cart count update event
+        ↓
+success toast
+</code></pre>
+<p>The cart uses a reusable <code>UniversalPrompt</code> for confirmation.</p>
+<hr />
+<h1 id="22--Order-Submission-Architecture">22. Order Submission Architecture</h1>
+<p>This application does <strong>not</strong> treat the initial checkout as an immediate payment transaction.</p>
+<p>The cart page clearly treats this as:</p>
+<pre><code class="language-text">Order Request
+</code></pre>
+<p>rather than:</p>
+<pre><code class="language-text">Pay Now
+</code></pre>
+<p>The order begins in:</p>
+<pre><code class="language-text">PENDING_ACCEPTANCE
+</code></pre>
+<p>and is reviewed after submission.</p>
+<hr />
+<h1 id="23--Exact-Order-Creation-Flow">23. Exact Order Creation Flow</h1>
+<p>This is one of the most important backend processes in the repository.</p>
+<p>The customer submits:</p>
+<pre><code class="language-text">POST /orders/create.php
+</code></pre>
+<p>with:</p>
+<pre><code class="language-json">{
+  &quot;shipping_name&quot;: &quot;...&quot;,
+  &quot;shipping_phone&quot;: &quot;...&quot;,
+  &quot;shipping_email&quot;: &quot;...&quot;,
+  &quot;shipping_address&quot;: &quot;...&quot;,
+  &quot;shipping_city&quot;: &quot;...&quot;,
+  &quot;shipping_state&quot;: &quot;...&quot;,
+  &quot;shipping_postal_code&quot;: &quot;...&quot;,
+  &quot;shipping_country&quot;: &quot;...&quot;
+}
+</code></pre>
+<p>The customer cart does exactly this after the user submits the order form.</p>
+<hr />
+<h1 id="24--Server-Side-Order-Creation-Pipeline">24. Server-Side Order Creation Pipeline</h1>
+<p>The backend flow is:</p>
+<pre><code class="language-text">POST /orders/create.php
+        ↓
+require customer
+        ↓
+read JSON request
+        ↓
+validate shipping/contact fields
+        ↓
+status = PENDING_ACCEPTANCE
+        ↓
+BEGIN TRANSACTION
+        ↓
+lock current cart rows FOR UPDATE
+        ↓
+load paintings
+        ↓
+validate paintings are active
+        ↓
+validate quantities
+        ↓
+resolve selected painting size
+        ↓
+resolve standard size if none selected
+        ↓
+calculate unit price
+        ↓
+calculate base amount
+        ↓
+generate order number
+        ↓
+INSERT orders
+        ↓
+INSERT order_items
+        ↓
+INSERT order_status_history
+        ↓
+DELETE cart items
+        ↓
+COMMIT
+        ↓
+send email notifications
+        ↓
+return JSON 201
+</code></pre>
+<p>This exact structure is implemented in <code>api/orders/create.php</code>.</p>
+<hr />
+<h1 id="25--Why--Matters-in-Order-Creation">25. Why <code>FOR UPDATE</code> Matters in Order Creation</h1>
+<p>The order creation query uses:</p>
+<pre><code class="language-sql">FOR UPDATE
+</code></pre>
+<p>while reading cart rows.</p>
+<p>This means the transaction locks the affected cart rows while the order is being built.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">Cart read
+    ↓
+row lock
+    ↓
+price/availability calculation
+    ↓
+order insert
+    ↓
+cart deletion
+    ↓
+commit
+</code></pre>
+<p>This is designed to reduce race conditions around concurrent order submission.</p>
+<hr />
+<h1 id="26--Order-Pricing-Model">26. Order Pricing Model</h1>
+<p>The backend currently resolves the price roughly in this order:</p>
+<pre><code class="language-text">Selected size option exists?
+        │
+        ├── YES → use size option price
+        │
+        └── NO
+              ↓
+       standard size option
+              ↓
+       if still unavailable:
+              ↓
+       discount_price if valid
+              ↓
+       otherwise base price
+</code></pre>
+<p>The order then stores its own pricing values.</p>
+<p>The SQL insert includes fields such as:</p>
+<pre><code class="language-text">subtotal
+base_amount
+customization_amount
+shipping_amount
+delivery_amount
+discount_amount
+total_amount
+</code></pre>
+<p>At the current order creation path:</p>
+<pre><code class="language-text">customization_amount = 0
+deliveryAmount = 0
+discountAmount = 0
+
+totalAmount = baseAmount
+</code></pre>
+<p>The exact implementation is in <code>api/orders/create.php</code>.</p>
+<hr />
+<h1 id="27--Why-Order-Items-Store-Size-Information">27. Why Order Items Store Size Information</h1>
+<p>When an order item is created, the backend stores not merely:</p>
+<pre><code class="language-text">painting_id
+</code></pre>
+<p>but also snapshot-like size information:</p>
+<pre><code class="language-text">size_option_id
+size_name
+size_width
+size_height
+size_unit
+painting_name
+quantity
+unit_price
+total_price
+</code></pre>
+<p>This means historical orders retain the relevant pricing/size information even if a painting's current configuration changes later.</p>
+<p>The database evolution for this feature is reflected in the migration sequence:</p>
+<pre><code class="language-text">004_painting_size_options.sql
+005_cart_item_size_option.sql
+006_order_contact_and_size.sql
+007_dedupe_painting_size_options.sql
+</code></pre>
+<hr />
+<h1 id="28--Order-Number-Generation">28. Order Number Generation</h1>
+<p>The backend creates an order number in the form:</p>
+<pre><code class="language-text">ORD-&lt;random hexadecimal value&gt;
+</code></pre>
+<p>It uses random bytes rather than relying only on the database numeric ID.</p>
+<p>So there are effectively two identifiers:</p>
+<pre><code class="language-text">database order ID
+order number shown/communicated to users
+</code></pre>
+<hr />
+<h1 id="29--Order-Status-History">29. Order Status History</h1>
+<p>Every important status change is recorded separately in:</p>
+<pre><code class="language-text">order_status_history
+</code></pre>
+<p>Initial order creation creates:</p>
+<pre><code class="language-text">old_status = NULL
+new_status = PENDING_ACCEPTANCE
+changed_by = customer user ID
+changed_by_type = USER
+notes = &quot;Initial order request&quot;
+</code></pre>
+<p>This creates an audit-style timeline for the order.</p>
+<hr />
+<h1 id="30--Cart-Cleanup-After-Order-Creation">30. Cart Cleanup After Order Creation</h1>
+<p>After successfully creating:</p>
+<pre><code class="language-text">orders
+order_items
+order_status_history
+</code></pre>
+<p>the backend deletes the user's cart items and commits the transaction.</p>
+<p>Therefore:</p>
+<pre><code class="language-text">Cart
+  ↓
+Order
+  ↓
+Cart emptied
+</code></pre>
+<p>The cart is not left as the permanent copy of the order.</p>
+<p>The order tables become the authoritative historical representation.</p>
+<hr />
+<h1 id="31--Order-Creation-and-Email-Notifications">31. Order Creation and Email Notifications</h1>
+<p>Only after the transaction commits does the backend call:</p>
+<pre><code class="language-text">sendNewOrderNotifications(...)
+</code></pre>
+<p>This is an important sequencing decision.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">Database transaction
+        ↓
+COMMIT SUCCESSFULLY
+        ↓
+send email notification
+</code></pre>
+<p>rather than:</p>
+<pre><code class="language-text">send email
+        ↓
+maybe commit
+</code></pre>
+<p>The mail infrastructure is separated into:</p>
+<pre><code class="language-text">api/mail/Mailer.php
+api/mail/Templates.php
+api/mail/groups.php
+api/mail/index.php
+</code></pre>
+<p>with PHPMailer included under:</p>
+<pre><code class="language-text">api/lib/PHPMailer/
+</code></pre>
+<hr />
+<h1 id="32--Customer-Order-Tracking">32. Customer Order Tracking</h1>
+<p>The customer order subsystem has:</p>
+<pre><code class="language-text">orders/my-orders.php
+orders/get.php
+orders/events.php
+orders/history.php
+</code></pre>
+<p>and the frontend contains:</p>
+<pre><code class="language-text">TrackOrders.jsx
+OrderDetails.jsx
+</code></pre>
+<p>The conceptual flow is:</p>
+<pre><code class="language-text">/track-orders
+      ↓
+GET my-orders.php
+      ↓
+user-specific order list
+      ↓
+click order
+      ↓
+/track-orders/:id
+      ↓
+GET order details
+      ↓
+order information + status history/events
+</code></pre>
+<p>The complete order API surface is visible in <code>api/orders</code>.</p>
+<hr />
+<h1 id="33--Customer-Cancellation">33. Customer Cancellation</h1>
+<p>The customer cancellation request is:</p>
+<pre><code class="language-text">POST /orders/cancel.php
+</code></pre>
+<p>The backend:</p>
+<ol>
+<li>Requires customer authentication.</li>
+<li>Looks up the order belonging to that customer.</li>
+<li>Locks the order with <code>FOR UPDATE</code>.</li>
+<li>Checks current status.</li>
+<li>Changes the status to <code>CANCELLED</code>.</li>
+<li>Inserts status history.</li>
+<li>Commits.</li>
+<li>Sends a status notification.</li>
+</ol>
+<hr />
+<h1 id="34--Current-Cancellation-Rule">34. Current Cancellation Rule</h1>
+<p>The current backend blocks cancellation when status is:</p>
+<pre><code class="language-text">CANCELLED
+PAID
+PROCESSING
+DISPATCHED
+DELIVERED
+</code></pre>
+<p>Therefore, according to the current implementation:</p>
+<pre><code class="language-text">PENDING_ACCEPTANCE → cancellable
+ACCEPTED           → cancellable
+PAYMENT_DUE        → cancellable
+REJECTED           → cancellable
+PAID               → not cancellable
+PROCESSING         → not cancellable
+DISPATCHED         → not cancellable
+DELIVERED          → not cancellable
+CANCELLED          → not cancellable
+</code></pre>
+<p>This is an important implementation detail.</p>
+<p>In particular, <strong><code>REJECTED</code> is currently not blocked by <code>cancel.php</code></strong>. If the intended business rule is that once an artist rejects an order the customer must never be able to cancel it, the current backend does not yet enforce that rule.</p>
+<hr />
+<h1 id="35--Admin-Application-Architecture">35. Admin Application Architecture</h1>
+<p>The admin app is completely separate from the customer app.</p>
+<p>Its routing is implemented in:</p>
+<pre><code class="language-text">admin/src/App.jsx
+</code></pre>
+<p>The major routes include:</p>
+<pre><code class="language-text">/login
+/reset-password
+/register
+
+/
+/orders
+/orders/:id
+
+/paintings
+/paintings/new
+/paintings/:id/edit
+
+/metadata
+/settings
+/faqs
+/administrators
+</code></pre>
+<p>There are also currently exposed placeholder sections for:</p>
+<pre><code class="language-text">/customers
+/payments
+/reports
+/audit
+</code></pre>
+<p>The admin application itself explicitly describes these sections as areas that will be connected to the marketplace API next.</p>
+<hr />
+<h1 id="36--Admin-Route-Protection">36. Admin Route Protection</h1>
+<p>Admin pages use a React-level <code>ProtectedRoute</code>.</p>
+<p>The sequence is:</p>
+<pre><code class="language-text">Admin opens protected URL
+        ↓
+ProtectedRoute
+        ↓
+GET /auth/admin-session.php
+        ↓
+backend checks admin session
+        ↓
+two_factor_verified?
+        ↓
+YES → render page
+NO  → redirect to /login
+</code></pre>
+<p>The frontend explicitly requires:</p>
+<pre><code class="language-text">success
+authenticated
+two_factor_verified
+</code></pre>
+<p>before allowing the page to render.</p>
+<hr />
+<h1 id="37--Admin-Backend-Authentication">37. Admin Backend Authentication</h1>
+<p>The backend also independently protects administrative API operations.</p>
+<p><code>api/admin/_common.php</code> establishes a different PHP session:</p>
+<pre><code class="language-text">painting_marketplace_admin_session
+</code></pre>
+<p>It then requires:</p>
+<pre><code class="language-text">admin_user_id exists
+admin_user_type === admin
+admin_2fa_verified === true
+</code></pre>
+<p>The <code>requireAdmin()</code> function rejects requests that do not satisfy those conditions.</p>
+<p>This means the application has two layers of admin protection:</p>
+<pre><code class="language-text">React route guard
+        +
+backend authorization
+</code></pre>
+<p>The backend is ultimately authoritative.</p>
+<hr />
+<h1 id="38--Admin-Session-vs-Customer-Session">38. Admin Session vs Customer Session</h1>
+<p>There are deliberately different cookies:</p>
+<pre><code class="language-text">Customer:
+painting_marketplace_session
+
+Admin:
+painting_marketplace_admin_session
+</code></pre>
+<p>This separation prevents the two authentication contexts from being represented by the same session namespace.</p>
+<hr />
+<h1 id="39--Admin-Dashboard">39. Admin Dashboard</h1>
+<p>The admin dashboard requests:</p>
+<pre><code class="language-text">GET /admin/dashboard.php
+</code></pre>
+<p>and displays figures such as:</p>
+<pre><code class="language-text">pending orders
+paintings
+customers
+revenue
+</code></pre>
+<p>The dashboard page also contains the maintenance mode control.</p>
+<p>The admin app's current dashboard source implements this request directly.</p>
+<hr />
+<h1 id="40--Admin-Maintenance-Mode">40. Admin Maintenance Mode</h1>
+<p>The admin interface can call:</p>
+<pre><code class="language-text">GET  /system/maintenance.php
+POST /system/maintenance-toggle.php
+</code></pre>
+<p>The flow is:</p>
+<pre><code class="language-text">Admin dashboard
+      ↓
+Maintenance Mode control
+      ↓
+confirmation prompt
+      ↓
+POST maintenance-toggle.php
+      ↓
+backend validates admin
+      ↓
+maintenance state changes
+      ↓
+customer frontend discovers state
+      ↓
+customer site enters/exits maintenance mode
+</code></pre>
+<hr />
+<h1 id="41--Admin-Painting-Management">41. Admin Painting Management</h1>
+<p>The admin painting subsystem includes:</p>
+<pre><code class="language-text">PaintingList
+AddPainting
+EditPainting
+PaintingSizeOptions
+</code></pre>
+<p>The backend has:</p>
+<pre><code class="language-text">paintings/create.php
+paintings/update.php
+paintings/list.php
+paintings/get.php
+paintings/customer-get.php
+paintings/upload-images.php
+paintings/images-list.php
+paintings/set-primary-image.php
+paintings/delete-image.php
+</code></pre>
+<p>Conceptually:</p>
+<pre><code class="language-text">Admin form
+    ↓
+POST JSON / multipart request
+    ↓
+painting endpoint
+    ↓
+admin auth
+    ↓
+validation
+    ↓
+MySQL
+    ↓
+JSON response
+    ↓
+admin UI refresh
+</code></pre>
+<hr />
+<h1 id="42--Painting-Image-Management">42. Painting Image Management</h1>
+<p>Painting images are treated as a distinct subsystem rather than simply a single image column.</p>
+<p>The backend has explicit operations:</p>
+<pre><code class="language-text">upload-images.php
+images-list.php
+set-primary-image.php
+delete-image.php
+</code></pre>
+<p>This implies a model where a painting can have multiple image records.</p>
+<p>The customer UI also expects an array of images and provides a gallery/thumb viewer.</p>
+<hr />
+<h1 id="43--Size-Management">43. Size Management</h1>
+<p>Sizes are a first-class data feature.</p>
+<p>The API provides:</p>
+<pre><code class="language-text">sizes/create.php
+sizes/list.php
+</code></pre>
+<p>And painting-specific size relationships are represented in:</p>
+<pre><code class="language-text">painting_size_options
+</code></pre>
+<p>The migration history shows that size support was progressively added to:</p>
+<pre><code class="language-text">paintings
+cart_items
+orders
+order_items
+</code></pre>
+<hr />
+<h1 id="44--Frame-Management">44. Frame Management</h1>
+<p>The backend contains:</p>
+<pre><code class="language-text">frames/create.php
+frames/list.php
+</code></pre>
+<p>This is likely supporting selectable/configurable painting frame information. The exact implementation is endpoint-based.</p>
+<hr />
+<h1 id="45--Category-Management">45. Category Management</h1>
+<p>The API currently includes:</p>
+<pre><code class="language-text">categories/create.php
+categories/list.php
+</code></pre>
+<p>Categories are also surfaced as painting metadata in the customer UI.</p>
+<hr />
+<h1 id="46--FAQ-Management">46. FAQ Management</h1>
+<p>The backend contains:</p>
+<pre><code class="language-text">faqs/list.php
+faqs/admin.php
+</code></pre>
+<p>while the admin frontend has:</p>
+<pre><code class="language-text">FAQs.jsx
+</code></pre>
+<p>This gives the application a data-driven FAQ layer rather than requiring FAQ text to be permanently hardcoded in the customer page.</p>
+<hr />
+<h1 id="47--Metadata-Management">47. Metadata Management</h1>
+<p>The backend metadata subsystem is:</p>
+<pre><code class="language-text">metadata/update.php
+metadata/delete.php
+</code></pre>
+<p>and the admin frontend contains:</p>
+<pre><code class="language-text">Metadata.jsx
+metadata-enhancer.js
+</code></pre>
+<p>This indicates that metadata is intended to be administratively editable rather than completely static.</p>
+<hr />
+<h1 id="48--Database-Configuration">48. Database Configuration</h1>
+<p>The main database file is:</p>
+<pre><code class="language-text">api/config/database.php
+</code></pre>
+<p>Production configuration can be supplied via:</p>
+<pre><code class="language-text">api/config/production.php
+</code></pre>
+<p>which is intentionally not committed.</p>
+<p>The connection parameters can also be provided through environment variables.</p>
+<p>The production configuration is designed to keep database credentials out of normal tracked source.</p>
+<hr />
+<h1 id="49--Database-Connection-Flow">49. Database Connection Flow</h1>
+<p>The backend essentially does:</p>
+<pre><code class="language-text">PHP endpoint
+     ↓
+require common/auth
+     ↓
+require database.php
+     ↓
+rate limiter
+     ↓
+load production.php or environment variables
+     ↓
+construct PDO MySQL DSN
+     ↓
+new PDO(...)
+     ↓
+prepared statements
+</code></pre>
+<p>PDO options include:</p>
+<pre><code class="language-text">ERRMODE_EXCEPTION
+FETCH_ASSOC
+EMULATE_PREPARES = false
+</code></pre>
+<hr />
+<h1 id="50--Core-Database-Entities">50. Core Database Entities</h1>
+<p>Based on the SQL used by the current backend, the important business tables include concepts such as:</p>
+<pre><code class="language-text">users
+carts
+cart_items
+
+paintings
+painting_size_options
+
+orders
+order_items
+order_status_history
+
+administrators / admin users
+
+categories
+frames
+faqs
+
+password reset records
+Google account linkage
+
+maintenance configuration
+mail groups
+metadata
+</code></pre>
+<p>The exact database schema has evolved through migration files rather than being represented by one single current SQL file.</p>
+<p>The migration history contains ten visible migrations covering Google accounts, order pricing, discounts, sizes, order contact information, deduplication, maintenance mode, mail groups, and password resets.</p>
+<hr />
+<h1 id="51--Order-Data-Model">51. Order Data Model</h1>
+<p>The basic conceptual relationship is:</p>
+<pre><code class="language-text">USER
+ │
+ └── CART
+      │
+      └── CART ITEMS
+             │
+             └── PAINTING
+                   │
+                   └── SIZE OPTION
+
+
+USER
+ │
+ └── ORDERS
+      │
+      ├── ORDER
+      │    ├── shipping/contact information
+      │    ├── pricing
+      │    ├── status
+      │    └── timestamps
+      │
+      ├── ORDER ITEMS
+      │    ├── painting
+      │    ├── selected size
+      │    ├── price snapshot
+      │    └── quantity
+      │
+      └── ORDER STATUS HISTORY
+           ├── old status
+           ├── new status
+           ├── actor
+           ├── actor type
+           └── notes
+</code></pre>
+<p>This structure is directly reflected by the queries in <code>orders/create.php</code> and <code>orders/update-status.php</code>.</p>
+<hr />
+<h1 id="52--Order-Lifecycle">52. Order Lifecycle</h1>
+<p>The backend recognizes the following statuses:</p>
+<pre><code class="language-text">PENDING_ACCEPTANCE
+ACCEPTED
+PAYMENT_DUE
+PAID
+PROCESSING
+DISPATCHED
+DELIVERED
+REJECTED
+</code></pre>
+<p>Customer cancellation introduces:</p>
+<pre><code class="language-text">CANCELLED
+</code></pre>
+<p>The admin status endpoint explicitly validates the first set of statuses.</p>
+<p>A conceptual lifecycle is therefore:</p>
+<pre><code class="language-text">PENDING_ACCEPTANCE
+        │
+        ├── ACCEPTED
+        │      │
+        │      └── PAYMENT_DUE
+        │             │
+        │             └── PAID
+        │                    │
+        │                    └── PROCESSING
+        │                           │
+        │                           └── DISPATCHED
+        │                                  │
+        │                                  └── DELIVERED
+        │
+        └── REJECTED
+
+Customer may also transition certain states to:
+
+CANCELLED
+</code></pre>
+<p>The actual transition rules are not fully encoded as a formal state machine; the status endpoint mainly validates that the requested status exists and blocks certain situations such as editing a cancelled order.</p>
+<hr />
+<h1 id="53--Admin-Status-Update-Flow">53. Admin Status Update Flow</h1>
+<p>The admin order status endpoint is:</p>
+<pre><code class="language-text">POST /orders/update-status.php
+</code></pre>
+<p>The request contains approximately:</p>
+<pre><code class="language-json">{
+  &quot;order_id&quot;: 123,
+  &quot;action&quot;: &quot;ACCEPTED&quot;,
+  &quot;notes&quot;: &quot;...&quot;
+}
+</code></pre>
+<p>Processing:</p>
+<pre><code class="language-text">Admin frontend
+       ↓
+POST update-status.php
+       ↓
+requireAdmin()
+       ↓
+validate order ID
+       ↓
+validate action
+       ↓
+lock order FOR UPDATE
+       ↓
+check previous status
+       ↓
+update status
+       ↓
+update artist_notes if supplied
+       ↓
+set relevant timestamp
+       ↓
+insert order_status_history
+       ↓
+COMMIT
+       ↓
+sendOrderStatusNotification()
+       ↓
+JSON response
+</code></pre>
+<hr />
+<h1 id="54--Important-Admin-Status-Timestamps">54. Important Admin Status Timestamps</h1>
+<p>When the status changes, the backend sets timestamps for certain milestones:</p>
+<pre><code class="language-text">ACCEPTED      → accepted_at
+PAID          → paid_at
+DISPATCHED    → dispatched_at
+DELIVERED     → delivered_at
+</code></pre>
+<p>This allows the order to contain both:</p>
+<pre><code class="language-text">current status
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">historical milestone timestamps
+</code></pre>
+<hr />
+<h1 id="55--Artist-Notes">55. Artist Notes</h1>
+<p>The status update endpoint accepts:</p>
+<pre><code class="language-text">notes
+</code></pre>
+<p>and stores them in:</p>
+<pre><code class="language-text">artist_notes
+</code></pre>
+<p>when supplied.</p>
+<p>The same note is also inserted into the status history record.</p>
+<p>This makes an artist/admin note visible both as the current order note and as part of the status-change history.</p>
+<hr />
+<h1 id="56--Email-Architecture">56. Email Architecture</h1>
+<p>The email system is a separate backend subsystem.</p>
+<pre><code class="language-text">api/mail/
+├── Mailer.php
+├── Templates.php
+├── groups.php
+└── index.php
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">api/lib/PHPMailer/
+</code></pre>
+<p>is present as the mail library.</p>
+<p>At least two central application-level notification functions are referenced by order flows:</p>
+<pre><code class="language-text">sendNewOrderNotifications()
+sendOrderStatusNotification()
+</code></pre>
+<hr />
+<h1 id="57--System-Maintenance-Email-Notification">57. System Maintenance Email Notification</h1>
+<p>Whenever the system is placed into maintenance mode, a system notification email is sent to the <strong>System Updates</strong> mail group.</p>
+<h2 id="57-1-Trigger">57.1 Trigger</h2>
+<p>The notification is triggered from:</p>
+<p><code>api/system/maintenance-toggle.php</code></p>
+<p>After the maintenance mode state is successfully updated, the system sends the notification using the existing mail infrastructure.</p>
+<h2 id="57-2-Recipient-Group">57.2 Recipient Group</h2>
+<p>The notification is sent to the:</p>
+<p><strong>System Updates</strong></p>
+<p>mail group.</p>
+<p>The group is managed through:</p>
+<p><code>api/mail/groups.php</code></p>
+<h2 id="57-3-Email-Template">57.3 Email Template</h2>
+<p>The maintenance notification template is maintained in:</p>
+<p><code>api/mail/Templates.php</code></p>
+<p>The email informs the System Updates recipients that the system has been placed into maintenance mode.</p>
+<h2 id="57-4-Mail-Flow">57.4 Mail Flow</h2>
+<pre><code class="language-text">Admin enables Maintenance Mode
+          |
+          v
+api/system/maintenance-toggle.php
+          |
+          v
+Maintenance state updated
+          |
+          v
+System Maintenance Email
+          |
+          v
+System Updates Mail Group
+          |
+          v
+api/mail/Mailer.php
+          |
+          v
+PHPMailer / SMTP
+
+</code></pre>
+<hr />
+<h1 id="58--New-Order-Email-Flow">58. New Order Email Flow</h1>
+<pre><code class="language-text">Customer submits order
+        ↓
+transaction succeeds
+        ↓
+COMMIT
+        ↓
+sendNewOrderNotifications()
+        ↓
+mail templates / mailer
+        ↓
+PHPMailer
+        ↓
+recipients
+</code></pre>
+<p>The key point is that email is invoked after the order transaction completes. The mail is sent to members of the mail group <em>ORDER_UPDATES</em></p>
+<hr />
+<h1 id="59--Status-Email-Flow">59. Status Email Flow</h1>
+<p>When an admin changes an order's status:</p>
+<pre><code class="language-text">Admin changes status
+        ↓
+DB update
+        ↓
+history insert
+        ↓
+COMMIT
+        ↓
+sendOrderStatusNotification()
+</code></pre>
+<p>When a customer cancels an order, the same notification mechanism is used for the cancellation status.</p>
+<hr />
+<h1 id="60--CORS-Architecture">60. CORS Architecture</h1>
+<p>Because the frontend and API are different origins in production, the backend explicitly implements CORS.</p>
+<p>The customer auth common layer allows configured origins and includes:</p>
+<pre><code class="language-text">https://arts.araha.co.in
+https://artsadmin.araha.co.in
+</code></pre>
+<p>along with localhost development origins.</p>
+<p>Credentials are explicitly allowed:</p>
+<pre><code class="language-text">Access-Control-Allow-Credentials: true
+</code></pre>
+<p>This is necessary because the application uses session cookies across the frontend/API relationship.</p>
+<hr />
+<h1 id="61--OPTIONS---Preflight-Requests">61. OPTIONS / Preflight Requests</h1>
+<p>The backend supports:</p>
+<pre><code class="language-text">OPTIONS
+</code></pre>
+<p>and responds to CORS preflight requests.</p>
+<p>An unapproved origin receives:</p>
+<pre><code class="language-text">403
+</code></pre>
+<p>instead of being granted credentialed access.</p>
+<p>The auth common layer performs this check.</p>
+<hr />
+<h1 id="62--Rate-Limiting">62. Rate Limiting</h1>
+<p>There is an application-level rate limiter:</p>
+<pre><code class="language-text">api/security/rate-limit.php
+</code></pre>
+<p>The current rules are:</p>
+<pre><code class="language-text">General API:
+90 requests / 60 seconds / IP
+
+Authentication endpoints:
+6 requests / 600 seconds / IP
+</code></pre>
+<p>The painting list endpoint is deliberately excluded from rate limiting.</p>
+<p>CORS preflight requests are excluded.</p>
+<p>Already authenticated and 2FA-verified administrators are excluded.</p>
+<hr />
+<h1 id="63--Rate-Limiter-Storage">63. Rate Limiter Storage</h1>
+<p>The limiter uses files in the operating system's temporary directory rather than storing counters in the repository.</p>
+<p>The basic concept is:</p>
+<pre><code class="language-text">system temp directory
+    ↓
+aramane_rate_limits
+    ↓
+hashed IP bucket
+    ↓
+JSON state file
+</code></pre>
+<p>The file is locked with:</p>
+<pre><code class="language-text">flock()
+</code></pre>
+<p>to protect concurrent access.</p>
+<hr />
+<h1 id="64--Rate-Limiting-Failure-Behavior">64. Rate Limiting Failure Behavior</h1>
+<p>If the server cannot create/open the temporary rate-limit file, the implementation intentionally fails open.</p>
+<p>In other words:</p>
+<pre><code class="language-text">rate limiter storage unavailable
+        ↓
+request continues
+</code></pre>
+<p>rather than:</p>
+<pre><code class="language-text">rate limiter storage unavailable
+        ↓
+entire site unavailable
+</code></pre>
+<p>This is explicitly documented in the source.</p>
+<hr />
+<h1 id="65--Where-the-Rate-Limiter-Is-Applied">65. Where the Rate Limiter Is Applied</h1>
+<p><code>database.php</code> loads the rate limiter before opening the database connection.</p>
+<p>Therefore the normal API processing path is broadly:</p>
+<pre><code class="language-text">API endpoint
+    ↓
+database.php
+    ↓
+rate limiter
+    ↓
+PDO connection
+</code></pre>
+<p>This is a notable architectural choice because the limiter executes before database access is established.</p>
+<hr />
+<h1 id="66--Authentication-Security-Model">66. Authentication Security Model</h1>
+<p>Customer:</p>
+<pre><code class="language-text">PHP session cookie
+HttpOnly
+Secure when HTTPS
+SameSite configurable
+CORS origin restrictions
+</code></pre>
+<p>Admin:</p>
+<pre><code class="language-text">Separate PHP session
+HttpOnly
+Secure when HTTPS
+SameSite configurable
+Admin type requirement
+2FA verification requirement
+</code></pre>
+<p>Backend endpoints independently call:</p>
+<pre><code class="language-text">requireCustomer()
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">requireAdmin()
+</code></pre>
+<p>rather than trusting the frontend UI.</p>
+<hr />
+<h1 id="67--Request-Processing-Pipeline---Generic">67. Request Processing Pipeline — Generic</h1>
+<p>Almost every API request can be mentally traced like this:</p>
+<pre><code class="language-text">1. Browser sends HTTP request
+        ↓
+2. Specific PHP endpoint receives request
+        ↓
+3. Shared auth/common code initializes session
+        ↓
+4. CORS headers are evaluated
+        ↓
+5. Rate limiter runs when database config is loaded
+        ↓
+6. Database connection is initialized
+        ↓
+7. Endpoint-specific authentication check
+        ↓
+8. JSON/request data parsed
+        ↓
+9. Input validation
+        ↓
+10. SQL queries / transaction
+        ↓
+11. Optional side effects
+        │
+        ├── email
+        ├── status history
+        ├── cart update
+        └── image/storage operation
+        ↓
+12. JSON response
+        ↓
+13. React updates its UI
+</code></pre>
+<hr />
+<h1 id="68--Example-Request---Loading-a-Painting">68. Example Request — Loading a Painting</h1>
+<pre><code class="language-text">Browser
+  |
+  | GET /paintings/get.php?id=25
+  v
+PHP endpoint
+  |
+  +--&gt; common configuration
+  |
+  +--&gt; rate limiting
+  |
+  +--&gt; database connection
+  |
+  +--&gt; query painting
+  |
+  +--&gt; query associated information/images
+  |
+  v
+JSON response
+  |
+  v
+PaintingDetails.jsx
+  |
+  +--&gt; setPainting()
+  |
+  +--&gt; setImages()
+  |
+  +--&gt; render
+</code></pre>
+<p>The frontend's actual detail-page load is implemented in <code>PaintingDetails.jsx</code>.</p>
+<hr />
+<h1 id="69--Example-Request---Add-to-Cart">69. Example Request — Add to Cart</h1>
+<pre><code class="language-text">User
+  |
+  | click &quot;Add to Cart&quot;
+  v
+PaintingDetails.jsx
+  |
+  | POST /cart/add-item.php
+  | credentials: include
+  v
+PHP
+  |
+  +--&gt; customer session
+  |
+  +--&gt; validate request
+  |
+  +--&gt; database/cart update
+  |
+  v
+JSON success
+  |
+  v
+Toast
+  |
+  v
+/cart
+</code></pre>
+<hr />
+<h1 id="70--Example-Request---Submit-Order">70. Example Request — Submit Order</h1>
+<pre><code class="language-text">Cart.jsx
+  |
+  | POST /orders/create.php
+  v
+auth/_common.php
+  |
+  +--&gt; session
+  +--&gt; CORS
+  |
+  v
+database.php
+  |
+  +--&gt; rate limiter
+  +--&gt; PDO
+  |
+  v
+orders/create.php
+  |
+  +--&gt; requireCustomer()
+  +--&gt; validate contact data
+  +--&gt; begin transaction
+  +--&gt; lock cart
+  +--&gt; resolve prices
+  +--&gt; create order
+  +--&gt; create order items
+  +--&gt; create history
+  +--&gt; delete cart
+  +--&gt; commit
+  |
+  +--&gt; mail notification
+  |
+  v
+201 JSON
+  |
+  v
+Cart.jsx
+  |
+  +--&gt; toast
+  +--&gt; navigate /track-orders
+</code></pre>
+<hr />
+<h1 id="71--Example-Request---Admin-Status-Update">71. Example Request — Admin Status Update</h1>
+<pre><code class="language-text">Admin OrderDetails / OrderStatusManager
+        |
+        | POST /orders/update-status.php
+        v
+api/admin/_common.php
+        |
+        +--&gt; admin session
+        +--&gt; 2FA verified?
+        v
+database.php
+        |
+        +--&gt; rate limiter
+        +--&gt; PDO
+        v
+orders/update-status.php
+        |
+        +--&gt; validate
+        +--&gt; lock order
+        +--&gt; update status
+        +--&gt; update notes/timestamps
+        +--&gt; write history
+        +--&gt; commit
+        |
+        +--&gt; send email
+        v
+JSON response
+        |
+        v
+Admin UI refresh
+</code></pre>
+<hr />
+<h1 id="72--Customer-UI-and-Backend-Are-Not-the-Same-Source-of-Truth">72. Customer UI and Backend Are Not the Same Source of Truth</h1>
+<p>An important architectural principle in this codebase is:</p>
+<pre><code class="language-text">Frontend = user experience
+Backend = authoritative business rules
+</code></pre>
+<p>For example, even if the React UI disables a button, the backend endpoint still performs its own validation.</p>
+<p>The cancellation endpoint verifies:</p>
+<pre><code class="language-text">customer owns order
+status permits cancellation
+</code></pre>
+<p>The admin status endpoint verifies:</p>
+<pre><code class="language-text">admin session
+2FA
+valid status
+order exists
+order is not customer-cancelled
+</code></pre>
+<p>This is the correct general architectural direction for security.</p>
+<hr />
+<h1 id="73--Public-vs-Protected-API-Concepts">73. Public vs Protected API Concepts</h1>
+<p>The backend can broadly be divided into:</p>
+<h2 id="Public-read-oriented">Public/read-oriented</h2>
+<pre><code class="language-text">paintings/list.php
+paintings/get.php
+categories/list.php
+frames/list.php
+sizes/list.php
+faqs/list.php
+system/maintenance.php
+</code></pre>
+<h2 id="Customer-protected">Customer-protected</h2>
+<pre><code class="language-text">auth/user-*
+cart/*
+orders/create.php
+orders/cancel.php
+orders/my-orders.php
+orders/get.php
+orders/history.php
+...
+</code></pre>
+<h2 id="Admin-protected">Admin-protected</h2>
+<pre><code class="language-text">admin/*
+paintings/create.php
+paintings/update.php
+paintings/upload-images.php
+metadata/*
+orders/update-status.php
+system/maintenance-toggle.php
+</code></pre>
+<p>The exact endpoint authorization is determined inside the PHP source, but this is the conceptual separation reflected in the repository.</p>
+<hr />
+<h1 id="74--Admin-Placeholders---Current-Implementation-Status">74. Admin Placeholders / Current Implementation Status</h1>
+<p>The admin navigation currently exposes:</p>
+<pre><code class="language-text">Customers
+Payments
+Reports
+Audit Log
+</code></pre>
+<p>but those routes currently render placeholder pages rather than complete management implementations.</p>
+<p>The placeholder component states that the section will be connected to the marketplace API next.</p>
+<p>Therefore:</p>
+<pre><code class="language-text">Admin UI exists
+≠
+Feature is fully implemented
+</code></pre>
+<p>This distinction matters when assessing the current system.</p>
+<hr />
+<h1 id="75--Payment-Architecture---Current-State">75. Payment Architecture — Current State</h1>
+<p>The current order creation flow does <strong>not</strong> take payment.</p>
+<p>Instead:</p>
+<pre><code class="language-text">customer submits order
+        ↓
+PENDING_ACCEPTANCE
+        ↓
+admin/artist review
+        ↓
+ACCEPTED
+        ↓
+PAYMENT_DUE
+        ↓
+PAID
+</code></pre>
+<p>The status model already contains:</p>
+<pre><code class="language-text">PAYMENT_DUE
+PAID
+</code></pre>
+<p>and there is an order endpoint called:</p>
+<pre><code class="language-text">release-price.php
+</code></pre>
+<p>but the initial customer checkout itself only creates the order request and does not charge the customer.</p>
+<p>The customer cart UI also explicitly represents the initial operation as an order request with no payment at that stage.</p>
+<hr />
+<h1 id="76--Frontend-State-Management">76. Frontend State Management</h1>
+<p>The application does not appear to use Redux, Zustand, MobX, or another global state framework.</p>
+<p>The dominant pattern is local React state:</p>
+<pre><code class="language-javascript">useState()
+useEffect()
+</code></pre>
+<p>plus browser events for lightweight cross-component updates, for example:</p>
+<pre><code class="language-javascript">window.dispatchEvent(new Event('ara-cart-updated'))
+</code></pre>
+<p>This is used around cart mutations to notify other UI elements that the cart changed.</p>
+<hr />
+<h1 id="77--Toast---Feedback-System">77. Toast / Feedback System</h1>
+<p>Both customer and admin applications contain reusable toast components/providers.</p>
+<p>Customer:</p>
+<pre><code class="language-text">Toast.jsx
+ToastProvider.jsx
+</code></pre>
+<p>Admin:</p>
+<pre><code class="language-text">Toast.jsx
+</code></pre>
+<p>These are used for:</p>
+<pre><code class="language-text">success
+error
+operation feedback
+</code></pre>
+<p>instead of relying solely on browser alerts.</p>
+<hr />
+<h1 id="78--Reusable-UI-Components">78. Reusable UI Components</h1>
+<p>Both frontend applications contain generic reusable pieces such as:</p>
+<pre><code class="language-text">UniversalDropdown
+UniversalPrompt
+Toast
+</code></pre>
+<p>The customer app also has:</p>
+<pre><code class="language-text">Layout
+ToastProvider
+</code></pre>
+<p>while the admin app has additional painting-specific components such as:</p>
+<pre><code class="language-text">PaintingSizeOptions
+</code></pre>
+<p>This indicates the frontends are componentized rather than placing every UI function into one monolithic page.</p>
+<hr />
+<h1 id="79--SEO---Metadata-Structure">79. SEO / Metadata Structure</h1>
+<p>The customer application contains:</p>
+<pre><code class="language-text">public/aa-og-img.svg
+public/aa-ogimage.png
+robots.txt
+sitemap.xml
+</code></pre>
+<p>and the frontend dynamically updates metadata.</p>
+<p>The current painting detail metadata path works like:</p>
+<pre><code class="language-text">route /paintings/:id
+        ↓
+MetadataManager
+        ↓
+GET /paintings/get.php?id=&lt;id&gt;
+        ↓
+painting name + description
+        ↓
+document title / description / OG tags
+</code></pre>
+<p>The admin application also has:</p>
+<pre><code class="language-text">metadata-enhancer.js
+Metadata.jsx
+</code></pre>
+<p>showing that SEO metadata is treated as a managed feature.</p>
+<hr />
+<h1 id="80--Deployment-Topology">80. Deployment Topology</h1>
+<p>The source clearly indicates a production topology resembling:</p>
+<pre><code class="language-text">Customer:
+https://arts.araha.co.in
+
+Admin:
+https://artsadmin.araha.co.in
+
+API:
+https://api.arts.araha.co.in
+</code></pre>
+<p>The frontend API configuration hardcodes the production API host, while the auth common files explicitly include the customer/admin origins in the allowed-origin list.</p>
+<hr />
+<h1 id="81--Production-Request-Topology">81. Production Request Topology</h1>
+<p>A real customer request therefore looks conceptually like:</p>
+<pre><code class="language-text">https://arts.araha.co.in
+        |
+        | fetch()
+        |
+        v
+https://api.arts.araha.co.in
+        |
+        | PHP session cookie
+        |
+        v
+     MySQL
+</code></pre>
+<p>Admin:</p>
+<pre><code class="language-text">https://artsadmin.araha.co.in
+        |
+        | fetch()
+        |
+        v
+https://api.arts.araha.co.in
+        |
+        v
+     MySQL
+</code></pre>
+<hr />
+<h1 id="82--Environment---Secrets-Architecture">82. Environment / Secrets Architecture</h1>
+<p>The repository contains:</p>
+<pre><code class="language-text">customer/.env.example
+admin/.env.example
+api/.env.example
+</code></pre>
+<p>Production database credentials are intended to come from an untracked:</p>
+<pre><code class="language-text">api/config/production.php
+</code></pre>
+<p>or environment variables.</p>
+<p>The database connection code explicitly documents <code>production.php</code> as something that should not be committed.</p>
+<p>That is the correct general separation:</p>
+<pre><code class="language-text">source code
+    ≠
+production secrets
+</code></pre>
+<hr />
+<h1 id="83--Important-Current-Code-Observation---Customer-Cart-Image-URLs">83. Important Current Code Observation — Customer Cart Image URLs</h1>
+<p>There is a notable inconsistency in the current customer frontend.</p>
+<p><code>PaintingDetails.jsx</code> resolves relative image URLs using the API origin:</p>
+<pre><code class="language-text">new URL(apiUrl('')).origin + relative URL
+</code></pre>
+<p>whereas <code>Cart.jsx</code> currently resolves a relative image using:</p>
+<pre><code class="language-text">http://localhost + relative URL
+</code></pre>
+<p>That means a relative image URL returned to the cart can resolve incorrectly in production.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">Painting Details:
+relative image
+    ↓
+production API origin
+    ↓
+correct production URL
+
+
+Cart:
+relative image
+    ↓
+http://localhost...
+    ↓
+potentially broken in production
+</code></pre>
+<p>This is worth fixing because it is environment-specific behavior.</p>
+<hr />
+<h1 id="84--Important-Current-Code-Observation---Duplicate-Painting-API-Fetch">84. Important Current Code Observation — Duplicate Painting API Fetch</h1>
+<p>A painting detail route can involve two separate frontend consumers:</p>
+<pre><code class="language-text">MetadataManager
+        ↓
+paintings/get.php
+
+PaintingDetails.jsx
+        ↓
+paintings/get.php
+</code></pre>
+<p>So a single painting detail navigation can result in:</p>
+<pre><code class="language-text">request 1 → metadata
+request 2 → page content
+</code></pre>
+<p>The data is not currently centrally shared between these two consumers.</p>
+<hr />
+<h1 id="85--Important-Current-Code-Observation---Maintenance-Polling">85. Important Current Code Observation — Maintenance Polling</h1>
+<p>The customer application checks maintenance status approximately every two seconds.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">Client 1 ─┐
+Client 2 ─┤
+Client 3 ─┤
+Client 4 ─┤
+           ├──&gt; maintenance.php
+Client N ─┘
+</code></pre>
+<p>This provides rapid state propagation but creates continuous request traffic.</p>
+<p>The rate limiter currently does not exempt the maintenance endpoint, while the painting collection endpoint is explicitly exempt.</p>
+<hr />
+<h1 id="86--Important-Current-Code-Observation---Order-Quantity">86. Important Current Code Observation — Order Quantity</h1>
+<p>The backend order calculation supports:</p>
+<pre><code class="language-text">quantity
+</code></pre>
+<p>and calculates:</p>
+<pre><code class="language-text">unit price × quantity
+</code></pre>
+<p>But the current customer cart interaction sends:</p>
+<pre><code class="language-text">quantity: 1
+</code></pre>
+<p>and the visible cart UI is focused on choosing a size rather than changing quantity.</p>
+<p>Therefore, the underlying data model supports quantity, while the current customer experience effectively treats a cart line as one artwork.</p>
+<hr />
+<h1 id="87--Important-Current-Code-Observation----Cancellation">87. Important Current Code Observation — <code>REJECTED</code> Cancellation</h1>
+<p>The system supports an admin status:</p>
+<pre><code class="language-text">REJECTED
+</code></pre>
+<p>and records it through the normal status-history mechanism.</p>
+<p>However:</p>
+<pre><code class="language-text">orders/cancel.php
+</code></pre>
+<p>does not classify <code>REJECTED</code> as a cancellation-blocking status.</p>
+<p>Therefore:</p>
+<pre><code class="language-text">ADMIN:
+PENDING_ACCEPTANCE → REJECTED
+
+then
+
+CUSTOMER:
+REJECTED → CANCELLED
+</code></pre>
+<p>is currently permitted by the cancellation endpoint.</p>
+<p>This is a business-rule detail that should be explicitly decided rather than left implicit.</p>
+<hr />
+<h1 id="88--Request---Response-Convention">88. Request / Response Convention</h1>
+<p>The API generally uses JSON responses shaped around:</p>
+<pre><code class="language-json">{
+  &quot;success&quot;: true,
+  ...
+}
+</code></pre>
+<p>or:</p>
+<pre><code class="language-json">{
+  &quot;success&quot;: false,
+  &quot;message&quot;: &quot;...&quot;
+}
+</code></pre>
+<p>The shared auth common layer defines:</p>
+<pre><code class="language-php">jsonResponse(...)
+</code></pre>
+<p>and the admin common layer defines:</p>
+<pre><code class="language-php">adminJsonResponse(...)
+</code></pre>
+<p>HTTP status codes are also used meaningfully:</p>
+<pre><code class="language-text">201 Created
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+409 Conflict
+422 Unprocessable Entity
+429 Too Many Requests
+500 Server Error
+</code></pre>
+<p>The exact endpoint determines which code is used.</p>
+<hr />
+<h1 id="89--Error-Handling">89. Error Handling</h1>
+<p>Typical PHP endpoint behavior is:</p>
+<pre><code class="language-text">validate request
+        ↓
+if invalid
+        ↓
+JSON error + appropriate HTTP status
+
+try
+    DB work
+catch Throwable
+    rollback
+    log internal error
+    return generic JSON error
+</code></pre>
+<p>For example, order creation explicitly rolls back an active transaction and logs the internal error before sending a generic 500 response.</p>
+<p>This prevents internal SQL/error messages from being directly returned as the normal customer-facing response.</p>
+<hr />
+<h1 id="90--Transaction-Model">90. Transaction Model</h1>
+<p>Transactions are especially important in order operations.</p>
+<p>Order creation:</p>
+<pre><code class="language-text">BEGIN
+ ↓
+read/lock cart
+ ↓
+validate
+ ↓
+insert order
+ ↓
+insert items
+ ↓
+insert history
+ ↓
+clear cart
+ ↓
+COMMIT
+</code></pre>
+<p>Admin order status:</p>
+<pre><code class="language-text">BEGIN
+ ↓
+lock order
+ ↓
+update order
+ ↓
+insert history
+ ↓
+COMMIT
+</code></pre>
+<p>Customer cancellation:</p>
+<pre><code class="language-text">BEGIN
+ ↓
+lock order
+ ↓
+update order
+ ↓
+insert history
+ ↓
+COMMIT
+</code></pre>
+<p>This makes order state changes substantially safer than performing a sequence of independent SQL queries without a transaction.</p>
+<hr />
+<h1 id="91--Request-Flow-by-Feature">91. Request Flow by Feature</h1>
+<h2 id="Browse-paintings">Browse paintings</h2>
+<pre><code class="language-text">Customer
+ → /paintings
+ → Paintings.jsx
+ → GET paintings/list.php
+ → MySQL
+ → JSON
+ → render cards
+</code></pre>
+<h2 id="View-painting">View painting</h2>
+<pre><code class="language-text">Customer
+ → /paintings/:id
+ → PaintingDetails.jsx
+ → GET paintings/get.php
+ → MySQL
+ → JSON
+ → gallery/details
+</code></pre>
+<h2 id="Login">Login</h2>
+<pre><code class="language-text">Customer
+ → Login.jsx
+ → POST auth/user-login.php
+ → authenticate
+ → create customer session
+ → JSON
+ → /account
+</code></pre>
+<h2 id="Register">Register</h2>
+<pre><code class="language-text">Customer
+ → Login.jsx registration mode
+ → POST auth/user-register.php
+ → create user
+ → session/auth result
+ → /account
+</code></pre>
+<h2 id="Password-reset">Password reset</h2>
+<pre><code class="language-text">Customer
+ → request reset
+ → POST auth/request-password-reset.php
+ → mail/reset token workflow
+ → email
+ → reset-password route
+</code></pre>
+<h2 id="Add-item">Add item</h2>
+<pre><code class="language-text">PaintingDetails
+ → POST cart/add-item.php
+ → session check
+ → DB
+ → success
+</code></pre>
+<h2 id="Change-size">Change size</h2>
+<pre><code class="language-text">Cart
+ → POST cart/update-item.php
+ → DB
+ → reload cart
+</code></pre>
+<h2 id="Remove-item">Remove item</h2>
+<pre><code class="language-text">Cart
+ → POST cart/remove-item.php
+ → DB
+ → reload cart
+</code></pre>
+<h2 id="Create-order">Create order</h2>
+<pre><code class="language-text">Cart
+ → POST orders/create.php
+ → transaction
+ → order + items + history
+ → clear cart
+ → notification
+ → /track-orders
+</code></pre>
+<h2 id="Customer-cancel">Customer cancel</h2>
+<pre><code class="language-text">OrderDetails
+ → POST orders/cancel.php
+ → verify ownership
+ → status validation
+ → CANCELLED
+ → history
+ → notification
+</code></pre>
+<h2 id="Admin-login">Admin login</h2>
+<pre><code class="language-text">AdminLogin
+ → admin/authentication endpoints
+ → admin session
+ → OTP / 2FA state
+ → admin session verification
+</code></pre>
+<p>The admin backend exposes OTP and password-reset operations under both <code>api/admin</code> and authentication-related endpoints.</p>
+<h2 id="Admin-painting-creation">Admin painting creation</h2>
+<pre><code class="language-text">AddPainting
+ → painting creation endpoint
+ → DB
+ → image uploads
+ → sizes / metadata
+ → refresh
+</code></pre>
+<h2 id="Admin-order-update">Admin order update</h2>
+<pre><code class="language-text">Orders
+ → OrderDetails
+ → OrderStatusManager
+ → POST orders/update-status.php
+ → transaction
+ → status history
+ → mail
+ → UI refresh
+</code></pre>
+<hr />
+<h1 id="92--Mental-Model-of-the-Whole-System">92. Mental Model of the Whole System</h1>
+<p>The easiest way to understand this project is to divide it into five layers:</p>
+<pre><code class="language-text">LAYER 1
+React pages
+    ↓
+LAYER 2
+fetch() API calls
+    ↓
+LAYER 3
+PHP endpoint
+    ↓
+LAYER 4
+shared auth / rate limiting / PDO
+    ↓
+LAYER 5
+MySQL + external side effects
+</code></pre>
+<p>For an order:</p>
+<pre><code class="language-text">Cart.jsx
+   ↓
+orders/create.php
+   ↓
+requireCustomer()
+   ↓
+rate-limit.php
+   ↓
+database.php
+   ↓
+PDO/MySQL
+   ↓
+orders + order_items + history
+   ↓
+mail/
+</code></pre>
+<p>For an admin status change:</p>
+<pre><code class="language-text">OrderStatusManager.jsx
+   ↓
+orders/update-status.php
+   ↓
+requireAdmin()
+   ↓
+rate-limit.php
+   ↓
+database.php
+   ↓
+MySQL transaction
+   ↓
+order history
+   ↓
+mail/
+</code></pre>
+<hr />
+<h1 id="93--Most-Important-Files-to-Understand-First">93. Most Important Files to Understand First</h1>
+<p>If a developer needs to understand this project quickly, the most useful reading order is:</p>
+<pre><code class="language-text">1. customer/src/App.jsx
+
+2. customer/src/config/api.js
+
+3. customer/src/pages/PaintingDetails.jsx
+
+4. customer/src/pages/Cart.jsx
+
+5. admin/src/App.jsx
+
+6. api/auth/_common.php
+
+7. api/admin/_common.php
+
+8. api/config/database.php
+
+9. api/orders/create.php
+
+10. api/orders/update-status.php
+
+11. api/orders/cancel.php
+
+12. api/security/rate-limit.php
+
+13. api/mail/index.php
+14. api/mail/Mailer.php
+15. api/mail/Templates.php
+
+16. api/migrations/*
+</code></pre>
+<p>Those files reveal most of the application's architecture.</p>
+<hr />
+<h1 id="94--Overall-System-Flow">94. Overall System Flow</h1>
+<p>The complete customer journey is:</p>
+<pre><code class="language-text">VISITOR
+  ↓
+HOME
+  ↓
+PAINTINGS COLLECTION
+  ↓
+PAINTING DETAIL
+  ↓
+LOGIN / REGISTER
+  ↓
+ADD TO CART
+  ↓
+CART
+  ↓
+CHOOSE SIZE
+  ↓
+ENTER DELIVERY DETAILS
+  ↓
+SUBMIT ORDER REQUEST
+  ↓
+PENDING_ACCEPTANCE
+  ↓
+ADMIN REVIEWS
+  ↓
+       ┌───────────────┐
+       │               │
+       ▼               ▼
+   ACCEPTED         REJECTED
+       │               │
+       ▼               │
+ PAYMENT_DUE           │
+       │               │
+       ▼               │
+      PAID             │
+       │               │
+       ▼               │
+ PROCESSING            │
+       │               │
+       ▼               │
+ DISPATCHED            │
+       │               │
+       ▼               │
+  DELIVERED            │
+                       │
+                       ▼
+                  order closed
+</code></pre>
+<p>The current backend, however, does not enforce every conceptual transition as a strict state machine. The status endpoint accepts the defined status values, with selected protections around cancelled orders.</p>
+<hr />
+<h1 id="95--Architectural-Strengths">95. Architectural Strengths</h1>
+<p>The current architecture has several useful properties:</p>
+<pre><code class="language-text">Separate customer/admin applications
+        ↓
+Separate sessions
+        ↓
+Backend authorization
+        ↓
+Transactional order operations
+        ↓
+Persistent order history
+        ↓
+Price snapshots in order items
+        ↓
+Dedicated email subsystem
+        ↓
+Application-level rate limiting
+        ↓
+Production secrets kept outside tracked config
+</code></pre>
+<p>These make the application easier to extend while keeping important business rules on the server.</p>
+<hr />
+<h1 id="96--Architectural-Areas-to-Watch">96. Architectural Areas to Watch</h1>
+<p>The main areas worth reviewing as development continues are:</p>
+<pre><code class="language-text">1. Formalizing order state transitions
+2. Ensuring rejected orders obey the desired cancellation rule
+3. Removing production localhost URL fallbacks from customer image handling
+4. Completing currently-placeholder admin sections
+5. Avoiding duplicate API requests where metadata and page data overlap
+6. Evaluating the frequency of maintenance polling
+7. Ensuring all sensitive production configuration stays outside Git
+8. Keeping frontend and backend validation rules synchronized
+</code></pre>
+<hr />
+<h1 id="97--One-Sentence-Description-of-the-System">97. One-Sentence Description of the System</h1>
+<p>The project is best described as:</p>
+<blockquote>
+<p><strong>A React/Vite customer marketplace and separate React/Vite administration console communicating with a session-based PHP/MySQL API that manages paintings, size options, carts, orders, authentication, metadata, maintenance mode, status history and transactional email notifications.</strong></p>
+</blockquote>
+<hr />
+<h1 id="98--Final-Architecture-Diagram">98. Final Architecture Diagram</h1>
+<pre><code class="language-text">                                  ┌─────────────────────┐
+                                  │   CUSTOMER BROWSER  │
+                                  │                     │
+                                  │ React + Vite        │
+                                  │ React Router        │
+                                  │ fetch()             │
+                                  └──────────┬──────────┘
+                                             │
+                                             │
+                                  https://arts.araha.co.in
+                                             │
+                                             │ API calls
+                                             ▼
+                          ┌─────────────────────────────────┐
+                          │       PHP API SERVER             │
+                          │   https://api.arts.araha.co.in  │
+                          │                                 │
+                          │ ┌─────────────────────────────┐ │
+                          │ │ CORS / Sessions             │ │
+                          │ └──────────────┬──────────────┘ │
+                          │                │                │
+                          │ ┌──────────────▼──────────────┐ │
+                          │ │ Rate Limiting               │ │
+                          │ └──────────────┬──────────────┘ │
+                          │                │                │
+                          │ ┌──────────────▼──────────────┐ │
+                          │ │ Domain Endpoints             │ │
+                          │ │                              │ │
+                          │ │ auth/                        │ │
+                          │ │ admin/                       │ │
+                          │ │ paintings/                   │ │
+                          │ │ cart/                        │ │
+                          │ │ orders/                      │ │
+                          │ │ categories/                  │ │
+                          │ │ sizes/                       │ │
+                          │ │ frames/                      │ │
+                          │ │ metadata/                    │ │
+                          │ │ faqs/                        │ │
+                          │ │ system/                      │ │
+                          │ └──────────────┬──────────────┘ │
+                          │                │                │
+                          │ ┌──────────────▼──────────────┐ │
+                          │ │ PDO / MySQL                  │ │
+                          │ └──────────────┬──────────────┘ │
+                          └────────────────┼────────────────┘
+                                           │
+                    ┌──────────────────────┼─────────────────────┐
+                    │                      │                     │
+                    ▼                      ▼                     ▼
+             ┌────────────┐        ┌───────────────┐     ┌──────────────┐
+             │   USERS    │        │    ORDERS     │     │  PAINTINGS   │
+             │ carts      │        │ items         │     │ images       │
+             │ sessions   │        │ history       │     │ sizes        │
+             └────────────┘        └───────────────┘     └──────────────┘
+                                           │
+                                           ▼
+                                  ┌──────────────────┐
+                                  │  Mail Subsystem  │
+                                  │  PHPMailer       │
+                                  │  Templates       │
+                                  └──────────────────┘
+
+
+                                  ┌─────────────────────┐
+                                  │    ADMIN BROWSER    │
+                                  │                     │
+                                  │ React + Vite        │
+                                  │ Admin routing       │
+                                  │ ProtectedRoute      │
+                                  └──────────┬──────────┘
+                                             │
+                                  artsadmin.araha.co.in
+                                             │
+                                             ▼
+                                  SAME PHP API SERVER
+                                             │
+                                             ├── admin session
+                                             ├── 2FA verification
+                                             ├── painting management
+                                             ├── order management
+                                             ├── metadata
+                                             ├── FAQs
+                                             └── maintenance mode
+</code></pre>
+<hr />
+<h1 id="99--Bottom-Line">99. Bottom Line</h1>
+<p>The repository is built around a straightforward three-application architecture:</p>
+<pre><code class="language-text">CUSTOMER REACT APP
+        +
+ADMIN REACT APP
+        +
+PHP / MYSQL API
+</code></pre>
+<p>The API is the central authority.</p>
+<p>The most important domain is the order lifecycle:</p>
+<pre><code class="language-text">Cart
+  → Order Request
+  → Pending Acceptance
+  → Admin/Artist Decision
+  → Payment Due
+  → Paid
+  → Processing
+  → Dispatched
+  → Delivered
+</code></pre>
+<p>with:</p>
+<pre><code class="language-text">order_items
+order_status_history
+transactional updates
+email notifications
+</code></pre>
+<p>forming the backbone of the commerce logic.</p>
+<p>The authentication model is session-based, with separate customer and admin sessions; admin operations additionally require verified 2FA state.</p>
+<p>The repository also already contains the foundations for:</p>
+<pre><code class="language-text">multi-size paintings
+image galleries
+SEO metadata
+Google login
+password reset
+maintenance mode
+email notification groups
+rate limiting
+order history
+administrator management
+</code></pre>
+<p>The principal implementation issue visible from this source review is that some behavior still needs to be formalized at the business-rule level, especially the exact order state transition rules and rejected-order cancellation behavior.</p>
+
+</body>
+</html>
