@@ -55,15 +55,21 @@
     window.fetch = async function (...args) {
       const response = await originalFetch.apply(this, args)
 
-      if (response.status === 429) {
+      if (response.status === 429 || response.status === 422) {
         let payload = null
         try {
           payload = await response.clone().json()
         } catch (_) {}
 
         showRateLimitToast(
-          payload?.message || 'Too many requests. Please wait a moment and try again.',
-          payload?.retry_after || response.headers.get('Retry-After') || 0
+          payload?.message || (
+            response.status === 422
+              ? 'Please use a non-disposable email address.'
+              : 'Too many requests. Please wait a moment and try again.'
+          ),
+          response.status === 429
+            ? payload?.retry_after || response.headers.get('Retry-After') || 0
+            : 0
         )
       }
 
