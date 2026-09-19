@@ -12,7 +12,7 @@ try {
     // Administrators must always see live database data. Customers use the
     // short-lived JSON cache to avoid opening a database connection on hits.
     if (!$isAdmin) {
-        $cached = readFreshPaintingsCache();
+        $cached = readPaintingsCache()();
         if ($cached !== null) {
             adminJsonResponse($cached);
         }
