@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../auth/require-admin.php';
+require_once __DIR__ . '/../cache/paintings-cache.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -45,6 +46,11 @@ try {
         $sortOrder++;
     }
     $pdo->commit();
+
+    // The cache was generated when the painting was created. Regenerate here
+    // as well so the catalogue immediately includes newly uploaded images.
+    writePaintingsCache($pdo);
+
     adminJsonResponse(['success'=>true,'message'=>'Images uploaded successfully','images'=>$results]);
 } catch(Throwable $e){
     if($pdo->inTransaction()) $pdo->rollBack();
