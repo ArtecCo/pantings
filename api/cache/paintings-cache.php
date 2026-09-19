@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const PAINTINGS_CACHE_TTL = 600;
+// const PAINTINGS_CACHE_TTL = 600;
 
 function paintingsCachePath(): string
 {
@@ -127,35 +127,76 @@ function writePaintingsCache(PDO $pdo): array
     return $payload;
 }
 
-function readFreshPaintingsCache(): ?array
+// function readFreshPaintingsCache(): ?array
+// {
+//     $cachePath = paintingsCachePath();
+//     if (!is_file($cachePath)) {
+//         return null;
+//     }
+
+//     clearstatcache(true, $cachePath);
+//     $modifiedAt = filemtime($cachePath);
+//     if ($modifiedAt === false || (time() - $modifiedAt) > PAINTINGS_CACHE_TTL) {
+//         return null;
+//     }
+
+//     $contents = @file_get_contents($cachePath);
+//     if ($contents === false || $contents === '') {
+//         return null;
+//     }
+
+//     $payload = json_decode($contents, true);
+//     if (!is_array($payload) || ($payload['success'] ?? false) !== true || !isset($payload['paintings']) || !is_array($payload['paintings'])) {
+//         return null;
+//     }
+
+//     return $payload;
+// }
+
+
+function readPaintingsCache(): ?array
 {
     $cachePath = paintingsCachePath();
+
     if (!is_file($cachePath)) {
         return null;
     }
 
-    clearstatcache(true, $cachePath);
-    $modifiedAt = filemtime($cachePath);
-    if ($modifiedAt === false || (time() - $modifiedAt) > PAINTINGS_CACHE_TTL) {
-        return null;
-    }
-
     $contents = @file_get_contents($cachePath);
+
     if ($contents === false || $contents === '') {
         return null;
     }
 
     $payload = json_decode($contents, true);
-    if (!is_array($payload) || ($payload['success'] ?? false) !== true || !isset($payload['paintings']) || !is_array($payload['paintings'])) {
+
+    if (
+        !is_array($payload) ||
+        ($payload['success'] ?? false) !== true ||
+        !isset($payload['paintings']) ||
+        !is_array($payload['paintings'])
+    ) {
         return null;
     }
 
     return $payload;
 }
 
+// function getPaintingsWithCache(PDO $pdo): array
+// {
+//     $cached = readFreshPaintingsCache();
+//     if ($cached !== null) {
+//         return $cached;
+//     }
+
+//     return writePaintingsCache($pdo);
+// }
+
+
 function getPaintingsWithCache(PDO $pdo): array
 {
-    $cached = readFreshPaintingsCache();
+    $cached = readPaintingsCache();
+
     if ($cached !== null) {
         return $cached;
     }
