@@ -75,7 +75,7 @@ export default function Settings() {
       </div>
       <div className="gold-rule" />
 
-      <section className="heritage-card settings-mail-group">
+      <section className="heritage-card settings-mail-group" style={{ width: 'min(100%, 630px)', marginBottom: '18px' }}>
         <div className="metadata-form-header">
           <div>
             <span className="eyebrow">CATALOGUE CACHE</span>
