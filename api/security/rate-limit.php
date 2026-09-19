@@ -109,7 +109,7 @@ try {
         echo json_encode([
             'success' => false,
             'rate_limited' => true,
-            'message' => 'Too many requests. Please wait a moment and try again.',
+            'message' => 'Too many requests. ',
             'retry_after' => $retryAfter,
         ], JSON_UNESCAPED_SLASHES);
         exit;

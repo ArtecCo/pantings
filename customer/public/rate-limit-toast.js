@@ -65,7 +65,7 @@
           payload?.message || (
             response.status === 422
               ? 'Please use a non-disposable email address.'
-              : 'Too many requests. Please wait a moment and try again.'
+              : 'Too many requests.'
           ),
           response.status === 429
             ? payload?.retry_after || response.headers.get('Retry-After') || 0
