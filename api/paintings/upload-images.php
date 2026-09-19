@@ -47,9 +47,14 @@ try {
     }
     $pdo->commit();
 
-    // The cache was generated when the painting was created. Regenerate here
-    // as well so the catalogue immediately includes newly uploaded images.
-    writePaintingsCache($pdo);
+    // Regenerate after images are committed so the cache contains the complete
+    // catalogue entry. A cache failure must not turn a successful upload into
+    // an error response.
+    try {
+        writePaintingsCache($pdo);
+    } catch (Throwable $cacheError) {
+        error_log('Painting cache regeneration after image upload failed: ' . $cacheError->getMessage());
+    }
 
     adminJsonResponse(['success'=>true,'message'=>'Images uploaded successfully','images'=>$results]);
 } catch(Throwable $e){
