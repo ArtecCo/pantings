@@ -57,10 +57,12 @@ try {
         foreach ($cleanSizes as $i => $option) $sizeStmt->execute([$paintingId,$option['name'],$option['width'],$option['height'],$option['unit'],$option['price'],$option['is_standard'] ? 1 : 0,$i]);
     }
 
-    // Regenerate immediately so a newly created active painting is available
-    // without waiting for the 10-minute cache TTL. Image uploads regenerate it
-    // again after the images have been saved.
-    writePaintingsCache($pdo);
+    // Cache regeneration must never make a successful database write fail.
+    try {
+        writePaintingsCache($pdo);
+    } catch (Throwable $cacheError) {
+        error_log('Painting cache regeneration after create failed: ' . $cacheError->getMessage());
+    }
 
     $adminStmt = $pdo->prepare('SELECT email FROM admin_users WHERE id = ? LIMIT 1'); $adminStmt->execute([$adminId]); $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
     $auditStmt = $pdo->prepare('INSERT INTO audit_logs (admin_user_id,admin_email,action,module,record_type,record_id,ip_address,user_agent) VALUES (?,?,?,?,?,?,?,?)'); $auditStmt->execute([$adminId, $admin['email'] ?? null, 'CREATE', 'catalogue', 'painting', $paintingId, $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null]);
