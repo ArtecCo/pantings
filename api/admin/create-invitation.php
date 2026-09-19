@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../email-validation/email-validator.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -17,6 +18,7 @@ $expiresHours = isset($data['expires_hours']) ? (int)$data['expires_hours'] : 48
 if ($name === '') adminJsonResponse(['success' => false, 'message' => 'Administrator name is required'], 422);
 if (mb_strlen($name) > 160) adminJsonResponse(['success' => false, 'message' => 'Administrator name is too long'], 422);
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) adminJsonResponse(['success' => false, 'message' => 'Valid email address is required'], 422);
+if (!isAllowedEmailDomain($email)) adminJsonResponse(['success' => false, 'message' => 'Please use a non-disposable email address'], 422);
 if ($expiresHours < 1 || $expiresHours > 168) adminJsonResponse(['success' => false, 'message' => 'Invitation expiry must be between 1 and 168 hours'], 422);
 
 try {
