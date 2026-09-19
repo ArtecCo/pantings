@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../auth/require-admin.php';
+require_once __DIR__ . '/../cache/paintings-cache.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') adminJsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
 
@@ -55,6 +56,11 @@ try {
         $sizeStmt = $pdo->prepare('INSERT INTO painting_size_options (painting_id,name,width,height,unit,price,is_standard,sort_order) VALUES (?,?,?,?,?,?,?,?)');
         foreach ($cleanSizes as $i => $option) $sizeStmt->execute([$paintingId,$option['name'],$option['width'],$option['height'],$option['unit'],$option['price'],$option['is_standard'] ? 1 : 0,$i]);
     }
+
+    // Regenerate immediately so a newly created active painting is available
+    // without waiting for the 10-minute cache TTL. Image uploads regenerate it
+    // again after the images have been saved.
+    writePaintingsCache($pdo);
 
     $adminStmt = $pdo->prepare('SELECT email FROM admin_users WHERE id = ? LIMIT 1'); $adminStmt->execute([$adminId]); $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
     $auditStmt = $pdo->prepare('INSERT INTO audit_logs (admin_user_id,admin_email,action,module,record_type,record_id,ip_address,user_agent) VALUES (?,?,?,?,?,?,?,?)'); $auditStmt->execute([$adminId, $admin['email'] ?? null, 'CREATE', 'catalogue', 'painting', $paintingId, $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null]);
