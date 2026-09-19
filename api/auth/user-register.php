@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../email-validation/email-validator.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -14,6 +15,10 @@ $lastName = trim((string)($data['last_name'] ?? ''));
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     jsonResponse(['success' => false, 'message' => 'Enter a valid email address.'], 422);
+}
+
+if (!isAllowedEmailDomain($email)) {
+    jsonResponse(['success' => false, 'message' => 'Please use a non-disposable email address.'], 422);
 }
 
 if (strlen($password) < 8) {
