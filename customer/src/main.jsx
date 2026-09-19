@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './toast.css'
 import './responsive.css'
 import './fixes.css'
 import './collection-redesign.css'
