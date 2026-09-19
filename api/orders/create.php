@@ -2,10 +2,12 @@
 require_once __DIR__ . '/../auth/_common.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../mail/index.php';
+require_once __DIR__ . '/../email-validation/email-validator.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['success'=>false,'message'=>'Method not allowed'],405);
 $userId=requireCustomer();$data=requestJson();
 $shippingName=trim((string)($data['shipping_name']??''));$shippingPhone=trim((string)($data['shipping_phone']??''));$customerEmail=trim((string)($data['shipping_email']??''));$shippingAddress=trim((string)($data['shipping_address']??''));$shippingCity=trim((string)($data['shipping_city']??''));$shippingState=trim((string)($data['shipping_state']??''));$shippingPostalCode=trim((string)($data['shipping_postal_code']??''));$shippingCountry=trim((string)($data['shipping_country']??''));
 if($shippingName===''||$shippingPhone===''||$customerEmail===''||!filter_var($customerEmail,FILTER_VALIDATE_EMAIL)||$shippingAddress===''||$shippingCity===''||$shippingState===''||$shippingPostalCode===''||$shippingCountry==='')jsonResponse(['success'=>false,'message'=>'Complete contact and delivery details are required'],422);
+if(!isAllowedEmailDomain($customerEmail))jsonResponse(['success'=>false,'message'=>'Please use a non-disposable email address'],422);
 $status='PENDING_ACCEPTANCE';$deliveryAmount=0.00;$customizationAmount=0.00;$discountAmount=0.00;
 try{
  $pdo->beginTransaction();$stmt=$pdo->prepare('SELECT ci.id AS cart_item_id,ci.painting_id,ci.size_option_id,ci.quantity,p.name,p.price,p.discount_price,p.is_active FROM cart_items ci INNER JOIN carts cart ON cart.id=ci.cart_id INNER JOIN paintings p ON p.id=ci.painting_id WHERE cart.user_id=? ORDER BY ci.id ASC FOR UPDATE');$stmt->execute([$userId]);$cartItems=$stmt->fetchAll();if(!$cartItems){$pdo->rollBack();jsonResponse(['success'=>false,'message'=>'Your cart is empty'],409);}
