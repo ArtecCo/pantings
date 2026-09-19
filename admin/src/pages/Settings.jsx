@@ -83,6 +83,10 @@ export default function Settings() {
             <p>The customer catalogue uses a server-side JSON cache for up to 10 minutes. Regenerate it immediately after external database changes or whenever you want to force a fresh catalogue.</p>
           </div>
         </div>
+        <div className="settings-mail-from">
+          <span>CACHE LOCATION</span>
+          <a href="https://api.arts.araha.co.in/cache/paintings.json" target="_blank" rel="noreferrer">api.arts.araha.co.in/cache/paintings.json</a>
+        </div>
         <div className="metadata-form-actions">
           <button type="button" className="gold-outline-button" onClick={regeneratePaintingCache} disabled={regeneratingCache}>
             {regeneratingCache ? 'Regenerating Cache...' : 'Regenerate Painting Cache'}
