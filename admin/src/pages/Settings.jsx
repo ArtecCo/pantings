@@ -7,6 +7,7 @@ export default function Settings() {
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(null)
+  const [regeneratingCache, setRegeneratingCache] = useState(false)
 
   const load = async () => {
     try {
@@ -43,6 +44,24 @@ export default function Settings() {
     }
   }
 
+  const regeneratePaintingCache = async () => {
+    setRegeneratingCache(true)
+    try {
+      const response = await fetch(apiUrl('admin/paintings-cache-regenerate.php'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to regenerate painting cache')
+      toast.success(`Painting cache regenerated. ${data.painting_count ?? 0} paintings cached.`)
+    } catch (error) {
+      toast.error(error.message || 'Unable to regenerate painting cache')
+    } finally {
+      setRegeneratingCache(false)
+    }
+  }
+
   if (loading) return <div className="metadata-page"><div className="page-header"><div><span className="eyebrow">SYSTEM CONFIGURATION</span><h1>Settings</h1></div></div><div className="gold-rule"/><div className="heritage-card metadata-list"><div className="metadata-loading">Loading settings...</div></div></div>
 
   return (
@@ -51,10 +70,26 @@ export default function Settings() {
         <div>
           <span className="eyebrow">SYSTEM CONFIGURATION</span>
           <h1>Settings</h1>
-          <p>Manage system notification recipients without leaving the admin panel.</p>
+          <p>Manage system notification recipients and catalogue caching.</p>
         </div>
       </div>
       <div className="gold-rule" />
+
+      <section className="heritage-card settings-mail-group">
+        <div className="metadata-form-header">
+          <div>
+            <span className="eyebrow">CATALOGUE CACHE</span>
+            <h2>Painting JSON Cache</h2>
+            <p>The customer catalogue uses a server-side JSON cache for up to 10 minutes. Regenerate it immediately after external database changes or whenever you want to force a fresh catalogue.</p>
+          </div>
+        </div>
+        <div className="metadata-form-actions">
+          <button type="button" className="gold-outline-button" onClick={regeneratePaintingCache} disabled={regeneratingCache}>
+            {regeneratingCache ? 'Regenerating Cache...' : 'Regenerate Painting Cache'}
+          </button>
+        </div>
+      </section>
+
       <div className="settings-mail-groups">
         {groups.map(group => (
           <MailGroupCard key={group.id} group={group} saving={saving === group.id} onSave={updateGroup} />
