@@ -1,19 +1,316 @@
-import { useEffect, useRef, useState } from 'react';
-import { apiUrl } from '../config/api';
-import { useToast } from '../components/ToastProvider';
-import './Login.css';
+import { useEffect, useRef, useState } from "react";
+import { apiUrl } from "../config/api";
+import { useToast } from "../components/ToastProvider";
+import "./Login.css";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '329379769166-igtg18ou4c67e0va4qe8hrs4evfs0m46.apps.googleusercontent.com';
-const isSecurityToastStatus = status => status === 429 || status === 422;
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "329379769166-igtg18ou4c67e0va4qe8hrs4evfs0m46.apps.googleusercontent.com";
+const isSecurityToastStatus = (status) => status === 429 || status === 422;
 
 export default function Login() {
-    const { toast } = useToast(); const toastRef = useRef(toast); const googleButtonRef = useRef(null);
-    const [mode,setMode]=useState('login'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[firstName,setFirstName]=useState(''),[lastName,setLastName]=useState(''),[loading,setLoading]=useState(false);
-    toastRef.current=toast;
-    useEffect(()=>{if(mode!=='login'||!GOOGLE_CLIENT_ID||!googleButtonRef.current)return undefined;let cancelled=false;const handle=async({credential})=>{if(cancelled||!credential)return;setLoading(true);try{const r=await fetch(apiUrl('auth/user-login.php'),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},credentials:'include',body:JSON.stringify({type:'google',token:credential})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success){if(isSecurityToastStatus(r.status))return;throw new Error(d.message||'Google sign-in failed.')}toastRef.current.success('Signed in with Google.');window.location.replace('/account')}catch(e){if(!cancelled)toastRef.current.error(e.message||'Google sign-in failed.')}finally{if(!cancelled)setLoading(false)};};const render=()=>{if(cancelled||!window.google?.accounts?.id||!googleButtonRef.current)return;googleButtonRef.current.innerHTML='';window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handle});window.google.accounts.id.renderButton(googleButtonRef.current,{type:'standard',theme:'outline',size:'large',width:372,text:'continue_with',shape:'rectangular'})};if(window.google?.accounts?.id)render();else{const existing=document.querySelector('script[data-google-gsi]');if(existing)existing.addEventListener('load',render,{once:true});else{const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.defer=true;s.dataset.googleGsi='true';s.addEventListener('load',render,{once:true});document.head.appendChild(s)}}return()=>{cancelled=true;if(googleButtonRef.current)googleButtonRef.current.innerHTML=''}},[mode]);
-    const submit=async e=>{e.preventDefault();setLoading(true);try{const endpoint=mode==='login'?'auth/user-login.php':'auth/user-register.php';const body=mode==='login'?{type:'email',email:email.trim().toLowerCase(),password}:{email:email.trim().toLowerCase(),password,first_name:firstName.trim(),last_name:lastName.trim()};const r=await fetch(apiUrl(endpoint),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},credentials:'include',body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success){if(isSecurityToastStatus(r.status))return;throw new Error(d.message||'Unable to continue.')}toastRef.current.success(mode==='login'?'Signed in successfully.':'Account created successfully.');window.location.replace('/account')}catch(e){toastRef.current.error(e.message||'Unable to continue.')}finally{setLoading(false)}};
-    const forgot=async e=>{e.preventDefault();setLoading(true);try{const r=await fetch(apiUrl('auth/request-password-reset.php'),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:email.trim().toLowerCase()})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success){if(isSecurityToastStatus(r.status))return;throw new Error(d.message||'Unable to send reset link.')}toastRef.current.success(d.message);setMode('login')}catch(e){toastRef.current.error(e.message||'Unable to send reset link.')}finally{setLoading(false)}};
-    const switchMode=m=>{setMode(m);setPassword('')};
-    const copy=mode==='login'?['WELCOME BACK','Welcome back','Sign in to track your orders and manage your account.']:mode==='register'?['JOIN ARAMANE ARTS','Create your account','Create an account to save your details and track your orders.']:['ACCOUNT SECURITY','Forgot your password?','Enter your email address and we will send you a secure reset link.'];
-    return <main className="ara-login-page"><section className="ara-login-shell"><div className="ara-login-brand"><span className="ara-brand-small">THE HOUSE OF</span><span className="ara-brand-name">ARAmane Arts</span></div><div className="ara-login-divider"><span/><b>✦</b><span/></div><div className="ara-login-heading"><p className="ara-login-eyebrow">{copy[0]}</p><h1>{copy[1]}</h1><p>{copy[2]}</p></div>{mode==='forgot'?<form className="ara-login-form" onSubmit={forgot}><label><span>Email address</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required/></label><button className="ara-login-submit" disabled={loading}>{loading?'Sending…':'Send reset link'}</button></form>:<form className="ara-login-form" onSubmit={submit}>{mode==='register'&&<div className="ara-login-name-grid"><label><span>First name</span><input value={firstName} onChange={e=>setFirstName(e.target.value)} placeholder="First name" autoComplete="given-name" required/></label><label><span>Last name</span><input value={lastName} onChange={e=>setLastName(e.target.value)} placeholder="Last name" autoComplete="family-name"/></label></div>}<label><span>Email address</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required/></label><label><span>Password</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={mode==='login'?'current-password':'new-password'} minLength={8} required/></label><button className="ara-login-submit" disabled={loading}>{loading?(mode==='login'?'Signing in…':'Creating account…'):(mode==='login'?'Sign in':'Create account')}</button></form>}{mode==='login'&&<><div className="ara-login-switch"><button type="button" onClick={()=>switchMode('forgot')}>Forgot password?</button></div><div className="ara-login-divider"><span/><b>OR</b><span/></div><div className="ara-google-button" ref={googleButtonRef}/></>}{mode==='login'?<div className="ara-login-switch">Don't have an account?<button type="button" onClick={()=>switchMode('register')}> Create one</button></div>:<div className="ara-login-switch"><button type="button" onClick={()=>switchMode('login')}>← Back to sign in</button></div>}<div className="ara-login-footer"><span>ARAmane Arts</span><i>•</i><span>Heritage paintings</span></div></section></main>;
+  const { toast } = useToast();
+  const toastRef = useRef(toast);
+  const googleButtonRef = useRef(null);
+  const [mode, setMode] = useState("login"),
+    [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [firstName, setFirstName] = useState(""),
+    [lastName, setLastName] = useState(""),
+    [loading, setLoading] = useState(false);
+  toastRef.current = toast;
+  useEffect(() => {
+    if (mode !== "login" || !GOOGLE_CLIENT_ID || !googleButtonRef.current)
+      return undefined;
+    let cancelled = false;
+    const handle = async ({ credential }) => {
+      if (cancelled || !credential) return;
+      setLoading(true);
+      try {
+        const r = await fetch(apiUrl("auth/user-login.php"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ type: "google", token: credential }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || !d.success) {
+          if (isSecurityToastStatus(r.status)) return;
+          throw new Error(d.message || "Google sign-in failed.");
+        }
+        toastRef.current.success("Signed in with Google.");
+        window.location.replace("/account");
+      } catch (e) {
+        if (!cancelled)
+          toastRef.current.error(e.message || "Google sign-in failed.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    const render = () => {
+      if (cancelled || !window.google?.accounts?.id || !googleButtonRef.current)
+        return;
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handle,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        width: 372,
+        text: "continue_with",
+        shape: "rectangular",
+      });
+    };
+    if (window.google?.accounts?.id) render();
+    else {
+      const existing = document.querySelector("script[data-google-gsi]");
+      if (existing) existing.addEventListener("load", render, { once: true });
+      else {
+        const s = document.createElement("script");
+        s.src = "https://accounts.google.com/gsi/client";
+        s.async = true;
+        s.defer = true;
+        s.dataset.googleGsi = "true";
+        s.addEventListener("load", render, { once: true });
+        document.head.appendChild(s);
+      }
+    }
+    return () => {
+      cancelled = true;
+      if (googleButtonRef.current) googleButtonRef.current.innerHTML = "";
+    };
+  }, [mode]);
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const endpoint =
+        mode === "login" ? "auth/user-login.php" : "auth/user-register.php";
+      const body =
+        mode === "login"
+          ? { type: "email", email: email.trim().toLowerCase(), password }
+          : {
+              email: email.trim().toLowerCase(),
+              password,
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+            };
+      const r = await fetch(apiUrl(endpoint), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.success) {
+        if (isSecurityToastStatus(r.status)) return;
+        throw new Error(d.message || "Unable to continue.");
+      }
+      toastRef.current.success(
+        mode === "login"
+          ? "Signed in successfully."
+          : "Account created successfully.",
+      );
+      window.location.replace("/account");
+    } catch (e) {
+      toastRef.current.error(e.message || "Unable to continue.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const forgot = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const r = await fetch(apiUrl("auth/request-password-reset.php"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.success) {
+        if (isSecurityToastStatus(r.status)) return;
+        throw new Error(d.message || "Unable to send reset link.");
+      }
+      toastRef.current.success(d.message);
+      setMode("login");
+    } catch (e) {
+      toastRef.current.error(e.message || "Unable to send reset link.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const switchMode = (m) => {
+    setMode(m);
+    setPassword("");
+  };
+  const copy =
+    mode === "login"
+      ? [
+          "WELCOME BACK",
+          "Welcome back",
+          "Sign in to track your orders and manage your account.",
+        ]
+      : mode === "register"
+        ? [
+            "JOIN ARAMANE ARTS",
+            "Create your account",
+            "Create an account to save your details and track your orders.",
+          ]
+        : [
+            "ACCOUNT SECURITY",
+            "Forgot your password?",
+            "Enter your email address and we will send you a secure reset link.",
+          ];
+  return (
+    <main className="ara-login-page">
+      <section className="ara-login-shell">
+        <div className="ara-login-brand">
+          <span className="ara-brand-small">THE HOUSE OF</span>
+          <span className="ara-brand-name">ARAmane Arts</span>
+        </div>
+        <div className="ara-login-divider">
+          <span />
+          <b>✦</b>
+          <span />
+        </div>
+        <div className="ara-login-heading">
+          <p className="ara-login-eyebrow">{copy[0]}</p>
+          <h1>{copy[1]}</h1>
+          <p>{copy[2]}</p>
+        </div>
+        {mode === "forgot" ? (
+          <form className="ara-login-form" onSubmit={forgot}>
+            <label>
+              <span>Email address</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <button className="ara-login-submit" disabled={loading}>
+              {loading ? "Sending…" : "Send reset link"}
+            </button>
+          </form>
+        ) : (
+          <form
+    className="ara-login-form"
+    onSubmit={submit}
+    autoComplete={mode === 'register' ? 'off' : 'on'}
+>
+            {mode === "register" && (
+              <div className="ara-login-name-grid">
+                <label>
+                  <span>First name</span>
+                  <input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    autoComplete="given-name"
+                    required
+                  />
+                </label>
+                <label>
+                  <span>Last name</span>
+                  <input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    autoComplete="family-name"
+                  />
+                </label>
+              </div>
+            )}
+            <label>
+              <span>Email address</span>
+              <input
+              key={mode}
+    type="email"
+    name={mode === 'register' ? 'registration-email' : 'email'}
+    value={email}
+    onChange={e => setEmail(e.target.value)}
+    placeholder="you@example.com"
+    autoComplete={mode === 'register' ? 'off' : 'email'}
+    required
+/>
+            </label>
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
+                minLength={8}
+                required
+              />
+            </label>
+            <button className="ara-login-submit" disabled={loading}>
+              {loading
+                ? mode === "login"
+                  ? "Signing in…"
+                  : "Creating account…"
+                : mode === "login"
+                  ? "Sign in"
+                  : "Create account"}
+            </button>
+          </form>
+        )}
+        {mode === "login" && (
+          <>
+            <div className="ara-login-switch">
+              <button type="button" onClick={() => switchMode("forgot")}>
+                Forgot password?
+              </button>
+            </div>
+            <div className="ara-login-divider">
+              <span />
+              <b>OR</b>
+              <span />
+            </div>
+            <div className="ara-google-button" ref={googleButtonRef} />
+          </>
+        )}
+        {mode === "login" ? (
+          <div className="ara-login-switch">
+            Don't have an account?
+            <button type="button" onClick={() => switchMode("register")}>
+              {" "}
+              Create one
+            </button>
+          </div>
+        ) : (
+          <div className="ara-login-switch">
+            <button type="button" onClick={() => switchMode("login")}>
+              ← Back to sign in
+            </button>
+          </div>
+        )}
+        <div className="ara-login-footer">
+          <span>ARAmane Arts</span>
+          <i>•</i>
+          <span>Heritage paintings</span>
+        </div>
+      </section>
+    </main>
+  );
 }
